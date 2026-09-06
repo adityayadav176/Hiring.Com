@@ -1,11 +1,12 @@
 import AuthLayout from "../../components/auth/AuthLayout"
 import React from 'react'
+import LoginForm from "../../components/auth/LoginForm"
 
 function Login() {
   return (
-    <>
-    <AuthLayout/>
-    </>
+    <AuthLayout>
+      <LoginForm/>
+    </AuthLayout> 
   )
 }
 
