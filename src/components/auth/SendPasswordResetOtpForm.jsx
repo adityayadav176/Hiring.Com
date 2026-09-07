@@ -35,7 +35,7 @@ function SendPasswordResetOtpForm() {
 </div>
         <div className='mt-4'>
           <h1 className='text-2xl font-bold'>Find Your Account</h1>
-          <p className='text-slate-500 font-medium text-xs mt-2 mb-4'>Enter your email to forget Your account.</p>
+          <p className='text-slate-500 font-medium text-xs mt-2 mb-4'>Enter your email to forget Your password.</p>
           <span className='text-slate-600 font-medium text-xs mt-3'>Email</span>
           <input onChange={(e)=>setEmail(e.target.value)} value={email} className='text-slate-500 outline-none font-medium mt-3 text-[12px] p-2.5 border-gray-200 focus:border-blue-500 border rounded-xl max-w-md w-full items-center justify-center flex' type="email" placeholder='Peer@example.com' />
         </div>

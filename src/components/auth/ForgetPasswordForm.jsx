@@ -1,13 +1,66 @@
 import React, { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 
 function ForgetPasswordForm() {
-  const handlePasswordChange = () => {
-    
+  const navigate = useNavigate();
+ const handlePasswordChange = async () => {
+  try {
+    const otpValue = otp.join("");
+
+    if (otpValue.length !== 6) {
+      alert("Please enter the 6-digit OTP");
+      return;
+    }
+
+    if (!password) {
+      alert("Please enter your new password");
+      return;
+    }
+
+    if (!confirmPassword) {
+      alert("Please confirm your password");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert("Password and Confirm Password do not match");
+      return;
+    }
+
+    const response = await fetch(
+      "http://localhost:9000/api/v1/auth/forgetPassword",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          otp: otpValue,
+          password,
+          confirmPassword,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Password Change Failed");
+    }
+
+    alert("Password changed successfully");
+    navigate("/login");
+
+  } catch (error) {
+    console.error("Password Change Error:", error);
+    alert(error.message || "Password change failed");
   }
-  const [otp, setOtp] = useState("");
+};
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  
   return (
     <div className='bg-white max-w-sm rounded-xl border border-slate-200 p-6 h-[560px] mt-2 mb-2'>
       <div>
@@ -15,23 +68,32 @@ function ForgetPasswordForm() {
 </div>
         <div className='mt-4'>
           <h1 className='text-2xl font-bold'> Forget Your Password</h1>
-          <p className='text-slate-500 font-medium text-xs mt-2 mb-4'>Enter a 6 digit otp to forget your account</p>
-          <div className="mt-3">
+          <p className='text-slate-500 font-medium text-xs mt-2 mb-4'>Enter a 6 digit otp to forget your password</p>
+         <div className="mt-3">
   <span className="text-slate-600 font-medium text-xs">
     OTP
   </span>
 
   <div className="flex gap-2 mt-3">
-    {[0, 1, 2, 3, 4, 5].map((index) => (
+    {otp.map((digit, index) => (
       <input
-      onChange={(e)=>setOtp(e.target.value)}
-      value={otp}
         key={index}
         type="text"
-        maxLength={1}
         inputMode="numeric"
-        autoComplete='false'
+        maxLength={1}
+        value={digit}
+        autoComplete="one-time-code"
         className="w-11 h-11 text-center text-sm font-semibold text-slate-700 outline-none border border-gray-200 rounded-xl focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+        onChange={(e) => {
+          const value = e.target.value;
+
+          // Only allow numbers
+          if (!/^\d*$/.test(value)) return;
+
+          const newOtp = [...otp];
+          newOtp[index] = value;
+          setOtp(newOtp);
+        }}
       />
     ))}
   </div>
