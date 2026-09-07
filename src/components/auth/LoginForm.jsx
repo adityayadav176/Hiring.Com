@@ -1,7 +1,45 @@
-import React from 'react'
-import { NavLink } from 'react-router-dom'
+import React, { useState } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
 
 function LoginForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  const handleLogin = async(e) => {
+      try {
+        if(!email || !password) {
+          alert("Please enter email and password");
+          return;
+        }
+
+        const response = await fetch("http://localhost:9000/api/v1/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({email, password}),
+        });
+
+        const data = await response.json();
+
+        if(!response.ok) {
+          throw new Error(data.message || "Login Failed");
+        }
+
+        const token = await data.data.accessToken;
+
+        localStorage.setItem("token", token);
+
+        alert(`Hello: ${data.data.name} Welcome to my application`);
+
+        navigate("/dashboard");
+      } catch (error) {
+        console.log(error);
+        alert(error.message);
+      }
+  }
   return (
     <div className='bg-white max-w-sm rounded-xl border border-slate-200 p-6 h-[560px] mt-2 mb-2'>
       <div>
@@ -40,18 +78,18 @@ function LoginForm() {
           <h1 className='text-2xl font-bold'> Welcome back </h1>
           <p className='text-slate-500 font-medium text-xs mt-2 mb-4'>Enter your details to continue your search.</p>
           <span className='text-slate-600 font-medium text-xs mt-3'>Work email</span>
-          <input className='text-slate-500  outline-none font-medium mt-3 text-[12px] p-2.5 border-gray-200 focus:border-blue-500 border rounded-xl max-w-md w-full items-center justify-center flex' type="text" placeholder='you@company.com' />
+          <input required onChange={(e) => setEmail(e.target.value)} value={email} className='text-slate-500  outline-none font-medium mt-3 text-[12px] p-2.5 border-gray-200 focus:border-blue-500 border rounded-xl max-w-md w-full items-center justify-center flex' type="email" placeholder='you@company.com' />
           <span className='text-slate-600 font-medium text-xs mt-3'>Password</span>
-          <input className='text-slate-500  outline-none font-medium mt-3 text-[12px] p-2.5 border-gray-200 focus:border-blue-500 border rounded-xl max-w-md w-full items-center justify-center flex' type="text" placeholder='.....' />
+          <input onChange={(e)=>setPassword(e.target.value)} value={password} className='text-slate-500 outline-none font-medium mt-3 text-[12px] p-2.5 border-gray-200 focus:border-blue-500 border rounded-xl max-w-md w-full items-center justify-center flex' type="password" placeholder='.....' />
         </div>
         <div className='flex items-center justify-between mt-4'>
           <div className='flex items-center mb-2 gap-2'>
-            <input type="checkbox" />
+            <input type="checkbox" required className='cursor-pointer'/>
             <span className='text-slate-400 font-medium text-[10px]'> Remember me </span>
           </div>
           <NavLink className='font-medium text-[8px] flex justify-end text-blue-600 hover:text-blue-800' to="Forgot password">Forget Password?</NavLink> 
         </div>
-        <button className='text-white mt-2 bg-blue-600 p-2.5 text-[12px] rounded-xl max-w-md w-full items-center justify-center flex'>Log in </button>
+        <button type='button' onClick={handleLogin} className='text-white mt-2 bg-blue-600 p-2.5 text-[12px] rounded-xl max-w-md w-full items-center justify-center flex cursor-pointer'>Log in </button>
 
     <div className="flex items-center gap-3 mt-5 mb-5">
   
@@ -61,7 +99,7 @@ function LoginForm() {
         </span>
     <div className="flex-1 border-t border-slate-200"></div>
     </div>
-        <button className="w-full max-w-md flex items-center justify-center gap-2 p-2.5 mt-4 mb-4 border border-gray-200 rounded-xl text-slate-500 font-medium text-[12px] transition-all duration-200 hover:bg-slate-50"><span className="text-violet-600 text-xl leading-none">G</span>
+        <button className="w-full cursor-pointer max-w-md flex items-center justify-center gap-2 p-2.5 mt-4 mb-4 border border-gray-200 rounded-xl text-slate-500 font-medium text-[12px] transition-all duration-200 hover:bg-slate-50"><span className="text-violet-600 text-xl leading-none">G</span>
   <span>
     Continue with Google
   </span>
