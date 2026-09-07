@@ -1,10 +1,11 @@
+import { Sidebar } from 'lucide-react'
 import React from 'react'
 
-function DashboardLayout() {
+function DashboardLayout({children}) {
   return (
-    <div>
-      
-    </div>
+   <div className='min-h-screen flex bg-slate-50'>
+      {children}
+   </div>
   )
 }
 

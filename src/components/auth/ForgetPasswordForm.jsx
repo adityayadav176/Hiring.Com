@@ -42,8 +42,10 @@ function ForgetPasswordForm() {
         }),
       }
     );
+    console.log(response);
 
     const data = await response.json();
+    console.log(data);
 
     if (!response.ok) {
       throw new Error(data.message || "Password Change Failed");

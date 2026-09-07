@@ -18,14 +18,12 @@ function SendPasswordResetOtpForm() {
             const data = await response.json();
     
             if(!response.ok) {
+              alert(data.message);
                 throw new Error(data.message || "Otp Sending Failed..");
-            }
-    
-            navigate("/forgetPassword");
+            }  
+          navigate("/forgetPassword");
         } catch (error) {
             console.log(error);
-            console.log("PasswordReset Otp Not Send");
-            alert("otp sending failed");
         }
     }
  return (

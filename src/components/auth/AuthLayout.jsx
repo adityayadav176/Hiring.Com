@@ -9,11 +9,9 @@ function AuthLayout({ children }) {
       {/* Header */}
       <header className="h-[70px] sm:h-[80px] lg:h-[90px] px-5 sm:px-8 lg:px-10 flex items-center">
         <div className="flex items-center gap-2 sm:gap-3">
-          <img
-            src={peerLogo}
-            alt="Peer Hiring"
-            className="w-9 h-9 sm:w-10 sm:h-10 object-contain"
-          />
+           <div className='w-5 h-5 sm:w-8 items-center shadow shadow-violet-800 justify-center flex sm:h-8 rounded-xl object-contain bg-violet-700'>
+                <span className='font-extrabold text-[17px] text-white'>P</span>
+            </div>
 
           <p className="text-lg sm:text-xl font-bold text-slate-950">
             Peer.Hiring
