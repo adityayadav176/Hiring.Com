@@ -87,7 +87,7 @@ function LoginForm() {
             <input type="checkbox" required className='cursor-pointer'/>
             <span className='text-slate-400 font-medium text-[10px]'> Remember me </span>
           </div>
-          <NavLink className='font-medium text-[8px] flex justify-end text-blue-600 hover:text-blue-800' to="Forgot password">Forget Password?</NavLink> 
+          <NavLink className='font-medium text-[8px] flex justify-end text-blue-600 hover:text-blue-800' to="/sendPasswordResetOpt">Forget Password?</NavLink> 
         </div>
         <button type='button' onClick={handleLogin} className='text-white mt-2 bg-blue-600 p-2.5 text-[12px] rounded-xl max-w-md w-full items-center justify-center flex cursor-pointer'>Log in </button>
 
