@@ -5,11 +5,13 @@ import ForgetPassword from "../pages/auth/ForgetPassword";
 import SendPasswordResetOtp from "../pages/auth/SendPasswordResetOtp";
 import Sidebar from "../components/layout/Sidebar";
 import Dashboard from "../pages/seeker/Dashboard";
+import Navbar from "../components/layout/Navbar";
 
 const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/" element={<Dashboard/>}/>
+            <Route path="/navbar" element={<Navbar/>}/>
             <Route path="/login" element={<Login/>}/>
             <Route path="/signup" element={<Signup/>}/>
             <Route path="/dashboard" element={<h1>Dashboad</h1>}/>
