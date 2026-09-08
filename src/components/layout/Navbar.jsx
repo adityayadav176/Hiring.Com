@@ -1,14 +1,60 @@
-import React from 'react'
-import { Building2, ChevronDown } from 'lucide-react'
+import React, { useContext, useState } from 'react'
+import { Building2, ChevronDown, Menu } from 'lucide-react'
 import { BellIcon } from 'lucide-react'
 import { CircleQuestionMark } from 'lucide-react'
+import { TitleContext } from '../../context/TitleContext'
+import { useNavigate } from 'react-router-dom'
 function Navbar() {
+  const [profile, setProfile] = useState(false);
+  const navigate = useNavigate();
+  const handleProfile = async () => {
+
+  try {
+
+    const response = await fetch(
+      "http://localhost:9000/api/v1/profile/me",
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        credentials: "include",
+      }
+    );
+
+    console.log(localStorage.getItem("token"));
+
+    console.log(response);
+
+    const data = await response.json();
+    console.log("data", data)
+    navigate("/profile");
+
+    if (!response.ok) {
+      throw new Error(data?.message || "Fetched Profile Failed");
+    }
+
+    console.log("Profile:", data);
+
+
+    alert("Profile fetched successfully");
+
+  } catch (error) {
+
+    console.log(error);
+    alert(error.message);
+
+  }
+};
+  const {title} = useContext(TitleContext); 
   return (
-    <nav className='flex min-w-auto justify-between min-h-auto items-center  bg-white flex-wrap p-2 pr-10 pl-10'>
+    <nav className='flex min-w-auto sm:flex justify-between min-h-auto items-center border bg-white flex-wrap p-2 pr-10 pl-10'>
       <div className='flex gap-3'>
+        <Menu className='md:hidden'/>
         <p className='text-gray-600 text-sm'>Workspace</p>
         <p className='text-gray-600 text-sm'>/</p>
-        <p className='font-medium text-gray-950 text-sm '>Overview</p>
+        <p className='font-medium text-gray-950 text-sm '>{title}</p>
       </div>
       <div className='flex justify-center items-center gap-2'>
         <div className='flex gap-3'>
@@ -17,8 +63,9 @@ function Navbar() {
         </div>
         
           <button
+          onClick={handleProfile}
           type="button"
-          className={`outline-none cursor-pointer p-3 rounded-xl flex items-center gap-4 text-left transition-all w-[12rem] duration-200
+          className={`outline-none hidden cursor-pointer p-3 rounded-xl md:flex items-center gap-4 text-left transition-all w-[12rem] duration-200
           `}
         >
           <span className="font-medium text-sm rounded-full bg-violet-300 text-violet-800 p-2.5 w-8 h-8 flex items-center justify-center">

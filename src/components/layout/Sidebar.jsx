@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { Building2, CalendarDays, CircleHelp, FileText, LayoutGrid, Menu, MessagesSquare, Search, Settings, User } from 'lucide-react'
 import { NavLink } from 'react-router-dom';
+import { TitleContext } from '../../context/TitleContext';
 function Sidebar() {
   const [isSidebarOpen, setisSidebarOpen] = useState(false);
+  const {setTitle} = useContext(TitleContext);
   return (
-    <div className={`w-full ${isSidebarOpen ? "md:w-64" : "md:w-25"} md:min-h-screen min-h-screen  ${isSidebarOpen ? "h-auto" :  "h-screen"}  gap-4 -r -slate-200  p-4 bg-white flex flex-col`}>
+    <div className={`w-full ${isSidebarOpen ? "md:w-64" : "md:w-25"} md:min-h-screen min-h-screen border ${isSidebarOpen ? "h-auto" :  "h-screen"}  gap-4 -r -slate-200  p-4 bg-white flex flex-col`}>
       <div className="flex items-center gap-2 sm:gap-3">
                <div className={`w-8 h-8 items-center shadow shadow-violet-800 justify-center ${isSidebarOpen ? "" : "ml-5"} flex rounded-xl object-contain bg-violet-700`}>
                 <span className={`font-extrabold text-[17px] text-white`}>P</span>
@@ -44,7 +46,7 @@ function Sidebar() {
         <div className='flex flex-wrap flex-col gap-1'>
           {(isSidebarOpen && 
           <span className='text-[10px] p-3 pl-5  text-slate-500 font-semibold'>WORKSPACE</span>)}
-            <NavLink className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/">
+            <NavLink onClick={()=>setTitle("Overview")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/">
               {({isActive}) => (
               <>
               <LayoutGrid className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>
@@ -52,7 +54,7 @@ function Sidebar() {
                  </>
                  )}
             </NavLink>
-            <NavLink className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
+            <NavLink onClick={()=>setTitle("Find jobs")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
               {({isActive}) => (
               <>
               <Search className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>
@@ -60,7 +62,7 @@ function Sidebar() {
                  </>
                  )}
             </NavLink>
-            <NavLink className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium  ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
+            <NavLink  onClick={()=>setTitle("Applications")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium  ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
               {({isActive}) => (
               <>
               <FileText className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>
@@ -68,7 +70,7 @@ function Sidebar() {
                  </>
                  )}
             </NavLink>
-            <NavLink className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
+            <NavLink onClick={()=>setTitle("Interviews")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
               {({isActive}) => (
               <>
               <CalendarDays className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>
@@ -76,7 +78,7 @@ function Sidebar() {
                  </>
                  )}
             </NavLink>
-            <NavLink className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
+            <NavLink onClick={()=>setTitle("Messages")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
               {({isActive}) => (
               <>
               <MessagesSquare className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>
@@ -87,7 +89,7 @@ function Sidebar() {
                       {(isSidebarOpen && 
           <span className='text-[10px] p-3 pl-5  text-slate-500 font-semibold'>ACCOUNT</span>
           )}
-            <NavLink className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium  ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
+            <NavLink onClick={()=>setTitle("My Profile")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium  ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
               {({isActive}) => (
               <>
               <User className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>
@@ -98,7 +100,7 @@ function Sidebar() {
                  )}
             </NavLink>
 
-            <NavLink className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
+            <NavLink onClick={()=>setTitle("Settings")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
               {({isActive}) => (
               <>
               <Settings className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>

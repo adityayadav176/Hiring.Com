@@ -6,11 +6,14 @@ import SendPasswordResetOtp from "../pages/auth/SendPasswordResetOtp";
 import Sidebar from "../components/layout/Sidebar";
 import Dashboard from "../pages/seeker/Dashboard";
 import Navbar from "../components/layout/Navbar";
+import Profile from "../pages/seeker/Profile";
 
 const AppRoutes = () => {
     return (
         <Routes>
+            
             <Route path="/" element={<Dashboard/>}/>
+            <Route path="/profile" element={<Profile/>}/>
             <Route path="/navbar" element={<Navbar/>}/>
             <Route path="/login" element={<Login/>}/>
             <Route path="/signup" element={<Signup/>}/>

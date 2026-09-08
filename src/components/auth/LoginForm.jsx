@@ -34,7 +34,7 @@ function LoginForm() {
 
         alert(`Hello: ${data.data.name} Welcome to my application`);
 
-        navigate("/dashboard");
+        navigate("/");
       } catch (error) {
         console.log(error);
         alert(error.message);

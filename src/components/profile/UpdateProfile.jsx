@@ -1,6 +1,6 @@
 import React from 'react'
 
-function ProfileHeader() {
+function UpdateProfile() {
   return (
     <div>
       
@@ -8,4 +8,4 @@ function ProfileHeader() {
   )
 }
 
-export default ProfileHeader
+export default UpdateProfile

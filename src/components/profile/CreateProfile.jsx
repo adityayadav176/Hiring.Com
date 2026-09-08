@@ -1,6 +1,6 @@
 import React from 'react'
 
-function Skills() {
+function CreateProfile() {
   return (
     <div>
       
@@ -8,4 +8,4 @@ function Skills() {
   )
 }
 
-export default Skills
+export default CreateProfile
