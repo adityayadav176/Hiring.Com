@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react'
 import { Building2, CalendarDays, CircleHelp, FileText, LayoutGrid, Menu, MessagesSquare, Search, Settings, User } from 'lucide-react'
 import { NavLink } from 'react-router-dom';
 import { TitleContext } from '../../context/TitleContext';
-function Sidebar() {
+function Sidebar({activePage, setActivePage}) {
   const [isSidebarOpen, setisSidebarOpen] = useState(false);
   const {setTitle} = useContext(TitleContext);
   return (
@@ -46,7 +46,7 @@ function Sidebar() {
         <div className='flex flex-wrap flex-col gap-1'>
           {(isSidebarOpen && 
           <span className='text-[10px] p-3 pl-5  text-slate-500 font-semibold'>WORKSPACE</span>)}
-            <NavLink onClick={()=>setTitle("Overview")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/">
+            <NavLink onClick={()=>setTitle("Overview")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/home">
               {({isActive}) => (
               <>
               <LayoutGrid className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>
@@ -89,16 +89,30 @@ function Sidebar() {
                       {(isSidebarOpen && 
           <span className='text-[10px] p-3 pl-5  text-slate-500 font-semibold'>ACCOUNT</span>
           )}
-            <NavLink onClick={()=>setTitle("My Profile")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium  ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
-              {({isActive}) => (
-              <>
-              <User className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>
-                 {(isSidebarOpen && 
-                 <span>My Profile</span>
-                 )}
-                 </>
-                 )}
-            </NavLink>
+           <button
+    type="button"
+    onClick={() => {
+        setActivePage("profile")
+        setTitle("My Profile")
+    }}
+    className={`w-full flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm font-medium ${
+        activePage === "profile"
+            ? "bg-[#EEF0FF] text-[#5950E6]"
+            : "text-gray-500"
+    }`}
+>
+    <User
+        className={`w-5 h-5 ${
+            activePage === "profile"
+                ? "text-[#5950E6]"
+                : "text-gray-500"
+        }`}
+    />
+
+    {isSidebarOpen && (
+        <span>My Profile</span>
+    )}
+</button>
 
             <NavLink onClick={()=>setTitle("Settings")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
               {({isActive}) => (

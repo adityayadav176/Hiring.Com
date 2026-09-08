@@ -1,11 +1,10 @@
 import React from 'react'
 import { ArrowUpRightSquareIcon, BriefcaseIcon, CircleCheck, Code, Edit3, GraduationCap, MapPin, Percent, Building2, PlusIcon } from 'lucide-react';
 
-function Profile() {
+function ProfileDashboard() {
   return (
-   <>   
-   <section className='flex items-center justify-center w-auto h-auto gap-5 m-8 flex-col'>
-        <div className='md:w-200 flex items-center  bg-white p-7 rounded-2xl shadow shadow-gray-300 justify-between'>
+     <section className='flex items-center justify-center w-auto h-auto gap-5 m-8 flex-col'>
+        <div className='md:w-full flex items-center  bg-white p-7 rounded-2xl shadow shadow-gray-300 justify-between'>
             <div className='flex gap-4'>
                 <div className='p-8 rounded-2xl bg-violet-600 flex items-center justify-center'>
                     <span className='text-2xl font-extrabold text-white'>AY</span>
@@ -28,7 +27,7 @@ function Profile() {
             </div>
         </div>
 
-       <div className="w-200 h-auto bg-white p-5 rounded-2xl shadow shadow-gray-300">
+       <div className="w-full h-auto bg-white p-5 rounded-2xl shadow shadow-gray-300">
 
   <div className="flex justify-between items-center">
 
@@ -62,7 +61,7 @@ function Profile() {
 
 </div>
         
-        <div className='w-200 bg-white p-5 h-auto gap-3 rounded-2xl shadow shadow-gray-300 flex flex-col'>
+        <div className='w-full bg-white p-5 h-auto gap-3 rounded-2xl shadow shadow-gray-300 flex flex-col'>
             <div className='flex gap-2'>
                 <BriefcaseIcon className='text-violet-600'/>
                 <p className='font-bold text-gray-900'>Job Preferences</p>
@@ -81,7 +80,7 @@ function Profile() {
             <div className='w-30 border rounded-xl border-gray-400 font-bold p-2 flex items-center bg-slate-100'>Based in INR</div>
         </div>
 
-             <div className="w-200 bg-white h-auto p-5 rounded-2xl shadow shadow-gray-300">
+             <div className="w-full bg-white h-auto p-5 rounded-2xl shadow shadow-gray-300">
 
   <div className="flex justify-between items-center">
 
@@ -98,7 +97,7 @@ function Profile() {
   </p>
 
 </div>
-        <div className='w-200 bg-white h-auto p-5 rounded-2xl shadow shadow-gray-300'>
+        <div className='w-full bg-white h-auto p-5 rounded-2xl shadow shadow-gray-300'>
             <div className='flex justify-between mb-5'>
                 <div className='font-bold text-gray-900 flex gap-3'>
                     <Code className='text-violet-600'/>
@@ -121,7 +120,7 @@ function Profile() {
         </div>
             
 
-        <div className='w-200 bg-white p-5 h-auto gap-5 rounded-2xl shadow shadow-gray-300 flex flex-col'>
+        <div className='w-full bg-white p-5 h-auto gap-5 rounded-2xl shadow shadow-gray-300 flex flex-col'>
             <div className='flex justify-between'>
                 <div className='font-bold text-gray-900 flex gap-3'>
                 <Code className='text-violet-600'/>
@@ -131,7 +130,7 @@ function Profile() {
                     Add Project
                 </button>
             </div>
-            <div className='w-3xl bg-white h-auto p-5 rounded-2xl hover:text-violet-700 shadow hover:shadow hover:shadow-gray-300 shadow-gray-100 border hover:border-violet-200 border-gray-200'>
+            <div className='w-full bg-white h-auto p-5 rounded-2xl   hover:text-violet-700 shadow hover:shadow hover:shadow-gray-300 shadow-gray-100 border hover:border-violet-200 border-gray-200'>
                 <div className='flex justify-between '>
                     <span className='font-bold text-xl'>Hiring Platform</span>
                     <ArrowUpRightSquareIcon className='cursor-pointer text-slate-400 hover:text-slate-900'/>
@@ -168,7 +167,7 @@ function Profile() {
         </div>
 
     
-        <div className='w-200 bg-white p-5 h-auto gap-2 rounded-2xl shadow shadow-gray-300 flex flex-col'>
+        <div className='w-full bg-white p-5 h-auto gap-2 rounded-2xl shadow shadow-gray-300 flex flex-col'>
             <div className='flex justify-between p-3'>
                 <div className='flex gap-2 font-bold text-gray-900'>
                 <GraduationCap className='text-violet-600'/>
@@ -178,7 +177,7 @@ function Profile() {
                     Add Education
                 </button>
             </div>
-            <div className='md:w-3xl bg-gray-100 flex items-center gap-4 h-auto p-5 rounded-2xl'>
+            <div className='md:w-full bg-gray-100 flex items-center gap-4 h-auto p-5 rounded-2xl'>
                 <div className='flex text-violet-600 p-2 w-12 h-12  rounded-xl items-center justify-center  bg-white shadow shadow-gray-500 border border-slate-50'>
                     <Building2/>
                 </div>
@@ -190,12 +189,12 @@ function Profile() {
             </div>
         </div>
 
-        <div className='w-200 bg-white p-5 h-auto gap-5 rounded-2xl shadow shadow-gray-300 flex flex-col'>
+        <div className='w-full bg-white p-5 h-auto gap-5 rounded-2xl shadow shadow-gray-300 flex flex-col'>
             <div className='flex gap-2 font-bold text-gray-900'>
                 <BriefcaseIcon className='text-violet-600'/>
                 <span>Experience</span>
             </div>
-            <div className='inset-0 rounded-2xl border-2 border-dashed border-gray-200 w-3xl bg-white h-auto gap-5 shadow shadow-gray-300 flex flex-col'>
+            <div className='inset-0 rounded-2xl border-2 border-dashed border-gray-200 w-full bg-white h-auto gap-5 shadow shadow-gray-300 flex flex-col'>
                 <div className='flex flex-wrap bg-gray-100 flex-col gap-3 items-center justify-center p-5'>
                     <div className='rounded-full p-3 text-gray-400 bg-gray-200'>
                         <BriefcaseIcon/>
@@ -209,8 +208,7 @@ function Profile() {
             </div>
         </div>
     </section>
-   </>
   )
 }
 
-export default Profile
+export default ProfileDashboard

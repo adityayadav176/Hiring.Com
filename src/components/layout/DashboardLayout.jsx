@@ -1,12 +1,9 @@
-import React from 'react'
-
 function DashboardLayout({ children }) {
-
-  return (
-    <div className="min-h-screen flex bg-slate-50">
-      {children}
-    </div>
-  )
+    return (
+        <div className="h-screen overflow-hidden flex">
+            {children}
+        </div>
+    )
 }
 
 export default DashboardLayout

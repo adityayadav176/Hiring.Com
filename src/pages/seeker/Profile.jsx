@@ -1,9 +1,9 @@
 import React from 'react'
-import Profile from '../../components/profile/Profile';
+import ProfileDashboard from '../../components/profile/ProfileDashboard'
 
 function Profile() {
   return (
-    <Profile/>
+    <ProfileDashboard/>
   )
 }
 

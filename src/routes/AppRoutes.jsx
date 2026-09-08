@@ -11,7 +11,6 @@ import Profile from "../pages/seeker/Profile";
 const AppRoutes = () => {
     return (
         <Routes>
-            
             <Route path="/" element={<Dashboard/>}/>
             <Route path="/profile" element={<Profile/>}/>
             <Route path="/navbar" element={<Navbar/>}/>

@@ -1,27 +1,41 @@
-import React from 'react'
-
+import React, { useState } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import Sidebar from '../../components/layout/Sidebar'
-import Navbar from './../../components/layout/Navbar'
-import Home from './../pubic/Home'
+import Navbar from '../../components/layout/Navbar'
+import Profile from './Profile'
+import Home from './../pubic/Home';
 
 function Dashboard() {
+    const [activePage, setActivePage] = useState("home")
 
-  return (
-    <DashboardLayout>
+    return (
+        <DashboardLayout>
 
-      <Sidebar />
+            {/* Sidebar */}
+            <Sidebar
+                activePage={activePage}
+                setActivePage={setActivePage}
+            />
 
-      <div className="flex-1 min-w-0">
+            {/* Right side */}
+            <div className="flex-1 min-w-0 flex flex-col min-h-0">
 
-        <Navbar />
+                {/* Navbar */}
+                <Navbar />
 
-        <Home />
+                {/* Content */}
+                <main className="flex-1 min-h-0 overflow-y-auto">
 
-      </div>
+                    {activePage === "home" && <Home />}
 
-    </DashboardLayout>
-  )
+                    {activePage === "profile" && <Profile />}
+
+                </main>
+
+            </div>
+
+        </DashboardLayout>
+    )
 }
 
 export default Dashboard
