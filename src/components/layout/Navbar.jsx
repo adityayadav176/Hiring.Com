@@ -1,51 +1,10 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { Building2, ChevronDown, Menu } from 'lucide-react'
 import { BellIcon } from 'lucide-react'
 import { CircleQuestionMark } from 'lucide-react'
 import { TitleContext } from '../../context/TitleContext'
-import { useNavigate } from 'react-router-dom'
-function Navbar({activePage, setActivePage, setTitle}) {
-  const [profile, setProfile] = useState(false);
-  const navigate = useNavigate();
-  const handleProfile = async () => {
+function Navbar({setActivePage, setTitle}) {
 
-  try {
-
-    const response = await fetch(
-      "http://localhost:9000/api/v1/profile/me",
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-        credentials: "include",
-      }
-    );
-
-    console.log(localStorage.getItem("token"));
-
-    console.log(response);
-
-    const data = await response.json();
-    console.log("data", data)
-
-    if (!response.ok) {
-      throw new Error(data?.message || "Fetched Profile Failed");
-    }
-
-    console.log("Profile:", data);
-
-
-    alert("Profile fetched successfully");
-
-  } catch (error) {
-
-    console.log(error);
-    alert(error.message);
-
-  }
-};
   const {title} = useContext(TitleContext); 
   return (
     <nav className='flex min-w-auto sm:flex justify-between min-h-auto items-center bg-white flex-wrap p-2 pr-10 pl-10'>
@@ -62,7 +21,6 @@ function Navbar({activePage, setActivePage, setTitle}) {
         </div>
         
           <button
-          onClick={handleProfile}
           type="button"
           className={`outline-none hidden cursor-pointer p-3 rounded-xl md:flex items-center gap-4 text-left transition-all w-[12rem] duration-200
           `}
