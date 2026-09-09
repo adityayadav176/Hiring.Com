@@ -4,7 +4,7 @@ import { BellIcon } from 'lucide-react'
 import { CircleQuestionMark } from 'lucide-react'
 import { TitleContext } from '../../context/TitleContext'
 import { useNavigate } from 'react-router-dom'
-function Navbar() {
+function Navbar({activePage, setActivePage, setTitle}) {
   const [profile, setProfile] = useState(false);
   const navigate = useNavigate();
   const handleProfile = async () => {
@@ -29,7 +29,6 @@ function Navbar() {
 
     const data = await response.json();
     console.log("data", data)
-    navigate("/profile");
 
     if (!response.ok) {
       throw new Error(data?.message || "Fetched Profile Failed");
@@ -49,7 +48,7 @@ function Navbar() {
 };
   const {title} = useContext(TitleContext); 
   return (
-    <nav className='flex min-w-auto sm:flex justify-between min-h-auto items-center border bg-white flex-wrap p-2 pr-10 pl-10'>
+    <nav className='flex min-w-auto sm:flex justify-between min-h-auto items-center bg-white flex-wrap p-2 pr-10 pl-10'>
       <div className='flex gap-3'>
         <Menu className='md:hidden'/>
         <p className='text-gray-600 text-sm'>Workspace</p>
@@ -71,7 +70,7 @@ function Navbar() {
           <span className="font-medium text-sm rounded-full bg-violet-300 text-violet-800 p-2.5 w-8 h-8 flex items-center justify-center">
   A
 </span>
-          <div>
+          <button type='button' onClick={()=> {setActivePage("profile"), setTitle("My Profile")} }>
             <p
               className={`font-semibold text-xs`}
             >
@@ -81,7 +80,7 @@ function Navbar() {
             <p className="text-[10px] text-slate-500 mt-1">
               Job seeker
             </p>
-          </div>
+          </button>
           <ChevronDown className="w-4 h-4" />
         </button>
       </div>

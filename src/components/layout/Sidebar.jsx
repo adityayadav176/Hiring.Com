@@ -6,7 +6,12 @@ function Sidebar({activePage, setActivePage}) {
   const [isSidebarOpen, setisSidebarOpen] = useState(false);
   const {setTitle} = useContext(TitleContext);
   return (
-    <div className={`w-full ${isSidebarOpen ? "md:w-64" : "md:w-25"} md:min-h-screen min-h-screen border ${isSidebarOpen ? "h-auto" :  "h-screen"}  gap-4 -r -slate-200  p-4 bg-white flex flex-col`}>
+<div
+    className={`w-full ${
+        isSidebarOpen ? "md:w-64" : "md:w-25"
+    } h-screen overflow-y-auto overscroll-contain shrink-0
+    gap-4 p-4 bg-white flex flex-col`}
+>
       <div className="flex items-center gap-2 sm:gap-3">
                <div className={`w-8 h-8 items-center shadow shadow-violet-800 justify-center ${isSidebarOpen ? "" : "ml-5"} flex rounded-xl object-contain bg-violet-700`}>
                 <span className={`font-extrabold text-[17px] text-white`}>P</span>

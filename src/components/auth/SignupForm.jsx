@@ -56,13 +56,13 @@ function SignupForm() {
 
             const data = await response.json();
 
-            console.log("Signup response:", data);
-
             if (!response.ok) {
                 throw new Error(
                     data?.message || "Signup failed"
                 );
             }
+
+            alert("please Wait We'll create your profile");
 
             // Backend:
             // data.data.user.name
@@ -71,7 +71,7 @@ function SignupForm() {
                 `Hello ${data?.data?.user?.name}, your account has been created! Welcome to Peer Hiring.`
             );
 
-            navigate("/dashboard");
+            navigate("/login");
 
         } catch (error) {
             console.error("Signup Error:", error);
@@ -129,10 +129,6 @@ function SignupForm() {
                     Choose how you'll use Peer Hiring.
                 </p>
 
-                {/* ========================= */}
-                {/* JOB SEEKER */}
-                {/* ========================= */}
-
                 <button
                     type="button"
                     onClick={() => setRole("User")}
@@ -167,9 +163,6 @@ function SignupForm() {
                     </div>
                 </button>
 
-                {/* ========================= */}
-                {/* RECRUITER */}
-                {/* ========================= */}
 
                 <button
                     type="button"
@@ -205,10 +198,6 @@ function SignupForm() {
                     </div>
                 </button>
 
-                {/* ========================= */}
-                {/* EMAIL */}
-                {/* ========================= */}
-
                 <div className="mt-5">
                     <label className="text-slate-600 font-medium text-xs">
                         Work email
@@ -223,10 +212,6 @@ function SignupForm() {
                         className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl"
                     />
                 </div>
-
-                {/* ========================= */}
-                {/* PHONE */}
-                {/* ========================= */}
 
                 <div className="mt-5">
                     <label className="text-slate-600 font-medium text-xs">
@@ -244,10 +229,6 @@ function SignupForm() {
                     />
                 </div>
 
-                {/* ========================= */}
-                {/* FULL NAME */}
-                {/* ========================= */}
-
                 <div className="mt-5">
                     <label className="text-slate-600 font-medium text-xs">
                         Full Name
@@ -262,10 +243,6 @@ function SignupForm() {
                         className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl"
                     />
                 </div>
-
-                {/* ========================= */}
-                {/* PASSWORD */}
-                {/* ========================= */}
 
                 <div className="mt-3">
                     <label className="text-slate-600 font-medium text-xs">
@@ -282,9 +259,6 @@ function SignupForm() {
                     />
                 </div>
 
-                {/* ========================= */}
-                {/* AVATAR */}
-                {/* ========================= */}
 {/* Avatar + Cover Upload */}
 <div className="grid grid-cols-2 mt-8 gap-3">
 
@@ -363,13 +337,8 @@ function SignupForm() {
     </label>
   </div>
 
-</div>
-
-                {/* ========================= */}
-                {/* CREATE ACCOUNT */}
-                {/* ========================= */}
-
-                <button
+</div>      
+          <button
                     type="submit"
                     className="text-white mt-4 bg-violet-600 cursor-pointer hover:bg-violet-700 transition-colors p-2.5 text-[12px] rounded-xl w-full flex items-center justify-center"
                 >
