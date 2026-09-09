@@ -6,7 +6,7 @@ const AdminProvider = ({children}) => {
 
     const API_URL = import.meta.env.VITE_API_URL;
 
-    const blockCompany = async(companyId) => {
+    const handleblockCompany = async(companyId) => {
         try {
             const response = await fetch(`${API_URL}/admin/companies/${companyId}/block`, {
                 credentials: true,
@@ -27,7 +27,7 @@ const AdminProvider = ({children}) => {
     }
 
     return (
-        <AdminContext.Provider value={blockCompany}>
+        <AdminContext.Provider value={handleblockCompany}>
             {children}
         </AdminContext.Provider>
     )
