@@ -7,6 +7,7 @@ import { ProfileContext } from './../context/ProfileContext';
 import { TitleContext } from './../context/TitleContext';
 import { ReportContext } from './../context/ReportContext';
 import { NotificationContext } from "../context/NotificationContext";
+import { ConversationContext } from "../context/Conversation";
 
 const useAdmin = () => {
     const context = useContext(AdminContext);
@@ -76,6 +77,15 @@ const useNotification = () => {
     return context;
 }
 
+const useConversation = () => {
+    const context = useContext(ConversationContext);
+
+    if(!context) {
+        throw new Error("Use Convesation Must Be Use In Conversation Provider");
+    }
+
+    return context;
+}
 
 
 export {
@@ -85,5 +95,6 @@ export {
     useProfile,
     useTitle,
     useReport,
-    useNotification
+    useNotification,
+    useConversation
 }
