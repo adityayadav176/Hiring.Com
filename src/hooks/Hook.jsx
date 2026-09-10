@@ -8,6 +8,7 @@ import { TitleContext } from './../context/TitleContext';
 import { ReportContext } from './../context/ReportContext';
 import { NotificationContext } from "../context/NotificationContext";
 import { ConversationContext } from "../context/Conversation";
+import { MessageContext } from "../context/MessageContext";
 
 const useAdmin = () => {
     const context = useContext(AdminContext);
@@ -87,6 +88,16 @@ const useConversation = () => {
     return context;
 }
 
+const useMessage = () => {
+    const context = useContext(MessageContext);
+    
+    if(!context) {
+        throw new Error("Use Message Must Be Use In Message Provider");
+    }
+
+    return context;
+}
+
 
 export {
     useAdmin,
@@ -96,5 +107,6 @@ export {
     useTitle,
     useReport,
     useNotification,
-    useConversation
+    useConversation,
+    useMessage
 }
