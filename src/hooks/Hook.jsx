@@ -6,6 +6,7 @@ import { CompanyContext } from "../context/CompanyContext";
 import { ProfileContext } from './../context/ProfileContext';
 import { TitleContext } from './../context/TitleContext';
 import { ReportContext } from './../context/ReportContext';
+import { NotificationContext } from "../context/NotificationContext";
 
 const useAdmin = () => {
     const context = useContext(AdminContext);
@@ -65,6 +66,16 @@ const useReport = () => {
     return context;
 }
 
+const useNotification = () => {
+    const context = useContext(NotificationContext);
+
+    if(!context) {
+        throw new Error("Use Notification Must Be Use In Notification Provider");
+    }
+
+    return context;
+}
+
 
 
 export {
@@ -72,5 +83,7 @@ export {
     useAuth,
     useCompany,
     useProfile,
-    useTitle    
+    useTitle,
+    useReport,
+    useNotification
 }
