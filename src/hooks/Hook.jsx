@@ -9,6 +9,7 @@ import { ReportContext } from './../context/ReportContext';
 import { NotificationContext } from "../context/NotificationContext";
 import { ConversationContext } from "../context/Conversation";
 import { MessageContext } from "../context/MessageContext";
+import { SessionContext } from "../context/SessionContext";
 
 const useAdmin = () => {
     const context = useContext(AdminContext);
@@ -98,6 +99,16 @@ const useMessage = () => {
     return context;
 }
 
+const useSession = () => {
+    const context = useContext(SessionContext);
+    
+    if(!context) {
+        throw new Error("Use Session Must Be Use In Session Provider");
+    }
+
+    return context;
+}
+
 
 export {
     useAdmin,
@@ -108,5 +119,6 @@ export {
     useReport,
     useNotification,
     useConversation,
-    useMessage
+    useMessage,
+    useSession
 }
