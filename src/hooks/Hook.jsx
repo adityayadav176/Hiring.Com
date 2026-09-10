@@ -10,6 +10,7 @@ import { ConversationContext } from "../context/Conversation";
 import { MessageContext } from "../context/MessageContext";
 import { SessionContext } from "../context/SessionContext";
 import { TitleContext } from "../context/TitleContext"; 
+import { InterviewContext } from "../context/InterviewContext";
 
 const useAdmin = () => {
     const context = useContext(AdminContext);
@@ -104,6 +105,16 @@ const useSession = () => {
     
     if(!context) {
         throw new Error("Use Session Must Be Use In Session Provider");
+    }
+
+    return context;
+}
+
+const useInterview = () => {
+    const context = useContext(InterviewContext);
+    
+    if(!context) {
+        throw new Error("useInterview Must Be Use In Interview Provider");
     }
 
     return context;
