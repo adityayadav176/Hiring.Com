@@ -12,6 +12,7 @@ import { SessionContext } from "../context/SessionContext";
 import { TitleContext } from "../context/TitleContext"; 
 import { InterviewContext } from "../context/InterviewContext";
 import { ApplicationContext } from "../context/ApplicationContext";
+import { JobContext } from "../context/JobContext";
 
 const useAdmin = () => {
     const context = useContext(AdminContext);
@@ -132,10 +133,10 @@ const useApplication = () => {
 }
 
 const useJob = () => {
-    const context = useContext(ApplicationContext);
+    const context = useContext(JobContext);
     
     if(!context) {
-        throw new Error("UseApplication Must Be Use In Application Provider");
+        throw new Error("UseJob Must Be Use In Job Provider");
     }
 
     return context;
