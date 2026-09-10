@@ -11,6 +11,7 @@ import { MessageContext } from "../context/MessageContext";
 import { SessionContext } from "../context/SessionContext";
 import { TitleContext } from "../context/TitleContext"; 
 import { InterviewContext } from "../context/InterviewContext";
+import { ApplicationContext } from "../context/ApplicationContext";
 
 const useAdmin = () => {
     const context = useContext(AdminContext);
@@ -120,6 +121,16 @@ const useInterview = () => {
     return context;
 }
 
+const useApplication = () => {
+    const context = useContext(ApplicationContext);
+    
+    if(!context) {
+        throw new Error("UseApplication Must Be Use In Application Provider");
+    }
+
+    return context;
+}
+
 
 export {
     useAdmin,
@@ -131,5 +142,7 @@ export {
     useNotification,
     useConversation,
     useMessage,
-    useSession
+    useSession,
+    useApplication, 
+    useInterview
 }
