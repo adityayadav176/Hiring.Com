@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from "react";
 
-const AdminContext = createContext();
+export const AdminContext = createContext();
 
 export const AdminProvider = ({ children }) => {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -716,14 +716,4 @@ export const AdminProvider = ({ children }) => {
       {children}
     </AdminContext.Provider>
   );
-};
-
-export const useAdmin = () => {
-  const context = useContext(AdminContext);
-
-  if (!context) {
-    throw new Error("useAdmin must be used inside AdminProvider");
-  }
-
-  return context;
 };
