@@ -5,6 +5,7 @@ import { AuthContext } from './../context/AuthContext';
 import { CompanyContext } from "../context/CompanyContext";
 import { ProfileContext } from './../context/ProfileContext';
 import { TitleContext } from './../context/TitleContext';
+import { ReportContext } from './../context/ReportContext';
 
 const useAdmin = () => {
     const context = useContext(AdminContext);
@@ -54,6 +55,16 @@ const useTitle = () => {
     return context;
 }
 
+const useReport = () => {
+    const context = useContext(ReportContext);
+
+    if(!context) {
+        throw new Error("Use Report Must Be Use In Report Provider");
+    }
+
+    return context;
+}
+
 
 
 export {
@@ -61,5 +72,5 @@ export {
     useAuth,
     useCompany,
     useProfile,
-    useTitle
+    useTitle    
 }
