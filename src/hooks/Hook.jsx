@@ -131,6 +131,16 @@ const useApplication = () => {
     return context;
 }
 
+const useJob = () => {
+    const context = useContext(ApplicationContext);
+    
+    if(!context) {
+        throw new Error("UseApplication Must Be Use In Application Provider");
+    }
+
+    return context;
+}
+
 
 export {
     useAdmin,
@@ -144,5 +154,6 @@ export {
     useMessage,
     useSession,
     useApplication, 
-    useInterview
+    useInterview,
+    useJob
 }
