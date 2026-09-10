@@ -47,7 +47,7 @@ const ReportProvider = ({children}) => {
                 throw new Error(data.message || "Failed To Fetch Report");
             }
             
-            setReport(data.report);
+            setReport(data.data);
             console.log("Report Fetched Successfully");
         } catch (error) {
             console.log(error);
