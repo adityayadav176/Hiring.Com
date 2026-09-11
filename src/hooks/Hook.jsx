@@ -13,6 +13,7 @@ import { TitleContext } from "../context/TitleContext";
 import { InterviewContext } from "../context/InterviewContext";
 import { ApplicationContext } from "../context/ApplicationContext";
 import { JobContext } from "../context/JobContext";
+import { ResumeContext } from "../context/ResumeContext";
 
 const useAdmin = () => {
     const context = useContext(AdminContext);
@@ -142,6 +143,16 @@ const useJob = () => {
     return context;
 }
 
+const useResume = () => {
+    const context = useContext(ResumeContext);
+    
+    if(!context) {
+        throw new Error("UseResume Must Be Use In Resume Provider");
+    }
+
+    return context;
+}
+
 
 export {
     useAdmin,
@@ -156,5 +167,6 @@ export {
     useSession,
     useApplication, 
     useInterview,
-    useJob
+    useJob,
+    useResume
 }
