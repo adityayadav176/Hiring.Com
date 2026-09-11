@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Building2, User } from "lucide-react";
+import {useAuth} from "../../hooks/Hook"
+
+
 
 function SignupForm() {
     const [role, setRole] = useState("");
@@ -11,80 +14,17 @@ function SignupForm() {
 
     const [avatar, setAvatar] = useState(null);
     const [coverImage, setCoverImage] = useState(null);
-
+    const {handleSignup} = useAuth();
     const navigate = useNavigate();
+    const handleSubmit = async(e) => {
+        e.preventDefault()
 
-    const handleSignup = async (e) => {
-        e.preventDefault();
-
-        try {
-
-            if (!role) {
-                alert("Please select your role.");
-                return;
-            }
-
-            if (!avatar) {
-                alert("Please select an avatar.");
-                return;
-            }
-
-            if (!coverImage) {
-                alert("Please select a cover image.");
-                return;
-            }
-
-            const formData = new FormData();
-
-            formData.append("name", name);
-            formData.append("email", email);
-            formData.append("password", password);
-            formData.append("phoneNo", phoneNo);
-            formData.append("role", role);
-
-            formData.append("avatar", avatar);
-            formData.append("coverImage", coverImage);
-
-            const response = await fetch(
-                "http://localhost:9000/api/v1/auth/register",
-                {
-                    method: "POST",
-                    credentials: "include",
-                    body: formData,
-                }
-            );
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    data?.message || "Signup failed"
-                );
-            }
-
-            alert("please Wait We'll create your profile");
-
-            // Backend:
-            // data.data.user.name
-
-            alert(
-                `Hello ${data?.data?.user?.name}, your account has been created! Welcome to Peer Hiring.`
-            );
-
-            navigate("/login");
-
-        } catch (error) {
-            console.error("Signup Error:", error);
-
-            alert(
-                error.message || "Something went wrong during signup."
-            );
-        }
-    };
+       await handleSignup({role, email, password, name, phoneNo, avatar, coverImage})
+    }
 
     return (
         <form
-            onSubmit={handleSignup}
+            onSubmit={handleSubmit}
             className="bg-white w-full max-w-sm rounded-xl border border-slate-200 p-5 sm:p-6 mt-2 mb-2"
         >
             {/* Tabs */}

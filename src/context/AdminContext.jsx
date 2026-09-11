@@ -2,7 +2,7 @@ import { createContext, useContext, useState } from "react";
 
 export const AdminContext = createContext();
 
-export const AdminProvider = ({ children }) => {
+const AdminProvider = ({ children }) => {
   const API_URL = import.meta.env.VITE_API_URL;
 
   // Dashboard
@@ -717,3 +717,5 @@ export const AdminProvider = ({ children }) => {
     </AdminContext.Provider>
   );
 };
+
+export default AdminProvider

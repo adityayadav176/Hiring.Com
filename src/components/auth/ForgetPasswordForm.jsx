@@ -1,67 +1,15 @@
 import React, { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
+import {useAuth} from "../../hooks/Hook"
 
 function ForgetPasswordForm() {
-  const navigate = useNavigate();
- const handlePasswordChange = async () => {
-  try {
-    const otpValue = otp.join("");
-
-    if (otpValue.length !== 6) {
-      alert("Please enter the 6-digit OTP");
-      return;
-    }
-
-    if (!password) {
-      alert("Please enter your new password");
-      return;
-    }
-
-    if (!confirmPassword) {
-      alert("Please confirm your password");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      alert("Password and Confirm Password do not match");
-      return;
-    }
-
-    const response = await fetch(
-      "http://localhost:9000/api/v1/auth/forgetPassword",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          otp: otpValue,
-          password,
-          confirmPassword,
-        }),
-      }
-    );
-    console.log(response);
-
-    const data = await response.json();
-    console.log(data);
-
-    if (!response.ok) {
-      throw new Error(data.message || "Password Change Failed");
-    }
-
-    alert("Password changed successfully");
-    navigate("/login");
-
-  } catch (error) {
-    console.error("Password Change Error:", error);
-    alert(error.message || "Password change failed");
-  }
-};
+  const {handleForgetPassword} = useAuth();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+    const handleSubmit = async() => {
+    await handleForgetPassword({password, confirmPassword, otp});
+  }
   
   return (
     <div className='bg-white max-w-sm rounded-xl border border-slate-200 p-6 h-[560px] mt-2 mb-2'>
@@ -69,7 +17,7 @@ function ForgetPasswordForm() {
        <div className="flex gap-6 border-slate-200">
 </div>
         <div className='mt-4'>
-          <h1 className='text-2xl font-bold'> Forget Your Password</h1>
+          <h1 className='text-2xl font-bold'> Reset Your Password</h1>
           <p className='text-slate-500 font-medium text-xs mt-2 mb-4'>Enter a 6 digit otp to forget your password</p>
          <div className="mt-3">
   <span className="text-slate-600 font-medium text-xs">
@@ -111,7 +59,7 @@ function ForgetPasswordForm() {
             <span className='text-slate-400 font-medium text-[10px]'> Remember me </span>
           </div>
         </div>
-        <button type='button' onClick={handlePasswordChange} className='text-white mt-2 mb-4 bg-blue-600 p-2.5 text-[12px] rounded-xl max-w-md w-full items-center justify-center flex cursor-pointer'>Forget Password</button>
+        <button type='button' onClick={handleSubmit} className='text-white mt-2 mb-4 bg-blue-600 p-2.5 text-[12px] rounded-xl max-w-md w-full items-center justify-center flex cursor-pointer'>Reset  Password</button>
         <p className='text-slate-500 flex justify-center gap-0.5 font-medium text-[8px]'>By continuing, you agree to our <NavLink
          className='text-blue-500' to="">Terms</NavLink> and <NavLink className='text-blue-500' to="">Privacy Policy.</NavLink></p>
       </div>

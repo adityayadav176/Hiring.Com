@@ -1,45 +1,14 @@
 import React, { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
+import {useAuth} from "../../hooks/Hook"
 
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
-
-  const handleLogin = async(e) => {
-      try {
-        if(!email || !password) {
-          alert("Please enter email and password");
-          return;
-        }
-
-        const response = await fetch("http://localhost:9000/api/v1/auth/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({email, password}),
-        });
-
-        const data = await response.json();
-
-        if(!response.ok) {
-          throw new Error(data.message || "Login Failed");
-        }
-
-        const token = await data.data.accessToken;
-
-        localStorage.setItem("token", token);
-
-        alert(`Hello: ${data.data.name} Welcome to my application`);
-
-        navigate("/");
-      } catch (error) {
-        console.log(error);
-        alert(error.message);
-      }
-  }
+  const {handleLogin} = useAuth();
+  const handleSubmit = async() => {
+    await handleLogin({email, password});
+  };
   return (
     <div className='bg-white max-w-sm rounded-xl border border-slate-200 p-6 h-[560px] mt-2 mb-2'>
       <div>
@@ -80,7 +49,7 @@ function LoginForm() {
           <span className='text-slate-600 font-medium text-xs mt-3'>Work email</span>
           <input required onChange={(e) => setEmail(e.target.value)} value={email} className='text-slate-500  outline-none font-medium mt-3 text-[12px] p-2.5 border-gray-200 focus:border-blue-500 border rounded-xl max-w-md w-full items-center justify-center flex' type="email" placeholder='you@company.com' />
           <span className='text-slate-600 font-medium text-xs mt-3'>Password</span>
-          <input onChange={(e)=>setPassword(e.target.value)} value={password} className='text-slate-500 outline-none font-medium mt-3 text-[12px] p-2.5 border-gray-200 focus:border-blue-500 border rounded-xl max-w-md w-full items-center justify-center flex' type="password" placeholder='.....' />
+          <input required onChange={(e)=>setPassword(e.target.value)} value={password} className='text-slate-500 outline-none font-medium mt-3 text-[12px] p-2.5 border-gray-200 focus:border-blue-500 border rounded-xl max-w-md w-full items-center justify-center flex' type="password" placeholder='.....' />
         </div>
         <div className='flex items-center justify-between mt-4'>
           <div className='flex items-center mb-2 gap-2'>
@@ -89,7 +58,7 @@ function LoginForm() {
           </div>
           <NavLink className='font-medium text-[8px] flex justify-end text-blue-600 hover:text-blue-800' to="/sendPasswordResetOpt">Forget Password?</NavLink> 
         </div>
-        <button type='button' onClick={handleLogin} className='text-white mt-2 bg-blue-600 p-2.5 text-[12px] rounded-xl max-w-md w-full items-center justify-center flex cursor-pointer'>Log in </button>
+        <button type='button' onClick={handleSubmit} className='text-white mt-2 bg-blue-600 p-2.5 text-[12px] rounded-xl max-w-md w-full items-center justify-center flex cursor-pointer'>Log in </button>
 
     <div className="flex items-center gap-3 mt-5 mb-5">
   

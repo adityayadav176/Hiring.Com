@@ -4,7 +4,7 @@ import CompanyProvider from "./CompanyContext";
 import ProfileProvider from "./ProfileContext";
 import ReportProvider from "./ReportContext";
 import NotificationProvider from "./NotificationContext";
-import ConversationProvider from "./Conversation";
+import ConversationProvider from "./ConversationContext";
 import MessageProvider from "./MessageContext";
 import SessionProvider from "./SessionContext";
 import TitleProvider from "./TitleContext";

@@ -1,9 +1,12 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const AuthContext = createContext();
 
+
 function AuthProvider({children}) {
     const [user, setUser] = useState(null);
+    const navigate = useNavigate();
 
     const getUser = async() => {
         try {
@@ -21,7 +24,7 @@ function AuthProvider({children}) {
                 throw new Error(data.message || "Failed to fetch User");  
             }
 
-            setUser(data);
+            setUser(data.data);
     
             console.log("User fatched Successfully");
         } catch (error) {
@@ -33,20 +36,34 @@ function AuthProvider({children}) {
     const handleLogin = async(details) => {
         try {
             const {email, password, phoneNo} = details;
+
+             if(!email || !password) {
+                alert("Please enter email and password");
+                return;
+             }
             const response = await fetch("http://localhost:9000/api/v1/auth/login", {
                 method: "POST",
                 headers: {
                     "Content-Type":"application/json"
                 },
                 credentials: "include",
-                body: JSON.stringify({email, password, phoneNo: phoneNo || null})
+                body: JSON.stringify({email: email || null, password, phoneNo: phoneNo || null})
             });
     
             const data = await response.json();
-    
+
             if(!response.ok) {
                 throw new Error(data.message || "Login Failed");
             }
+
+            const token = data.data.accessToken;
+
+            localStorage.setItem("token", token);
+
+            alert(`Hello: ${data.data.name} Welcome to my application`);
+            navigate("/");
+    
+            
     
             console.log("Login Successfully");
         } catch (error) {
@@ -58,6 +75,21 @@ function AuthProvider({children}) {
     const handleSignup = async(details) => {
         try {
             const {name, email, password, avatar, coverImage, role, phoneNo} = details;
+
+            if (!role) {
+                alert("Please select your role.");
+                return;
+            }
+
+            if (!avatar) {
+                alert("Please select an avatar.");
+                return;
+            }
+
+            if (!coverImage) {
+                alert("Please select a cover image.");
+                return;
+            }
 
             const formData = new FormData();
 
@@ -78,8 +110,13 @@ function AuthProvider({children}) {
             if(!response.ok) {
                 throw new Error(data.message || "Signup Failed")
             }
+
+            alert(
+                `Hello ${data?.data?.user?.name}, your account has been created! Welcome to Peer Hiring.`
+            );
     
             console.log("Signup Successfully");
+            navigate("/login");
         } catch (error) {
             console.log(error);
             alert(error.message);
@@ -103,6 +140,7 @@ function AuthProvider({children}) {
             }
     
             console.log("Otp Send Successfully");
+            navigate("/forgetPassword");
         } catch (error) {
             console.log(error);
             alert(error.message);
@@ -110,13 +148,36 @@ function AuthProvider({children}) {
     }
 
     const handleForgetPassword = async({password, confirmPassword, otp}) => {
+
+        const otpValue = otp.join("");
+
+    if (otpValue.length !== 6) {
+      alert("Please enter the 6-digit OTP");
+      return;
+    }
+
+    if (!password) {
+      alert("Please enter your new password");
+      return;
+    }
+
+    if (!confirmPassword) {
+      alert("Please confirm your password");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert("Password and Confirm Password do not match");
+      return;
+    }
+
         try {
             const response = await fetch("http://localhost:9000/api/v1/auth/forgetPassword", {
                 headers: {
                     "Content-Type": "application/json",
                 },
                 method: "POST",
-                body: JSON.stringify({password, confirmPassword, otp})
+                body: JSON.stringify({password, confirmPassword, otp: otpValue}),
             })
     
             const data = await response.json();
@@ -124,6 +185,9 @@ function AuthProvider({children}) {
             if(!response.ok) {
                 throw new Error(data.message || "Password Reset Failed");
             }
+
+            alert("Password changed successfully");
+            navigate("/login");
     
             console.log("Password Reset Successfully");
         } catch (error) {
@@ -415,6 +479,11 @@ function AuthProvider({children}) {
             alert(error.message);
         }
     }
+
+    useEffect(() => {
+        getUser();
+    }, [])
+    
 
 
     return (

@@ -6,7 +6,7 @@ import { CompanyContext } from "../context/CompanyContext";
 import { ProfileContext } from './../context/ProfileContext';
 import { ReportContext } from './../context/ReportContext';
 import { NotificationContext } from "../context/NotificationContext";
-import { ConversationContext } from "../context/Conversation";
+import {ConversationContext} from "../context/ConversationContext"
 import { MessageContext } from "../context/MessageContext";
 import { SessionContext } from "../context/SessionContext";
 import { TitleContext } from "../context/TitleContext"; 

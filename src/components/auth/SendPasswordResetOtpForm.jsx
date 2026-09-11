@@ -1,30 +1,16 @@
 import React, { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
+import {useAuth} from "../../hooks/Hook"
 
 function SendPasswordResetOtpForm() {
-    const navigate = useNavigate();
     const [email, setEmail] = useState("");
-    const handleSendOtp = async() => {
-        try {
-            const response = await fetch("http://localhost:9000/api/v1/auth/SendPasswordResetOtp", {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                method: "POST",
-                credentials: "include",
-                body: JSON.stringify({email})
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-              alert(data.message);
-                throw new Error(data.message || "Otp Sending Failed..");
-            }  
-          navigate("/forgetPassword");
-        } catch (error) {
-            console.log(error);
-        }
+    const {handlePasswordResetOtp} = useAuth();
+    const handleSubmit = async() => {
+      if(!email) {
+        alert("Please enter your email");
+        return;
+      }
+      await handlePasswordResetOtp({email});
     }
  return (
     <div className='bg-white max-w-sm rounded-xl border border-slate-200 p-6 h-[560px] mt-2 mb-2'>
@@ -39,11 +25,11 @@ function SendPasswordResetOtpForm() {
         </div>
         <div className='flex items-center justify-between mt-4'>
           <div className='flex items-center mb-2 gap-2'>
-            <input type="checkbox" required className='cursor-pointer'/>
+            <input type="checkbox" className='cursor-pointer'/>
             <span className='text-slate-400 font-medium text-[10px]'> Remember me </span>
           </div>
         </div>
-        <button onClick={handleSendOtp} type='button' className='text-white mt-2 bg-blue-600 p-2.5 text-[12px] rounded-xl max-w-md w-full items-center justify-center flex cursor-pointer'>Send Otp</button>
+        <button onClick={handleSubmit} type='button' className='text-white mt-2 bg-blue-600 p-2.5 text-[12px] rounded-xl max-w-md w-full items-center justify-center flex cursor-pointer'>Send Otp</button>
 
     <div className="flex items-center gap-3 mt-5 mb-5">
   
