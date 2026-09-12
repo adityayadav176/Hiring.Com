@@ -13,6 +13,15 @@ const JobProvider = ({ children }) => {
     const [jobPagination, setJobPagination] = useState({});
     const [recruiterJobPagination, setRecruiterJobPagination] = useState({});
     const [deletedJobPagination, setDeletedJobPagination] = useState({});
+    const [selectedJobs, setSelectedJobs] = useState(null);
+
+
+
+    console.log("API_URL:", API_URL);
+        console.log("Request URL:", `${API_URL}/job`);
+
+        console.log("ENV:", import.meta.env);
+console.log("API_URL:", import.meta.env.VITE_API_URL);
 
     // Create Job
     const handleCreateJob = async ({ jobData }) => {
@@ -43,28 +52,40 @@ const JobProvider = ({ children }) => {
     };
 
     // Get All Jobs
-    const handleGetAllJobs = async ({ query = "" } = {}) => {
-        try {
-            const response = await fetch(`${API_URL}/job${query}`, {
-                credentials: "include",
-                method: "GET",
-            });
+    const handleGetAllJobs = async () => {
+    try {
+        const url = `${API_URL}/job`;
 
-            const data = await response.json();
+        console.log("API URL:", API_URL);
+        console.log("Fetching:", url);
 
-            if (!response.ok) {
-                throw new Error(data.message || "Failed to Get Jobs");
-            }
+        const response = await fetch(url, {
+            credentials: "include",
+            method: "GET",
+        });
 
-            setJobs(data.data.jobs);
-            setJobPagination(data.data.pagination);
+        console.log("Status:", response.status);
+        console.log("Response URL:", response.url);
+        console.log("Content-Type:", response.headers.get("content-type"));
 
-            console.log("Jobs Fetched Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
+        const text = await response.text();
+
+        console.log("Raw response:", text);
+
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
         }
-    };
+
+        const data = JSON.parse(text);
+
+        setJobs(data?.data?.jobs || []);
+        setJobPagination(data?.data?.pagination || {});
+
+        console.log("Jobs Fetched Successfully:", data);
+    } catch (error) {
+        console.log("Get All Jobs Error:", error);
+    }
+};
 
     // Get Recruiter Jobs
     const handleGetRecruiterJobs = async ({ query = "" } = {}) => {
@@ -297,6 +318,7 @@ const JobProvider = ({ children }) => {
             alert(error.message);
         }
     };
+    
 
     return (
         <JobContext.Provider
@@ -309,6 +331,8 @@ const JobProvider = ({ children }) => {
                 jobPagination,
                 recruiterJobPagination,
                 deletedJobPagination,
+                selectedJobs,
+                setSelectedJobs,
 
                 handleCreateJob,
                 handleGetAllJobs,

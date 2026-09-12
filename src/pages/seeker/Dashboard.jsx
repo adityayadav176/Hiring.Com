@@ -5,6 +5,7 @@ import Navbar from '../../components/layout/Navbar'
 import Profile from './Profile'
 import Home from './../pubic/Home';
 import JobLayout from '../../components/jobs/JobLayout'
+import Settings from './Settings'
 
 function Dashboard() {
     const [activePage, setActivePage] = useState("home")
@@ -32,6 +33,8 @@ function Dashboard() {
                     {activePage === "profile" && <Profile />}
 
                     {activePage === "jobs" && <JobLayout/>}
+
+                    {activePage === "settings" && <Settings/>}
 
                 </main>
 

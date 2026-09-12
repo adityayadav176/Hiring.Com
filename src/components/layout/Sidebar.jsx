@@ -191,14 +191,32 @@ function Sidebar({activePage, setActivePage}) {
     )}
 </button>
 
-            <NavLink onClick={()=>setTitle("Settings")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
-              {({isActive}) => (
-              <>
-              <Settings className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>
-                 {(isSidebarOpen && <span>Settings</span>)}
-                 </>
-                 )}
-            </NavLink>
+<button
+    type="button"
+    onClick={() => {
+        setActivePage("settings")
+        setTitle("Settings")
+    }}
+    className={`w-full flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm font-medium ${
+        activePage === "settings"
+            ? "bg-[#EEF0FF] text-[#5950E6]"
+            : "text-gray-500"
+    }`}
+>
+
+<Settings
+        className={`w-5 h-5 ${
+            activePage === "settings"
+                ? "text-[#5950E6]"
+                : "text-gray-500"
+        }`}
+    />
+
+    {isSidebarOpen && (
+        <span>Settings</span>
+    )}
+</button>
+
         </div>
         
         <p to="" className={`outline-none cursor-pointer mt-3 p-3 border-violet-300 bg-[#EEF0FF] border rounded-xl w-full flex items-center gap-4 ${isSidebarOpen ? "text-left" : "justify-center"} transition-all duration-200`}>

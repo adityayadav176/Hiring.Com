@@ -5,9 +5,10 @@ import {
   Clock3,
   MapPin,
 } from "lucide-react";
+import { useJob } from "../../hooks/Hook";
 
 function JobItem({job}) {
-    const getTimeAgo = (date) => {
+  const getTimeAgo = (date) => {
   const now = new Date();
   const created = new Date(date);
 
@@ -45,6 +46,27 @@ function JobItem({job}) {
 
   return `${years} year${years > 1 ? "s" : ""} ago`;
 };
+
+const FormatEnumValue = (value) => {
+  if(!value) {
+    return;
+  }
+  return value
+  .toLowerCase()
+  .split("_")
+  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+  .join(" ");
+}
+
+const FormatLocation = (location) => {
+  if(!location) return "Location Not Specified";
+
+  const {city, state, country} = location;
+
+  return [city, state, country].filter(Boolean).join(", ") || "Location Not Specified"
+}
+
+const {setSelectedJobs, selectedJobs} = useJob();
   return (
     <article
       className="
@@ -79,7 +101,9 @@ function JobItem({job}) {
             text-[#6D28D9]
           "
         >
-         {job.companyId.logo}
+        {job?.companyId?.logo ? 
+            <img src={job?.companyId.logo} alt={job?.companyId?.name || "Company"} className="h-full w-full rounded-xl object-cover" />
+        : job?.companyId?.name?.charAt(0).toUpperCase() || "A"}
         </div>
 
         {/* Job Information */}
@@ -97,11 +121,11 @@ function JobItem({job}) {
     group-hover:text-[#6D28D9]
   "
 >
-  {job.title}
+  {job?.title}
 </h2>
 
 <p className="mt-1 text-sm font-medium text-slate-600">
-  {job.companyId.name}
+  {job?.companyId?.name || "Microsoft"}
 </p>
             </div>
 
@@ -138,26 +162,26 @@ function JobItem({job}) {
             {/* Location */}
             <span className="flex items-center gap-1.5">
               <MapPin size={15} />
-              {`${job.location.city}, ${job.location.state}, ${job.location.country}`}
+              {FormatLocation(job?.location)}
             </span>
 
             {/* Job Type */}
             <span className="flex items-center gap-1.5">
               <BriefcaseBusiness size={15} />
-              {job.employmentType}
+              {FormatEnumValue(job.employmentType)}
             </span>
 
             {/* Work Mode */}
-            <span>{job.workSpaceType}</span>
+            <span>{FormatEnumValue(job.workSpaceType)}</span>
 
             {/* Experience */}
-            <span>{job.experienceLevel}</span>
+            <span>{FormatEnumValue(job.experienceLevel)}</span>
           </div>
 
           {/* Salary */}
           <div className="mt-4">
             <span className="text-sm font-semibold text-slate-900">
-              {`₹${job.salary.min} - ₹${job.salary.max}`}
+              {job?.salary?.min !== undefined && job?.salary?.max !== undefined ? `₹${job.salary.min.toLocaleString()} - ₹${job.salary.max.toLocaleString()}` : "Salary Not Specified"}
             </span>
 
             <span className="ml-1 text-xs text-slate-400">
@@ -167,7 +191,7 @@ function JobItem({job}) {
 
           {/* Skills */}
           <div className="mt-4 flex flex-wrap gap-2">
-            {job.skills.length > 0 ? job.skills.map((item) => <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{item}</span>) : <span className="text-slate-500 font-medium text-sm"> No Skills Required</span>}
+            {job.skills.length > 0 ? job.skills.map((item, index) => <span key={index} className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{item}</span>) : <span className="text-slate-500 font-medium text-sm"> No Skills Required</span>}
           </div>
 
           {/* Bottom Section */}
@@ -199,6 +223,7 @@ function JobItem({job}) {
 
             {/* View Job */}
             <button
+            onClick={() => setSelectedJobs(job)}
               type="button"
               className="
                 shrink-0

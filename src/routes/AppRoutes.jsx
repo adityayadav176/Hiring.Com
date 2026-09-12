@@ -8,11 +8,14 @@ import Dashboard from "../pages/seeker/Dashboard";
 import Navbar from "../components/layout/Navbar";
 import Profile from "../pages/seeker/Profile";
 import JobLayout from "../components/jobs/JobLayout";
+import Settings from "../pages/seeker/Settings";
 
 const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/" element={<Dashboard/>}/>
+            <Route path="/settings" element={<Settings/>}/>
+            <Route path="/settingsPage" element={<Settings/>}/>
             <Route path="/jobLayout" element={<JobLayout/>}/>
             <Route path="/profile" element={<Profile/>}/>
             <Route path="/navbar" element={<Navbar/>}/>

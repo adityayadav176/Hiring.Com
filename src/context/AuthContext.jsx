@@ -15,7 +15,8 @@ function AuthProvider({children}) {
                     "Content-Type": "application/json"
                 },
                 method: "GET",
-                credentials: "include"
+                credentials: "include",
+                
             });
             
             const data = await response.json();
@@ -57,15 +58,11 @@ function AuthProvider({children}) {
             }
 
             const token = data.data.accessToken;
-
             localStorage.setItem("token", token);
-
             alert(`Hello: ${data.data.name} Welcome to my application`);
             navigate("/");
-    
-            
-    
-            console.log("Login Successfully");
+            setUser(data.data.user);
+            console.log("Login Successfully", data.data.user);
         } catch (error) {
             console.log(error);
             alert(error.message);
@@ -237,6 +234,9 @@ function AuthProvider({children}) {
             }
     
             console.log("LogoutUser Successfully");
+            localStorage.removeItem("token");
+            setUser(null);
+            navigate("/login");
         } catch (error) {
             console.log(error);
             alert(error.message);
