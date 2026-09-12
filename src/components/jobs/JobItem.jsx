@@ -79,7 +79,7 @@ function JobItem({job}) {
             text-[#6D28D9]
           "
         >
-         {job.companyId.logo || "M"}
+         {job.companyId.logo}
         </div>
 
         {/* Job Information */}
@@ -88,21 +88,21 @@ function JobItem({job}) {
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <h2
-                className="
-                  truncate
-                  text-base
-                  font-semibold
-                  text-slate-900
-                  transition-colors
-                  group-hover:text-[#6D28D9]
-                "
-              >
-                
-              </h2>
+  className="
+    truncate
+    text-base
+    font-semibold
+    text-slate-900
+    transition-colors
+    group-hover:text-[#6D28D9]
+  "
+>
+  {job.title}
+</h2>
 
-              <p className="mt-1 text-sm font-medium text-slate-600">
-                {job.title}
-              </p>
+<p className="mt-1 text-sm font-medium text-slate-600">
+  {job.companyId.name}
+</p>
             </div>
 
             {/* Bookmark */}
@@ -179,7 +179,7 @@ function JobItem({job}) {
               justify-between
               gap-4
               border-t
-              border-slate-100
+              border-slate-200
               pt-4
             "
           >

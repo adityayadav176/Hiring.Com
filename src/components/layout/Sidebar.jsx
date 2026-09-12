@@ -51,46 +51,116 @@ function Sidebar({activePage, setActivePage}) {
         <div className='flex flex-wrap flex-col gap-1'>
           {(isSidebarOpen && 
           <span className='text-[10px] p-3 pl-5  text-slate-500 font-semibold'>WORKSPACE</span>)}
-            <NavLink onClick={()=>setTitle("Overview")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/home">
-              {({isActive}) => (
-              <>
-              <LayoutGrid className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>
-                 {(isSidebarOpen && <span>Overview</span>)}
-                 </>
-                 )}
-            </NavLink>
-            <NavLink onClick={()=>setTitle("Find jobs")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
-              {({isActive}) => (
-              <>
-              <Search className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>
-                {(isSidebarOpen && <span>Find jobs</span>)}
-                 </>
-                 )}
-            </NavLink>
-            <NavLink  onClick={()=>setTitle("Applications")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium  ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
-              {({isActive}) => (
-              <>
-              <FileText className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>
-                 {(isSidebarOpen && <span>Applications</span>)}
-                 </>
-                 )}
-            </NavLink>
-            <NavLink onClick={()=>setTitle("Interviews")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
-              {({isActive}) => (
-              <>
-              <CalendarDays className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>
-                 {(isSidebarOpen && <span>Interviews</span>)}
-                 </>
-                 )}
-            </NavLink>
-            <NavLink onClick={()=>setTitle("Messages")} className={({isActive}) => `flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm  font-medium ${isActive  ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500 hover:bg-gray-100"}` }  to="/dashboard">
-              {({isActive}) => (
-              <>
-              <MessagesSquare className={`w-5 h-5 ${isActive ? "bg-[#EEF0FF] text-[#5950E6]" : "text-gray-500"}` }/>
-                {(isSidebarOpen &&  <span>Messages</span>)}
-                 </>
-                 )}
-            </NavLink>
+            <button
+  type="button"
+  onClick={() => {
+    setActivePage("overview");
+    setTitle("Overview");
+  }}
+  className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
+    activePage === "overview"
+      ? "bg-[#EEF0FF] text-[#5950E6]"
+      : "text-gray-500 hover:bg-gray-100"
+  }`}
+>
+  <LayoutGrid
+    className={`w-5 h-5 ${
+      activePage === "overview"
+        ? "text-[#5950E6]"
+        : "text-gray-500"
+    }`}
+  />
+
+  {isSidebarOpen && <span>Overview</span>}
+</button>
+        <button
+    type="button"
+    onClick={() => {
+      setActivePage("jobs");
+      setTitle("Find jobs");
+    }}
+    className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
+      activePage === "jobs"
+        ? "bg-[#EEF0FF] text-[#5950E6]"
+        : "text-gray-500 hover:bg-gray-100"
+    }`}
+  >
+    <Search
+      className={`w-5 h-5 ${
+        activePage === "jobs"
+          ? "text-[#5950E6]"
+          : "text-gray-500"
+      }`}
+    />
+
+    {isSidebarOpen && <span>Find jobs</span>}
+  </button>
+            <button
+  type="button"
+  onClick={() => {
+    setActivePage("applications");
+    setTitle("Applications");
+  }}
+  className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
+    activePage === "applications"
+      ? "bg-[#EEF0FF] text-[#5950E6]"
+      : "text-gray-500 hover:bg-gray-100"
+  }`}
+>
+  <FileText
+    className={`w-5 h-5 ${
+      activePage === "applications"
+        ? "text-[#5950E6]"
+        : "text-gray-500"
+    }`}
+  />
+
+  {isSidebarOpen && <span>Applications</span>}
+</button>
+            <button
+  type="button"
+  onClick={() => {
+    setActivePage("interviews");
+    setTitle("Interviews");
+  }}
+  className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
+    activePage === "interviews"
+      ? "bg-[#EEF0FF] text-[#5950E6]"
+      : "text-gray-500 hover:bg-gray-100"
+  }`}
+>
+  <CalendarDays
+    className={`w-5 h-5 ${
+      activePage === "interviews"
+        ? "text-[#5950E6]"
+        : "text-gray-500"
+    }`}
+  />
+
+  {isSidebarOpen && <span>Interviews</span>}
+</button>
+            <button
+  type="button"
+  onClick={() => {
+    setActivePage("messages");
+    setTitle("Messages");
+  }}
+  className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
+    activePage === "messages"
+      ? "bg-[#EEF0FF] text-[#5950E6]"
+      : "text-gray-500 hover:bg-gray-100"
+  }`}
+>
+  <MessagesSquare
+    className={`w-5 h-5 ${
+      activePage === "messages"
+        ? "text-[#5950E6]"
+        : "text-gray-500"
+    }`}
+  />
+
+  {isSidebarOpen && <span>Messages</span>}
+</button>
                       {(isSidebarOpen && 
           <span className='text-[10px] p-3 pl-5  text-slate-500 font-semibold'>ACCOUNT</span>
           )}
@@ -106,6 +176,8 @@ function Sidebar({activePage, setActivePage}) {
             : "text-gray-500"
     }`}
 >
+
+  
     <User
         className={`w-5 h-5 ${
             activePage === "profile"
