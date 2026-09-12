@@ -7,7 +7,6 @@ import Sidebar from "../components/layout/Sidebar";
 import Dashboard from "../pages/seeker/Dashboard";
 import Navbar from "../components/layout/Navbar";
 import Profile from "../pages/seeker/Profile";
-import Jobs from "../components/jobs/Jobs";
 import JobLayout from "../components/jobs/JobLayout";
 
 const AppRoutes = () => {
@@ -15,7 +14,6 @@ const AppRoutes = () => {
         <Routes>
             <Route path="/" element={<Dashboard/>}/>
             <Route path="/jobLayout" element={<JobLayout/>}/>
-            <Route path="/jobs" element={<Jobs/>}/>
             <Route path="/profile" element={<Profile/>}/>
             <Route path="/navbar" element={<Navbar/>}/>
             <Route path="/login" element={<Login/>}/>

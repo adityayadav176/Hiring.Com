@@ -1,11 +1,10 @@
 import React from 'react'
-import ProfileDashboard from '../../components/profile/ProfileDashboard'
-import Jobs from '../../components/jobs/Jobs'
+import JobLayout from '../../components/jobs/JobLayout'
 
 function Home() {
   return (
    <>
-   <Jobs/>
+   <JobLayout/>
    </>
   )
 }
