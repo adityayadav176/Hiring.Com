@@ -3,11 +3,11 @@ import DashboardLayout from '../../components/layout/DashboardLayout'
 import Sidebar from '../../components/layout/Sidebar'
 import Navbar from '../../components/layout/Navbar'
 import Profile from './Profile'
-import Home from './../pubic/Home';
 import JobLayout from '../../components/jobs/JobLayout'
 import Settings from './Settings'
 import Application from "./Application"
 import { useHome } from '../../hooks/Hook'
+import Overview from './../pubic/Overview';
 
 function Dashboard() {
     const {activePage, setActivePage} = useHome();
@@ -29,8 +29,6 @@ function Dashboard() {
                 {/* Content */}
                 <main className="flex-1 min-h-0 overflow-y-auto">
 
-                    {activePage === "home" && <Home />}
-
                     {activePage === "profile" && <Profile />}
 
                     {activePage === "jobs" && <JobLayout/>}
@@ -38,6 +36,8 @@ function Dashboard() {
                     {activePage === "settings" && <Settings/>}
 
                     {activePage === "applications" && <Application/>}
+
+                    {activePage === "overview" && <Overview/>}
 
                 </main>
 
