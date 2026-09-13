@@ -3,12 +3,13 @@ import { Building2, ChevronDown, Menu } from 'lucide-react'
 import { BellIcon } from 'lucide-react'
 import { CircleQuestionMark } from 'lucide-react'
 import { TitleContext } from '../../context/TitleContext'
-import { useAuth } from '../../hooks/Hook'
-function Navbar({setActivePage, setTitle}) {
+import { useAuth, useHome, useTitle } from '../../hooks/Hook' 
+function Navbar() {
   const {user} = useAuth();
-  console.log(user);
-
-  const {title} = useContext(TitleContext); 
+  const {setTitle} = useTitle();
+  console.log(user); 
+  const {title} = useContext(TitleContext);
+  const {setActivePage} = useHome(); 
   return (
     <nav className='flex min-w-auto sm:flex justify-between min-h-auto items-center bg-white flex-wrap p-2 pr-10 pl-10'>
       <div className='flex gap-3'>

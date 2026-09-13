@@ -12,9 +12,11 @@ import InterviewProvider from "./InterviewContext";
 import ApplicationProvider from "./ApplicationContext";
 import JobProvider from "./JobContext";
 import ResumeProvider from "./ResumeContext";
+import HomeProvider from "./HomeContext";
 
 const AppContextProvider = ({ children }) => {
   return (
+    <HomeProvider>
     <AuthProvider>
       <ProfileProvider>
         <CompanyProvider>
@@ -44,6 +46,7 @@ const AppContextProvider = ({ children }) => {
         </CompanyProvider>
       </ProfileProvider>
     </AuthProvider>
+    </HomeProvider>
   );
 };
 

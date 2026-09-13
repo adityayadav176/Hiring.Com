@@ -2,9 +2,11 @@ import React, { useContext, useState } from 'react'
 import { Building2, CalendarDays, CircleHelp, FileText, LayoutGrid, Menu, MessagesSquare, Search, Settings, User } from 'lucide-react'
 import { NavLink } from 'react-router-dom';
 import { TitleContext } from '../../context/TitleContext';
-function Sidebar({activePage, setActivePage}) {
+import { useHome } from '../../hooks/Hook';
+function Sidebar() {
   const [isSidebarOpen, setisSidebarOpen] = useState(false);
   const {setTitle} = useContext(TitleContext);
+  const {setActivePage, activePage} = useHome();
   return (
 <div
     className={`w-full ${
@@ -99,7 +101,7 @@ function Sidebar({activePage, setActivePage}) {
   type="button"
   onClick={() => {
     setActivePage("applications");
-    setTitle("Applications");
+    setTitle("Application");
   }}
   className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
     activePage === "applications"

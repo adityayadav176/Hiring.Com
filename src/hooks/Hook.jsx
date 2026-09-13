@@ -14,6 +14,7 @@ import { InterviewContext } from "../context/InterviewContext";
 import { ApplicationContext } from "../context/ApplicationContext";
 import { JobContext } from "../context/JobContext";
 import { ResumeContext } from "../context/ResumeContext";
+import { HomeContext } from "../context/HomeContext";
 
 const useAdmin = () => {
     const context = useContext(AdminContext);
@@ -152,10 +153,20 @@ const useResume = () => {
 
     return context;
 }
+const useHome = () => {
+    const context = useContext(HomeContext);
+    
+    if(!context) {
+        throw new Error("UseHome Must Be Use In Home Provider");
+    }
+
+    return context;
+}
 
 
 export {
     useAdmin,
+    useHome,
     useAuth,
     useCompany,
     useProfile,

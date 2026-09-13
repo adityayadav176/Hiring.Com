@@ -1,9 +1,14 @@
 import { Bookmark, BriefcaseBusiness, Building2, CalendarDays, CheckCircle2, Clock3, DollarSign, MapPin, Send, Users, X } from 'lucide-react'
 import React from 'react'
-import { useJob } from '../../hooks/Hook'
+import { useHome, useJob, useTitle } from '../../hooks/Hook'
 
 function JobDetails({job}) {
     const {setSelectedJobs, getTimeAgo, FormatEnumValue, FormatLocation, formatDeadline, formatApplicants, formatSalary} = useJob();
+    const {setTitle} = useTitle();
+    const {setActivePage} = useHome();
+    const handleClick = () => {
+        alert("clicked");
+    }
   return (
     <div className='fixed inset-0 z-40 bg-slate-950/30 backdrop:blur-[2px]'>
       <aside className='bg-white right-0 z-50 flex h-screen w-[650px] max-w-[92vw] flex-col overflow-hidden fixed shadow-2xl top-0'>
@@ -171,7 +176,7 @@ function JobDetails({job}) {
 
         <div className='shrink-0 border-t border-slate-200 bg-white px-7 py-4'>
             <div className='flex items-center gap-3'>
-                <button className='flex flex-1 justify-center items-center px-5 rounded-xl text-sm font-semibold shadow-sm shadow-violet-200 transition-all  hover:bg-[#5B21B6] actice:scale-[0.99] hover:shadow-md py-3 text-white gap-2  bg-[#6D28D9] '>
+                <button onClick={() => {setTitle("Application"); setActivePage("applications"); handleClick()}} className='flex flex-1 justify-center items-center px-5 rounded-xl text-sm font-semibold shadow-sm shadow-violet-200 transition-all  hover:bg-[#5B21B6] actice:scale-[0.99] hover:shadow-md py-3 text-white gap-2  bg-[#6D28D9] '>
                     <Send/>
                     Apply Now
                 </button>

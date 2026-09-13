@@ -6,10 +6,11 @@ import Profile from './Profile'
 import Home from './../pubic/Home';
 import JobLayout from '../../components/jobs/JobLayout'
 import Settings from './Settings'
+import Application from "./Application"
+import { useHome } from '../../hooks/Hook'
 
 function Dashboard() {
-    const [activePage, setActivePage] = useState("home")
-
+    const {activePage, setActivePage} = useHome();
     return (
         <DashboardLayout>
 
@@ -35,6 +36,8 @@ function Dashboard() {
                     {activePage === "jobs" && <JobLayout/>}
 
                     {activePage === "settings" && <Settings/>}
+
+                    {activePage === "applications" && <Application/>}
 
                 </main>
 
