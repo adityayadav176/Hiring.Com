@@ -8,65 +8,8 @@ import {
 import { useJob } from "../../hooks/Hook";
 
 function JobItem({job}) {
-  const getTimeAgo = (date) => {
-  const now = new Date();
-  const created = new Date(date);
 
-  const seconds = Math.floor((now - created) / 1000);
-
-  if (seconds < 60) {
-    return "just now";
-  }
-
-  const minutes = Math.floor(seconds / 60);
-
-  if (minutes < 60) {
-    return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
-  }
-
-  const hours = Math.floor(minutes / 60);
-
-  if (hours < 24) {
-    return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-  }
-
-  const days = Math.floor(hours / 24);
-
-  if (days < 30) {
-    return `${days} day${days > 1 ? "s" : ""} ago`;
-  }
-
-  const months = Math.floor(days / 30);
-
-  if (months < 12) {
-    return `${months} month${months > 1 ? "s" : ""} ago`;
-  }
-
-  const years = Math.floor(months / 12);
-
-  return `${years} year${years > 1 ? "s" : ""} ago`;
-};
-
-const FormatEnumValue = (value) => {
-  if(!value) {
-    return;
-  }
-  return value
-  .toLowerCase()
-  .split("_")
-  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-  .join(" ");
-}
-
-const FormatLocation = (location) => {
-  if(!location) return "Location Not Specified";
-
-  const {city, state, country} = location;
-
-  return [city, state, country].filter(Boolean).join(", ") || "Location Not Specified"
-}
-
-const {setSelectedJobs, selectedJobs} = useJob();
+const {setSelectedJobs, getTimeAgo, FormatEnumValue, FormatLocation, formatSalary} = useJob();
   return (
     <article
       className="
@@ -179,15 +122,23 @@ const {setSelectedJobs, selectedJobs} = useJob();
           </div>
 
           {/* Salary */}
-          <div className="mt-4">
-            <span className="text-sm font-semibold text-slate-900">
-              {job?.salary?.min !== undefined && job?.salary?.max !== undefined ? `₹${job.salary.min.toLocaleString()} - ₹${job.salary.max.toLocaleString()}` : "Salary Not Specified"}
-            </span>
+          {job?.salary?.min && job?.salary?.max ? (
+  <div className="mt-4">
+    <span className="text-sm font-semibold text-slate-900">
+      ₹{formatSalary(job.salary.min)} - ₹{formatSalary(job.salary.max)}
+    </span>
 
-            <span className="ml-1 text-xs text-slate-400">
-              / year
-            </span>
-          </div>
+    <span className="ml-1 text-xs text-slate-400">
+      / year
+    </span>
+  </div>
+) : (
+  <div className="mt-4">
+    <span className="text-sm font-semibold text-slate-900">
+      Salary Not Disclosed
+    </span>
+  </div>
+)}
 
           {/* Skills */}
           <div className="mt-4 flex flex-wrap gap-2">

@@ -3,7 +3,7 @@ import React from 'react'
 import { useJob } from '../../hooks/Hook'
 
 function JobDetails({job}) {
-    const {selectedJobs, setSelectedJobs} = useJob();
+    const {setSelectedJobs, getTimeAgo, FormatEnumValue, FormatLocation, formatDeadline, formatApplicants, formatSalary} = useJob();
   return (
     <div className='fixed inset-0 z-40 bg-slate-950/30 backdrop:blur-[2px]'>
       <aside className='bg-white right-0 z-50 flex h-screen w-[650px] max-w-[92vw] flex-col overflow-hidden fixed shadow-2xl top-0'>
@@ -12,7 +12,7 @@ function JobDetails({job}) {
             <div className='flex items-center gap-4'>
                 <div className='h-14 w-14 flex shrink-0 items-center justify-center overflow-hidden  bg-[#F0EDFF] rounded-2xl text-[#6D28D9] text-xl font-bold'>M</div>
                 <div>
-                    <p className='font-medium text-slate-500 text-sm'>{job?.companyid?.name || "Microsoft"}</p>
+                    <p className='font-medium text-slate-500 text-sm'>{job?.companyId?.name}</p>
                     <h1 className='text-xl font-bold mt-1 tracking-tight text-slate-900'>{job?.title}</h1>
                 </div>
             </div>
@@ -26,23 +26,23 @@ function JobDetails({job}) {
                 </div>
             </div>
             <div className='flex gap-2 mt-5 flex-wrap'>
-                <span className='rounded-lg bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700'>{job?.employmentType}</span>
-                <span className='rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600'>{job?.workSpaceType}</span>
-                <span className='rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600'>{job?.experienceLevel}</span>
+                <span className='rounded-lg bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700'>{FormatEnumValue(job?.employmentType)}</span>
+                <span className='rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600'>{FormatEnumValue(job?.workSpaceType)}</span>
+                <span className='rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600'>{FormatEnumValue(job?.experienceLevel)}</span>
                     {job?.status === "OPEN" ? (
     <span className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
         <CheckCircle2 size={13} />
-        OPEN
+        Open
     </span>
 ) : job?.status === "CLOSED" ? (
     <span className="flex items-center justify-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700">
         <CheckCircle2 size={13} />
-        CLOSED
+        Closed
     </span>
 ) : (
     <span className="flex items-center justify-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700">
         <CheckCircle2 size={13} />
-        EXPIRED
+        Expired
     </span>
 )}
             </div>
@@ -58,21 +58,21 @@ function JobDetails({job}) {
                                 <MapPin size={17}/>
                                 <span className='font-medium text-xs'>Location</span>
                             </div>
-                            <p className='font-semibold mt-2 text-sm text-slate-800'>{job?.location ? `${job?.location?.city}, ${job?.location?.state}, ${job?.location?.country}` : "Location Not Show"}</p>
+                            <p className='font-semibold mt-2 text-sm text-slate-800'>{FormatLocation(job?.location)}</p>
                         </div>
                         <div className='rounded-xl border border-slate-200 bg-slate-50/60 p-4'>
                             <div className='flex items-center gap-2 text-slate-400'>
                                 <BriefcaseBusiness size={17}/>
                                 <span className='font-medium text-xs'>Employment</span>
                             </div>
-                            <p className='font-semibold mt-2 text-sm text-slate-800'>{job?.employmentType}</p>
+                            <p className='font-semibold mt-2 text-sm text-slate-800'>{FormatEnumValue(job?.employmentType)}</p>
                         </div>
                         <div className='rounded-xl border border-slate-200 bg-slate-50/60 p-4'>
                             <div className='flex items-center gap-2 text-slate-400'>
                                 <DollarSign size={17}/>
                                 <span className='font-medium text-xs'>Salary</span>
                             </div>
-                            <p className='font-semibold mt-2 text-sm text-slate-800'>{`${job?.salary?.min} - ${job?.salary.max}`}</p>
+                            <p className='font-semibold mt-2 text-sm text-slate-800'>{job?.salary?.min && job?.salary?.max ? `₹${formatSalary(job.salary.min)} - ₹${formatSalary(job.salary.max)}` : "Salary Not Disclosed"}</p>
                             {job?.salary?.isNagotiable ? <p className='mt-1 text-xs text-emerald-600'>Negotiable</p> : ""}
                         </div>
                         <div className='rounded-xl border border-slate-200 bg-slate-50/60 p-4'>
@@ -80,7 +80,7 @@ function JobDetails({job}) {
                                 <Users size={17}/>
                                 <span className='font-medium text-xs'>Experience</span>
                             </div>
-                            <p className='font-semibold mt-2 text-sm text-slate-800'>{job.experienceLevel}</p>
+                            <p className='font-semibold mt-2 text-sm text-slate-800'>{FormatEnumValue(job.experienceLevel)}</p>
                         </div>
                     </div>
                 </section>
@@ -134,7 +134,7 @@ function JobDetails({job}) {
                                     <Users size={16}/>
                                     <span className='text-sm'>Applicants</span>
                                 </div>
-                                <span className='text-sm font-semibold text-slate-800'>{job?.applicantsCount || "0"}</span>
+                                <span className='text-sm font-semibold text-slate-800'>{formatApplicants(job?.applicantsCount)}</span>
                             </div>
                         </div>
                         <div className='mt-4 space-x-3'>
@@ -143,7 +143,7 @@ function JobDetails({job}) {
                                     <Users size={16}/>
                                     <span className='text-sm'>Posted</span>
                                 </div>
-                                <span className='text-sm font-semibold text-slate-800'>{ job?.CreatedAt ||"4 days ago"}</span>
+                                <span className='text-sm font-semibold text-slate-800'>{getTimeAgo(job?.createdAt)}</span>
                             </div>
                         </div>
                         <div className='mt-4 space-x-3'>
@@ -152,7 +152,7 @@ function JobDetails({job}) {
                                     <Clock3 size={16}/>
                                     <span className='text-sm'>Application deadline</span>
                                 </div>
-                                <span className='text-sm font-semibold text-slate-800'>{job?.applicationDeadline || "Walk Throw Interview"}</span>
+                                <span className='text-sm font-semibold text-slate-800'>{formatDeadline(job?.applicationDeadline)}</span>
                             </div>
                         </div>
                         <div className='mt-4 space-x-3'>
@@ -161,7 +161,7 @@ function JobDetails({job}) {
                                     <CalendarDays size={16}/>
                                     <span className='text-sm'>Category</span>
                                 </div>
-                                <span className='text-sm font-semibold text-slate-800'>{job?.title}</span>
+                                <span className='text-sm font-semibold text-slate-800'>{job?.category}</span>
                             </div>
                         </div>
                 </section>

@@ -9,6 +9,7 @@ function JobLayout() {
   useEffect(() => {
     handleGetAllJobs();
   }, [])
+  console.log(jobs);
   return (
     <div className='bg-[#F4F4F8] px-6 py-6 min-h-full'>
         <div className='flex justify-between flex-row p-3'>

@@ -15,14 +15,6 @@ const JobProvider = ({ children }) => {
     const [deletedJobPagination, setDeletedJobPagination] = useState({});
     const [selectedJobs, setSelectedJobs] = useState(null);
 
-
-
-    console.log("API_URL:", API_URL);
-        console.log("Request URL:", `${API_URL}/job`);
-
-        console.log("ENV:", import.meta.env);
-console.log("API_URL:", import.meta.env.VITE_API_URL);
-
     // Create Job
     const handleCreateJob = async ({ jobData }) => {
         try {
@@ -318,6 +310,91 @@ console.log("API_URL:", import.meta.env.VITE_API_URL);
             alert(error.message);
         }
     };
+
+   const getTimeAgo = (data) => {
+    const now = new Date();
+    const created = new Date(data);
+
+    const seconds = Math.floor((now - created) / 1000);
+
+    if (seconds < 60) {
+        return "Just now";
+    }
+
+    const minutes = Math.floor(seconds / 60);
+
+    if (minutes < 60) {
+        return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+
+    if (hours < 24) {
+        return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+    }
+
+    const days = Math.floor(hours / 24);
+
+    if (days < 30) {
+        return `${days} day${days > 1 ? "s" : ""} ago`;
+    }
+
+    const months = Math.floor(days / 30);
+
+    if (months < 12) {
+        return `${months} month${months > 1 ? "s" : ""} ago`;
+    }
+
+    const years = Math.floor(months / 12);
+
+    return `${years} year${years > 1 ? "s" : ""} ago`;
+};
+
+const FormatLocation = (location) => {
+    if(!location) {
+        return "Location Not Specified";
+    }
+
+    const {city, state, country} = location;
+
+    return [city, state, country].filter(Boolean).join(", ") || "Location Not Specified";
+}
+
+const FormatEnumValue = (value) => {
+    if(!value) {
+        return;
+    }
+
+    return value.toLowerCase().split("_").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+}
+
+const formatDeadline = (date) => {
+    const deadline = new Date();
+    const now = new Date(date);
+
+    const diff = deadline - now;
+
+    if(diff < 0) return "Deadline Passed"
+
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+
+    if(days === 0) return "Deadline Today";
+    if(days === 1) return "1 day left";
+
+    return `${days} days left`;
+}
+
+const formatApplicants = (applicants) => {
+    if(applicants === undefined || applicants === null || applicants === 0) return "Yet No Applicants";
+
+    return `${applicants} Applicant${applicants > 1 ? "s" : ""}`;
+}
+
+const formatSalary = (salary) => {
+  if (salary === undefined || salary === null) return "";
+
+  return new Intl.NumberFormat("en-IN").format(salary);
+};
     
 
     return (
@@ -327,6 +404,13 @@ console.log("API_URL:", import.meta.env.VITE_API_URL);
                 jobs,
                 recruiterJobs,
                 deletedJobs,
+
+                getTimeAgo,
+                formatSalary,
+                FormatEnumValue,
+                FormatLocation,
+                formatDeadline,
+                formatApplicants,
 
                 jobPagination,
                 recruiterJobPagination,
