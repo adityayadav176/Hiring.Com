@@ -3,7 +3,10 @@ import { Building2, ChevronDown, Menu } from 'lucide-react'
 import { BellIcon } from 'lucide-react'
 import { CircleQuestionMark } from 'lucide-react'
 import { TitleContext } from '../../context/TitleContext'
+import { useAuth } from '../../hooks/Hook'
 function Navbar({setActivePage, setTitle}) {
+  const {user} = useAuth();
+  console.log(user);
 
   const {title} = useContext(TitleContext); 
   return (
@@ -20,27 +23,44 @@ function Navbar({setActivePage, setTitle}) {
         <div className='items-center bg-white border border-gray-300 rounded-xl cursor-pointer p-1.5 text-gray-500'><CircleQuestionMark/></div>
         </div>
         
-          <button
-          type="button"
-          className={`outline-none hidden cursor-pointer p-3 rounded-xl md:flex items-center gap-4 text-left transition-all w-[12rem] duration-200
-          `}
-        >
-          <span className="font-medium text-sm rounded-full bg-violet-300 text-violet-800 p-2.5 w-8 h-8 flex items-center justify-center">
-  A
-</span>
-          <button type='button' onClick={()=> {setActivePage("profile"), setTitle("My Profile")} }>
-            <p
-              className={`font-semibold text-xs`}
-            >
-              Aditya Yadav
-            </p>
+        <button
+  type="button"
+  onClick={() => {
+    setActivePage("profile");
+    setTitle("My Profile");
+  }}
+  className="
+    hidden md:flex items-center gap-3
+    w-[12rem] rounded-xl p-2.5
+    text-left cursor-pointer
+    transition-all duration-200
+    hover:bg-slate-50
+  "
+>
+  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-semibold text-sm">
+    {user?.avatar ? (
+      <img
+        src={user?.avatar?.url}
+        alt={user?.name || "User"}
+        className="h-full w-full object-cover"
+      />
+    ) : (
+      user?.name?.charAt(0)?.toUpperCase() || "A"
+    )}
+  </div>
 
-            <p className="text-[10px] text-slate-500 mt-1">
-              Job seeker
-            </p>
-          </button>
-          <ChevronDown className="w-4 h-4" />
-        </button>
+  <div className="min-w-0 flex-1">
+    <p className="truncate text-xs font-semibold text-slate-900">
+      {user?.name || "USER"}
+    </p>
+
+    <p className="mt-1 text-[10px] text-slate-500">
+      {user?.role || "User"}
+    </p>
+  </div>
+
+  <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+</button>
       </div>
     </nav>
   )

@@ -481,8 +481,10 @@ function AuthProvider({children}) {
     }
 
     useEffect(() => {
-        getUser();
-    }, [])
+        if(!user) {
+            getUser();
+        }
+    }, [user])
     
 
 
