@@ -1,19 +1,11 @@
-import React, { useMemo, useState } from "react";
-import {
-  Search,
-  ChevronDown,
-  BriefcaseBusiness,
-} from "lucide-react";
+import { BriefcaseBusiness, ChevronDown, Search } from 'lucide-react'
+import React, { useMemo, useState } from 'react'
 
-import ApplicationCard from "./ApplicationCard";
-
-const Applications = () => {
+function ApplicationLayout() {
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
 
-  // Temporary data
-  // Later this will come from ApplicationContext/API.
-  const applications = [
+     const applications = [
     {
       id: 1,
       company: "Google",
@@ -147,56 +139,7 @@ const Applications = () => {
     },
   ];
 
-  const tabs = [
-    "All",
-    "Active",
-    "Interviews",
-    "Offers",
-    "Closed",
-  ];
-
-  const filteredApplications = useMemo(() => {
-    return applications.filter((application) => {
-      const text = `
-        ${application.company}
-        ${application.jobTitle}
-        ${application.location}
-      `.toLowerCase();
-
-      const matchesSearch = text.includes(
-        search.toLowerCase()
-      );
-
-      let matchesTab = true;
-
-      if (activeTab === "Active") {
-        matchesTab = [
-          "Pending",
-          "Reviewing",
-          "Shortlisted",
-        ].includes(application.status);
-      }
-
-      if (activeTab === "Interviews") {
-        matchesTab =
-          application.status === "Interview";
-      }
-
-      if (activeTab === "Offers") {
-        matchesTab =
-          application.status === "Offer";
-      }
-
-      if (activeTab === "Closed") {
-        matchesTab =
-          application.status === "Rejected";
-      }
-
-      return matchesSearch && matchesTab;
-    });
-  }, [search, activeTab]);
-
-  const getStatusStyle = (status) => {
+   const getStatusStyle = (status) => {
     switch (status) {
       case "Interview":
         return "text-violet-600 bg-violet-50";
@@ -215,101 +158,72 @@ const Applications = () => {
     }
   };
 
+  const filteredApplications = useMemo(() => {
+    return applications.filter((application) => {
+      const text = `${application.company} ${application.jobTitle} ${application.location}`.toUpperCase();
+
+      const matchesSearch = text.includes(text.toLowerCase())
+
+      let matchesTab = true;
+
+      if(activeTab == "Active") {
+        return matchesTab = ["Pending",
+          "Reviewing",
+          "Shortlisted"].include(application.status)
+      }
+
+      if(activeTab === "Interviews") {
+        matchesTab =
+          application.status === "Interview";
+      }
+
+      if (activeTab === "Offers") {
+        matchesTab =
+          application.status === "Offer";
+      }
+
+      if (activeTab === "Closed") {
+        matchesTab =
+          application.status === "Rejected";
+      }
+
+      return matchesSearch && matchesTab;
+    })
+  }, [search, active])
+
+  const tabs = ["All", "Active", "Interviews", "Offers", "Closed"];
   return (
-    <div className="min-h-full bg-[#f8f9fc] px-6 py-7">
-      <div className="mx-auto max-w-[1160px]">
-
-        {/* ================= HEADER ================= */}
-
-        <div className="flex items-end justify-between">
-
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-600">
-              Career workspace
-            </p>
-
-            <h1 className="mt-2 text-[27px] font-semibold tracking-[-0.035em] text-slate-950">
-              Your applications
-            </h1>
-
-            <p className="mt-1 text-[13px] text-slate-500">
-              Follow your progress from application to interview.
-            </p>
-          </div>
-
-          <div className="flex items-end gap-8">
-
-            <div>
-              <p className="text-right text-[23px] font-semibold text-slate-900">
-                {applications.length}
-              </p>
-
-              <p className="text-[11px] text-slate-400">
-                applications
-              </p>
+    <div className='min-h-full bg-[#f8f9fc] py-7 px-6'>
+      <div className='mx-auto max-w-[1160px]'>
+        <div className='flex items-end justify-between'>
+            <div className=''>
+                <p className='text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-600'>Career workspace</p>
+                <h1 className='mt-2 text-[27px] font-semibold tracking-[-0.035em] text-slate-950'>Your applications</h1>
+                <p className='font-[13px] mt-1 text-slate-500'>Follow your progress from application to interview.</p>
             </div>
-
-            <div>
-              <p className="text-right text-[23px] font-semibold text-violet-600">
-                {
-                  applications.filter(
-                    (application) =>
-                      [
-                        "Pending",
-                        "Reviewing",
-                        "Shortlisted",
-                      ].includes(application.status)
-                  ).length
-                }
-              </p>
-
-              <p className="text-[11px] text-slate-400">
-                active
-              </p>
+            <div className='flex items-end gap-2'>
+                <div>
+                    <p className='text-right text-[23px] font-semibold text-slate-950'>4</p>
+                    <p className='text-[11px] text-slate-400'>applications</p>
+                </div>
+                <div>
+                    <p className='text-right text-[23px] font-semibold text-violet-600'>2</p>
+                    <p className='text-[11px] text-slate-400'>active</p>
+                </div>
             </div>
-
-          </div>
         </div>
-
-
-        {/* ================= SEARCH / SORT ================= */}
-
-        <div className="mt-7 flex items-center justify-between">
-
-          <div className="relative w-[360px]">
-
-            <Search
-              size={15}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-            />
-
-            <input
-              type="text"
-              value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
-              placeholder="Search applications..."
-              className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-[12px] outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-2 focus:ring-violet-50"
-            />
-
-          </div>
-
-          <button
-            type="button"
-            className="flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-[12px] font-medium text-slate-600 transition hover:bg-slate-50"
-          >
-            Recently applied
-
-            <ChevronDown size={14} />
-          </button>
-
+        <div className='flex mt-7 items-center justify-between'>
+            <div className='relative w-[360px]'>
+                <Search size={15} className='absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400'/>
+                <input type="text" value={search} onClick={(e) => setSearch(e.target.value)} className='h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-[12px] outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-2 focus:ring-violet-50'/>
+            </div>
+            <button className='flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-[12px] font-medium text-slate-600 transition hover:bg-slate-50'>
+                Recently applied
+                <ChevronDown size={14}/>
+            </button>
         </div>
-
-
-        {/* ================= TABS ================= */}
-
-        <div className="mt-6 flex items-center gap-7 border-b border-slate-200">
+      </div>
+     <div className="mt-6 flex items-center gap-7 border-b border-slate-200">
 
           {tabs.map((tab) => (
             <button
@@ -334,12 +248,8 @@ const Applications = () => {
 
         </div>
 
-
-        {/* ================= APPLICATIONS ================= */}
-
-        <div className="mt-5 space-y-3">
-
-          {filteredApplications.length > 0 ? (
+        <div className='mt-5 space-y-3'>
+           {filteredApplications.length > 0 ? (
             filteredApplications.map(
               (application) => (
                 <ApplicationCard
@@ -367,12 +277,9 @@ const Applications = () => {
 
             </div>
           )}
-
         </div>
-
-      </div>
     </div>
-  );
-};
+  )
+}
 
-export default Applications;
+export default ApplicationLayout

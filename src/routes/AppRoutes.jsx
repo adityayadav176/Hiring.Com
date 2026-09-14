@@ -11,11 +11,15 @@ import JobLayout from "../components/jobs/JobLayout";
 import Settings from "../pages/seeker/Settings";
 import ApplyJobModal from "../components/applications/ApplyForJob";
 import Overview from "../pages/pubic/Overview";
+import ApplicationLayout from "../pages/seeker/ApplicationLayout";
+import ApplicationItem from "../pages/seeker/ApplicationItem";
 
 const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/" element={<Dashboard/>}/>
+            <Route path="/items" element={<ApplicationItem/>}/>
+            <Route path="/applications" element={<ApplicationLayout/>}/>
             <Route path="/overview" element={<Overview/>}/>
             <Route path="/apply" element={<ApplyJobModal/>}/>
             <Route path="/settings" element={<Settings/>}/>
