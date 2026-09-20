@@ -8,6 +8,7 @@ import Settings from './Settings'
 import Application from "./Application"
 import { useHome } from '../../hooks/Hook'
 import Overview from './../pubic/Overview';
+import ADashboard from './../admin/ADashboard';
 
 function Dashboard() {
     const {activePage, setActivePage} = useHome();
@@ -38,6 +39,8 @@ function Dashboard() {
                     {activePage === "applications" && <Application/>}
 
                     {activePage === "overview" && <Overview/>}
+
+                    {activePage == "admin/dashboard" && <ADashboard/>}
 
                 </main>
 

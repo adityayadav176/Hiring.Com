@@ -11,6 +11,8 @@ import JobLayout from "../components/jobs/JobLayout";
 import AdminDashboardS from "../components/Admin/AdminDashboardS";
 import ADashboard from "../pages/admin/ADashboard";
 import ProtectedRoutes from "./ProtectedRoutes";
+import AdminUsers from "../pages/admin/AdminUsers";
+import Userss from "../pages/admin/Userss";
 
 const AppRoutes = () => {
     return (
@@ -19,10 +21,13 @@ const AppRoutes = () => {
             <Route path="/forgetPassword" element={<ForgetPassword/>}/>
             <Route path="/login" element={<Login/>}/>
             <Route path="/signup" element={<Signup/>}/>
+            <Route path="/admin/users" element={<AdminUsers/>}/>
+            <Route path="/users" element={<Userss/>}/>
 
             <Route element={<ProtectedRoutes allowedType="admin" />}>
             <Route path="/admin" element={<ADashboard/>}/>
             <Route path="/admins" element={<AdminDashboardS/>}/>
+            
             </Route>
 
             <Route element={<ProtectedRoutes allowedType="recruiter"/>}>
