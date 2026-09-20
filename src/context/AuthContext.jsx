@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 
 export const AuthContext = createContext();
 
-
 function AuthProvider({children}) {
     const [user, setUser] = useState(null);
+    const [admin, setAdmin] = useState(null);
+    const [recruiter, setRecruiter] = useState(null);
+    const [authLoading, setAuthLoading] = useState(true);
     const navigate = useNavigate();
 
     const getUser = async() => {
@@ -26,6 +28,7 @@ function AuthProvider({children}) {
             }
 
             setUser(data.data);
+            console.log(data);
     
             console.log("User fatched Successfully");
         } catch (error) {
@@ -34,40 +37,107 @@ function AuthProvider({children}) {
         }
     }
 
-    const handleLogin = async(details) => {
-        try {
-            const {email, password, phoneNo} = details;
+    console.log(user);
+    console.log("recruiter", recruiter);
 
-             if(!email || !password) {
-                alert("Please enter email and password");
-                return;
-             }
-            const response = await fetch("http://localhost:9000/api/v1/auth/login", {
+const handleLogin = async (details) => {
+    try {
+        const { email, password, phoneNo } = details;
+
+        if ((!email && !phoneNo) || !password) {
+            alert("Please enter email/phone number and password");
+            return;
+        }
+
+        const response = await fetch(
+            "http://localhost:9000/api/v1/auth/login",
+            {
                 method: "POST",
                 headers: {
-                    "Content-Type":"application/json"
+                    "Content-Type": "application/json",
                 },
                 credentials: "include",
-                body: JSON.stringify({email: email || null, password, phoneNo: phoneNo || null})
-            });
-    
-            const data = await response.json();
-
-            if(!response.ok) {
-                throw new Error(data.message || "Login Failed");
+                body: JSON.stringify({
+                    email: email || null,
+                    password,
+                    phoneNo: phoneNo || null,
+                }),
             }
+        );
 
-            const token = data.data.accessToken;
-            localStorage.setItem("token", token);
-            alert(`Hello: ${data.data.name} Welcome to my application`);
-            navigate("/");
-            setUser(data.data.user);
-            console.log("Login Successfully", data.data.user);
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
+        const data = await response.json();
+
+
+        if (!response.ok) {
+            throw new Error(data.message || "Login Failed");
         }
+
+        // ---------------------------------------
+        // 2FA Required
+        // ---------------------------------------
+        if (data.data.twoFactorRequired) {
+            console.log("Two-factor authentication required");
+
+            navigate("/verify-2fa", {
+                state: {
+                    userId: data.data.userId,
+                },
+            });
+
+            return;
+        }
+
+        // ---------------------------------------
+        // Admin Login
+        // ---------------------------------------
+        if (data.data.type === "admin") {
+            setAdmin(data.data);
+
+            console.log(
+                "Admin Login Successfully:",
+                data.data
+            );
+
+            navigate("/admin");
+            return;
+        }
+
+        // ---------------------------------------
+        // Recruiter Login
+        // ---------------------------------------
+        if (data.data.user.role === "recruiter") {
+            setRecruiter(data.data.user);
+
+            console.log(
+                "Recruiter Login Successfully",
+                data.data
+            );
+
+            navigate("/recruiter");
+            return;
+        }
+
+        // ---------------------------------------
+        // Normal User Login
+        // ---------------------------------------
+        setUser(data.data.user);
+
+        console.log(
+            "User Login Successfully:",
+            data.data.user
+        );
+
+        alert(
+            `Hello ${data.data.user.name}, welcome to my application`
+        );
+
+        navigate("/");
+
+    } catch (error) {
+        console.log("Login error:", error);
+        alert(error.message);
     }
+};
 
     const handleSignup = async(details) => {
         try {
@@ -489,7 +559,7 @@ function AuthProvider({children}) {
 
 
     return (
-        <AuthContext.Provider value={{user, getUser, handleLogin, handleForgetPassword, handleDeleteAccount, handleLogout ,handleSignup, changeName, handlePasswordResetOtp, handleEnable2FA, handleLoginWith2FA, handleVerify2fa, handleEmailVerificationOtp, handleVerifyEmail, handleUpdateAvatar, handleUpdateCoverImage, handleSendDeleteAccountOtp, handleRefreshAccessToken}}>
+        <AuthContext.Provider value={{user, admin, recruiter, authLoading, getUser, handleLogin, handleForgetPassword, handleDeleteAccount, handleLogout ,handleSignup, changeName, handlePasswordResetOtp, handleEnable2FA, handleLoginWith2FA, handleVerify2fa, handleEmailVerificationOtp, handleVerifyEmail, handleUpdateAvatar, handleUpdateCoverImage, handleSendDeleteAccountOtp, handleRefreshAccessToken}}>
             {children}
         </AuthContext.Provider>
     )

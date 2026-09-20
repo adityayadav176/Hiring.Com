@@ -1,7 +1,17 @@
 import { Activity, AlertCircle, ArrowUp, ArrowUpRight, BriefcaseBusinessIcon, Building2, CalendarDays, CheckCircle2, ChevronRight, Clock, Edit, FileText, Icon, PauseCircle, ShieldAlert, ShieldCheck, TrendingDown, TrendingUp, User, Users } from 'lucide-react'
-import React from 'react'
+import React, { useEffect } from 'react'
+import { useAdmin } from '../../hooks/Hook'
 
 function AdminDashboardS() {
+    const {dashboard, handleGetAdminDashboard} = useAdmin();
+    useEffect(() => {
+        handleGetAdminDashboard();
+    }, [])
+
+    const handleclick = () => {
+        alert("btn clicked!");
+        console.log(dashboard);
+    }
   return (
     <div className='min-h-screen bg-[#F7F8FC] px-6 py-7 lg:px-8'>
         <div className='mx-auto max-w-[1600px] space-y-6'>
@@ -14,7 +24,7 @@ function AdminDashboardS() {
                         <h1 className='font-bold tracking-tight text-3xl text-[#11152A] lg:text-4xl'>Control Center</h1>
                         <p className='mt-2 text-sm text-slate-500'>Monitor your platform's performance, growth and key metrics.</p>
                     </div>
-                <button className='flex gap-2 h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 shadow-sm transition hover:border-violet-200 hover:text-violet-600'>
+                <button onClick={handleclick} className='flex gap-2 h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 shadow-sm transition hover:border-violet-200 hover:text-violet-600'>
                     <CalendarDays size={17}/>
                     Last 30 Days
                     <ChevronRight size={15}/>
@@ -36,7 +46,7 @@ function AdminDashboardS() {
                                     </div>
                                 </div>
                             <div className='min-w-[220px]'>
-                                <p className='text-3xl font-bold tracking-tight text-[#11152A]'>12842</p>
+                                <p className='text-3xl font-bold tracking-tight text-[#11152A]'>{dashboard?.users?.total}</p>
                                 <p className='text-slate-500 mt-1 font-medium text-xs'>Total Users</p>
                                 <div  className='mt-4 flex h-2 overflow-hidden rounded-full bg-slate-100'>
                                     <div className='bg-violet-600' style={{width: "65%"}}/>
@@ -69,9 +79,9 @@ function AdminDashboardS() {
                                 ↑ 8%
                             </span>
                         </div>
-                        <p className='mt-5 text-xs font-medium text-slate-500'>Verified Companies</p>
-                        <p className='mt-1 text-2xl font-bold text-[#11152A]'>1,248</p>
-                        <p className='mt-1 text-[11px] text-slate-400'>78% of total companies</p>
+                        <p className='mt-5 text-xs font-medium text-slate-500'>Verified</p>
+                        <p className='mt-1 text-2xl font-bold text-[#11152A]'>{dashboard?.company?.verified}</p>
+                        <p className='mt-1 text-[11px] text-slate-400'>{dashboard?.company?.total ? ((dashboard.company.verified / dashboard.company.total) * 100).toFixed(1) : 0}% of total companies</p>
                     </div>
                     <div className='rounded-xl border border-slate-200 p-5'>
                         <div className='flex justify-between items-start'>
@@ -83,8 +93,8 @@ function AdminDashboardS() {
                             </span>
                         </div>
                         <p className='mt-5 text-xs font-medium text-slate-500'>Unverified Companies</p>
-                        <p className='mt-1 text-2xl font-bold text-[#11152A]'>356</p>
-                        <p className='mt-1 text-[11px] text-slate-400'>22% of total companies</p>
+                        <p className='mt-1 text-2xl font-bold text-[#11152A]'>{dashboard?.company?.unVerified}</p>
+                        <p className='mt-1 text-[11px] text-slate-400'>{dashboard?.company?.total ? ((dashboard.company.unVerified / dashboard.company.total) * 100).toFixed(1) : 0}% of total companies</p>
                     </div>
                 </div>
             </section>
@@ -111,7 +121,7 @@ function AdminDashboardS() {
                                 <span className='text-[10px] font-semibold text-emerald-500'>+12%</span>
                             </div>
                             <p className='font-medium text-slate-400 text-[11px] mt-4'>Total Users</p>
-                            <p className='mt-1 text-xl font-bold text-[#11152A]'>12,842</p>
+                            <p className='mt-1 text-xl font-bold text-[#11152A]'>{dashboard?.users?.total}</p>
                            <div className="mt-4 flex h-7 items-end gap-[3px]">
                       {[3, 5, 4, 7, 6, 8, 7, 10, 9, 12, 10, 14].map(
                         (height, index) => (
@@ -132,7 +142,7 @@ function AdminDashboardS() {
                                 <span className='text-[10px] font-semibold text-emerald-500'>+12%</span>
                             </div>
                             <p className='font-medium text-slate-400 text-[11px] mt-4'>Candidates</p>
-                            <p className='mt-1 text-xl font-bold text-[#11152A]'>8,421</p>
+                            <p className='mt-1 text-xl font-bold text-[#11152A]'>{dashboard?.users?.candidate}</p>
                            <div className="mt-4 flex h-7 items-end gap-[3px]">
                       {[3, 5, 4, 7, 6, 8, 7, 10, 9, 12, 10, 14].map(
                         (height, index) => (
@@ -153,7 +163,7 @@ function AdminDashboardS() {
                                 <span className='text-[10px] font-semibold text-emerald-500'>+12%</span>
                             </div>
                             <p className='font-medium text-slate-400 text-[11px] mt-4'>Recruiters</p>
-                            <p className='mt-1 text-xl font-bold text-[#11152A]'>2,817</p>
+                            <p className='mt-1 text-xl font-bold text-[#11152A]'>{dashboard?.users?.recruiter}</p>
                            <div className="mt-4 flex h-7 items-end gap-[3px]">
                       {[3, 5, 4, 7, 6, 8, 7, 10, 9, 12, 10, 14].map(
                         (height, index) => (
@@ -174,7 +184,7 @@ function AdminDashboardS() {
                                 <span className='text-[10px] font-semibold text-emerald-500'>+12%</span>
                             </div>
                             <p className='font-medium text-slate-400 text-[11px] mt-4'>Companies</p>
-                            <p className='mt-1 text-xl font-bold text-[#11152A]'>1,604</p>
+                            <p className='mt-1 text-xl font-bold text-[#11152A]'>{dashboard?.company?.total}</p>
                            <div className="mt-4 flex h-7 items-end gap-[3px]">
                       {[3, 5, 4, 7, 6, 8, 7, 10, 9, 12, 10, 14].map(
                         (height, index) => (
@@ -192,7 +202,7 @@ function AdminDashboardS() {
                                     <CheckCircle2 size={18}/>
                                 </div>
                             <p className='font-medium text-slate-400 text-[11px] mt-4'>Verified Companies</p>
-                            <p className='mt-1 text-xl font-bold text-[#11152A]'>1,248</p>
+                            <p className='mt-1 text-xl font-bold text-[#11152A]'>{dashboard?.company?.verified}</p>
                            <div className="mt-4 flex items-center  gap-1 text-[10px]  font-semibold text-emerald-500">
                              8% growth
                             <TrendingUp/>
@@ -203,7 +213,7 @@ function AdminDashboardS() {
                                     <AlertCircle size={18}/>
                                 </div>
                             <p className='font-medium text-slate-400 text-[11px] mt-4'>Unverified Companies</p>
-                            <p className='mt-1 text-xl font-bold text-[#11152A]'>356</p>
+                            <p className='mt-1 text-xl font-bold text-[#11152A]'>{dashboard?.company?.unVerified}</p>
                            <div className="mt-4 flex items-center  gap-1 text-[10px]  font-semibold text-orange-500">
                             5% decrease
                             <TrendingDown/>
@@ -238,7 +248,7 @@ function AdminDashboardS() {
                                             <span className='text-[10px] font-semibold text-emerald-500'>+16%</span>
                                         </div>
                                         <p className='mt-3 text-[10px] font-medium text-slate-400'>Total Jobs</p>
-                                        <p className='mt-1 text-lg font-bold text-[#11152A]'>6,482</p>
+                                        <p className='mt-1 text-lg font-bold text-[#11152A]'>{dashboard?.job?.total}</p>
                                         <div className='mt-3 flex h-5 items-end gap-[2px]'>
                                             {[4, 7, 5, 8, 6, 10, 8, 11].map((height, i) => (
                                                 <div key={i} className='w-full rounded-sm bg-violet-200' style={{height: `${height * 2}px`}}>  </div>
@@ -252,8 +262,8 @@ function AdminDashboardS() {
                                             </div>
                                             <span className='text-[10px] font-semibold text-emerald-500'>+16%</span>
                                         </div>
-                                        <p className='mt-3 text-[10px] font-medium text-slate-400'>Total Jobs</p>
-                                        <p className='mt-1 text-lg font-bold text-[#11152A]'>6,482</p>
+                                        <p className='mt-3 text-[10px] font-medium text-slate-400'>Active jobs</p>
+                                        <p className='mt-1 text-lg font-bold text-[#11152A]'>{dashboard?.job?.active}</p>
                                         <div className='mt-3 flex h-5 items-end gap-[2px]'>
                                             {[4, 7, 5, 8, 6, 10, 8, 11].map((height, i) => (
                                                 <div key={i} className='w-full rounded-sm bg-violet-200' style={{height: `${height * 2}px`}}>  </div>
@@ -267,8 +277,8 @@ function AdminDashboardS() {
                                             </div>
                                             <span className='text-[10px] font-semibold text-emerald-500'>+16%</span>
                                         </div>
-                                        <p className='mt-3 text-[10px] font-medium text-slate-400'>Total Jobs</p>
-                                        <p className='mt-1 text-lg font-bold text-[#11152A]'>6,482</p>
+                                        <p className='mt-3 text-[10px] font-medium text-slate-400'>Closed Jobs</p>
+                                        <p className='mt-1 text-lg font-bold text-[#11152A]'>{dashboard?.job?.closed}</p>
                                         <div className='mt-3 flex h-5 items-end gap-[2px]'>
                                             {[4, 7, 5, 8, 6, 10, 8, 11].map((height, i) => (
                                                 <div key={i} className='w-full rounded-sm bg-violet-200' style={{height: `${height * 2}px`}}>  </div>
@@ -282,8 +292,8 @@ function AdminDashboardS() {
                                             </div>
                                             <span className='text-[10px] font-semibold text-emerald-500'>+16%</span>
                                         </div>
-                                        <p className='mt-3 text-[10px] font-medium text-slate-400'>Total Jobs</p>
-                                        <p className='mt-1 text-lg font-bold text-[#11152A]'>6,482</p>
+                                        <p className='mt-3 text-[10px] font-medium text-slate-400'>Expired Jobs</p>
+                                        <p className='mt-1 text-lg font-bold text-[#11152A]'>{dashboard?.job?.expired}</p>
                                         <div className='mt-3 flex h-5 items-end gap-[2px]'>
                                             {[4, 7, 5, 8, 6, 10, 8, 11].map((height, i) => (
                                                 <div key={i} className='w-full rounded-sm bg-violet-200' style={{height: `${height * 2}px`}}>  </div>
@@ -297,8 +307,8 @@ function AdminDashboardS() {
                                             </div>
                                             <span className='text-[10px] font-semibold text-emerald-500'>+16%</span>
                                         </div>
-                                        <p className='mt-3 text-[10px] font-medium text-slate-400'>Total Jobs</p>
-                                        <p className='mt-1 text-lg font-bold text-[#11152A]'>6,482</p>
+                                        <p className='mt-3 text-[10px] font-medium text-slate-400'>Draft Jobs</p>
+                                        <p className='mt-1 text-lg font-bold text-[#11152A]'>{dashboard?.job?.draft}</p>
                                         <div className='mt-3 flex h-5 items-end gap-[2px]'>
                                             {[4, 7, 5, 8, 6, 10, 8, 11].map((height, i) => (
                                                 <div key={i} className='w-full rounded-sm bg-violet-200' style={{height: `${height * 2}px`}}>  </div>
@@ -312,8 +322,8 @@ function AdminDashboardS() {
                                             </div>
                                             <span className='text-[10px] font-semibold text-emerald-500'>+16%</span>
                                         </div>
-                                        <p className='mt-3 text-[10px] font-medium text-slate-400'>Total Jobs</p>
-                                        <p className='mt-1 text-lg font-bold text-[#11152A]'>6,482</p>
+                                        <p className='mt-3 text-[10px] font-medium text-slate-400'>Paused Jobs</p>
+                                        <p className='mt-1 text-lg font-bold text-[#11152A]'>{dashboard?.job?.paused}</p>
                                         <div className='mt-3 flex h-5 items-end gap-[2px]'>
                                             {[4, 7, 5, 8, 6, 10, 8, 11].map((height, i) => (
                                                 <div key={i} className='w-full rounded-sm bg-violet-200' style={{height: `${height * 2}px`}}>  </div>
@@ -331,7 +341,7 @@ function AdminDashboardS() {
                                     </span>
                                 </div>
                                 <p className='mt-4 text-[11px] font-medium text-slate-400'>Total Applications</p>
-                                <p className='mt-1 text-2xl font-bold text-[#11152A]'>48,230</p>
+                                <p className='mt-1 text-2xl font-bold text-[#11152A]'>{dashboard?.application?.total}</p>
                             </div>
                             <div className='rounded-lg border border-emerald-100 bg-violet-50/30 p-4'>
                                 <div className='flex items-start justify-between'>
@@ -343,8 +353,8 @@ function AdminDashboardS() {
                                         22%
                                     </span>
                                 </div>
-                                <p className='mt-4 text-[11px] font-medium text-slate-400'>Total Applications</p>
-                                <p className='mt-1 text-2xl font-bold text-[#11152A]'>48,230</p>
+                                <p className='mt-4 text-[11px] font-medium text-slate-400'>Total Interview</p>
+                                <p className='mt-1 text-2xl font-bold text-[#11152A]'>{dashboard?.interview?.total}</p>
                             </div>
                         </div>
                 </section>
@@ -368,7 +378,7 @@ function AdminDashboardS() {
                         </div>
                         <div>
                             <p className='text-xs text-slate-400'>Jobs Posted</p>
-                            <p className='text-xl font-bold text-[#11152A]'>6,482</p>
+                            <p className='text-xl font-bold text-[#11152A]'>{dashboard?.job?.total}</p>
                         </div>
                     </div>
                     <div className='inline-flex mt-4 rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-semibold text-violet-600'>
@@ -388,7 +398,7 @@ function AdminDashboardS() {
                         </div>
                         <div>
                             <p className='text-xs text-slate-400'>Applications</p>
-                            <p className='text-xl font-bold text-[#11152A]'>48,230</p>
+                            <p className='text-xl font-bold text-[#11152A]'>{dashboard?.application?.total}</p>
                         </div>
                     </div>
                     <div className='inline-flex mt-4 rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-semibold text-violet-600'>
@@ -405,8 +415,8 @@ function AdminDashboardS() {
                             <BriefcaseBusinessIcon size={20}/>
                         </div>
                         <div>
-                            <p className='text-xs text-slate-400'>Applications</p>
-                            <p className='text-xl font-bold text-[#11152A]'>48,230</p>
+                            <p className='text-xs text-slate-400'>Interviews</p>
+                            <p className='text-xl font-bold text-[#11152A]'>{dashboard?.interview?.total}</p>
                         </div>
                     </div>
                     <div className='inline-flex mt-4 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-600'>

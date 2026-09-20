@@ -52,6 +52,9 @@ const AdminProvider = ({ children }) => {
         "Failed to fetch dashboard"
       );
 
+      console.log("Admin Dashboard API Response:", data);
+console.log("Admin Dashboard Data:", data.data);
+
       setDashboard(data.data);
 
       return data;
