@@ -179,13 +179,8 @@
 
     </div>
 )}
-
-                                        </div>
-
-                                    </td>
-
-
-
+</div>
+</td>
                     </tr>
                   </tbody>
                 </table>
