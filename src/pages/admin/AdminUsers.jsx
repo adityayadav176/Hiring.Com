@@ -655,7 +655,7 @@ function AdminUsers() {
                                 onClick={() =>
                                     setSelectedUser(null)
                                 }
-                                className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center"
+                                className="text-slate-400 w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center"
                             >
                                 <X className="w-5 h-5 text-slate-500" />
                             </button>
