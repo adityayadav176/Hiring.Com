@@ -13,7 +13,10 @@ import ADashboard from "../pages/admin/ADashboard";
 import ProtectedRoutes from "./ProtectedRoutes";
 import AdminUsers from "../pages/admin/AdminUsers";
 import Userss from "../pages/admin/Userss";
-
+import Companies from "../pages/admin/Companies";
+import Settings from "../pages/seeker/Settings";
+import RecruiterLayout from "../recruiter/components/RecruiterLayout";
+import RecruiterSidebar from "../recruiter/components/RecruiterSidebar";
 const AppRoutes = () => {
     return (
         <Routes>
@@ -23,6 +26,11 @@ const AppRoutes = () => {
             <Route path="/signup" element={<Signup/>}/>
             <Route path="/admin/users" element={<AdminUsers/>}/>
             <Route path="/users" element={<Userss/>}/>
+            <Route path="/companies" element={<Companies/>}/>
+            <Route path="/settings" element={<Settings/>}/>
+            <Route path="/recruiter" element={<RecruiterLayout/>}/>
+            <Route path="/recruiterS" element={<RecruiterSidebar/>}/>
+
 
             <Route element={<ProtectedRoutes allowedType="admin" />}>
             <Route path="/admin" element={<ADashboard/>}/>
