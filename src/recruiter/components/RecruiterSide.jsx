@@ -12,8 +12,8 @@ function RecruiterSidebar() {
                 <div className='pointer-events-none absolute -bottom-14 -left-8 h-28 w-28 rounded-full bg-white/10'/>
                 <div className='relative h-full px-5 py-5'>
                   <p className='text-[10px] font-bold uppercase tracking-[0.18em] text-violet-200'>Workspace</p>
-                  <button onClick={() => setWorkspaceOpen((prev) => !prev)} type='button' className='mt-4 flex w-full  items-center justify-between rounded-xl text-left transition hover:bg-white/5'>
-                    <div className='flex min-w-0 items-center gap-3'>
+                  <button onClick={() => setWorkspaceOpen((prev) => !prev)} type='button' className='mt-4 flex w-full items-center justify-between rounded-xl text-left transition hover:bg-white/5'>
+                    <div className='flex p-3 min-w-0 items-center gap-3'>
                         <div className='flex items-center justify-center h-10 w-10 shrink-0 rounded-xl bg-white text-[#6D28D9] shadow-sm'>
                             <Building2 strokeWidth={2.2} size={18}/>
                         </div>
