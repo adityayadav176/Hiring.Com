@@ -1,24 +1,33 @@
-import React from 'react'
-import RecruiterNavbar from './RecruiterNavbar';
-import { Outlet } from 'react-router-dom';
-import RecruiterSide from './RecruiterSide';
+import React from "react";
+import RecruiterNavbar from "./RecruiterNavbar";
+import { Outlet } from "react-router-dom";
+import RecruiterSidebar from "./RecruiterSide";
 
 function RecruiterLayout() {
   return (
-    <div className='min-h-screen bg-[#F7F8FC]'>
-       <RecruiterNavbar/>
+    <div className="h-screen overflow-hidden bg-[#F7F8FC]">
 
-       <div className='flex'>
-            <RecruiterSide/>
+      {/* Navbar */}
+      <RecruiterNavbar />
 
-            <main className='flex-1 min-w-0 md:ml-25'> 
-                <div className='px-4 py-5 md:px-6 lg:px-6'>
-                    <Outlet/>
-                </div>
-            </main>
-       </div>
+      {/* Area below navbar */}
+      <div className="flex h-[calc(100vh-92px)] overflow-hidden">
+
+        {/* Sidebar */}
+        <div className="h-full shrink-0 overflow-hidden">
+          <RecruiterSidebar />
+        </div>
+
+        {/* Main */}
+        <main className="min-w-0 flex-1 overflow-y-auto">
+          <div className="px-4 py-5 md:px-6 lg:px-6">
+            <Outlet />
+          </div>
+        </main>
+
+      </div>
     </div>
-  )
+  );
 }
 
-export default RecruiterLayout
+export default RecruiterLayout;
