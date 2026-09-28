@@ -16,6 +16,9 @@ import Userss from "../pages/admin/Userss";
 import Companies from "../pages/admin/Companies";
 import Settings from "../pages/seeker/Settings";
 import RecruiterLayout from "../recruiter/components/RecruiterLayout";
+import RecruiterJobs from "../recruiter/pages/RecruiterJobs";
+import RecruiterJobsLayout from "../recruiter/pages/RecruiterJobsLayout";
+import CreateProfile1 from "../components/profile/CreateProfile1";
 const AppRoutes = () => {
     return (
         <Routes>
@@ -28,6 +31,13 @@ const AppRoutes = () => {
             <Route path="/companies" element={<Companies/>}/>
             <Route path="/settings" element={<Settings/>}/>
             <Route path="/recruiter" element={<RecruiterLayout/>}/>
+            <Route path="/recruiter/jobs" element={<RecruiterJobs />}/>
+            <Route path="/recruiter/jobsLayout" element={<RecruiterJobsLayout />}/>
+            <Route
+  path="/profile/edit"
+  element={<CreateProfile1 />}
+/>
+
 
 
             <Route element={<ProtectedRoutes allowedType="admin" />}>

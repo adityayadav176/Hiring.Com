@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   Briefcase,
@@ -9,11 +9,19 @@ import {
   MapPin,
   Plus,
   CircleCheck,
+  UserRound,
+  Sparkles,
+  BriefcaseBusiness,
+  Target,
 } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 import { useAuth, useProfile } from "../../hooks/Hook";
 
 function ProfileDashboard() {
+  const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(true);
+
   const {
     profile,
     profileCompletion,
@@ -22,23 +30,59 @@ function ProfileDashboard() {
   } = useProfile();
 
   const { user } = useAuth();
-  console.log("AUTH USER:", user);
-console.log("PROFILE:", profile);
+
+  // ============================================================
+  // FETCH PROFILE
+  // ============================================================
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchProfileData = async () => {
       try {
-        await handleGetMyProfile();
-        await handleProfileCompletion();
+        setLoading(true);
+
+        const profileData = await handleGetMyProfile();
+
+        if (profileData) {
+          await handleProfileCompletion();
+        }
       } catch (error) {
         console.error("Failed to load profile:", error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchProfileData();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Safe arrays
+  // ============================================================
+  // OPEN CREATE PROFILE PAGE
+  // ============================================================
+
+  const handleOpenCreateProfile = () => {
+    navigate("/profile/create");
+  };
+
+  // ============================================================
+  // OPEN EDIT PROFILE PAGE
+  // ============================================================
+
+  const handleOpenEditProfile = () => {
+    navigate("/profile/edit");
+  };
+
+  // ============================================================
+  // SAFE ARRAYS
+  // ============================================================
+
   const skills = profile?.skills || [];
   const projects = profile?.projects || [];
   const education = profile?.education || [];
@@ -46,23 +90,309 @@ console.log("PROFILE:", profile);
 
   const score = profileCompletion?.score ?? 0;
 
+  // ============================================================
+  // DATE FORMATTER
+  // ============================================================
+
   const formatDate = (date) => {
     if (!date) return "";
 
-    return new Date(date).toLocaleDateString("en-IN", {
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "";
+    }
+
+    return parsedDate.toLocaleDateString("en-IN", {
       month: "short",
       year: "numeric",
     });
   };
 
+  // ============================================================
+  // LOADING STATE
+  // ============================================================
+
+  if (loading) {
+    return (
+      <div className="flex min-h-full w-full items-center justify-center bg-[#F7F8FC]">
+        <div className="flex flex-col items-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#6D28D9]" />
+
+          <p className="mt-4 text-sm font-medium text-slate-500">
+            Loading your profile...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // PROFILE DOES NOT EXIST
+  // ============================================================
+
+  if (!profile) {
+    return (
+      <div className="h-full w-full overflow-auto bg-[#F7F8FC]">
+        <div className="mx-auto flex min-h-full w-full max-w-[1600px] flex-col px-7 py-7 lg:px-10">
+          {/* =====================================================
+              HEADER
+          ====================================================== */}
+
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-violet-600" />
+
+                <span className="text-sm font-semibold text-violet-600">
+                  My Profile
+                </span>
+              </div>
+
+              <h1 className="text-[30px] font-semibold leading-tight tracking-[-0.025em] text-slate-900">
+                Build your professional profile
+              </h1>
+
+              <p className="mt-2 max-w-2xl text-[15px] leading-6 text-slate-500">
+                Create a profile that represents your skills, experience,
+                projects, and career goals.
+              </p>
+            </div>
+
+            <div className="hidden items-center gap-3 md:flex">
+              <div className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-500 shadow-sm">
+                Profile setup
+              </div>
+            </div>
+          </div>
+
+          {/* =====================================================
+              MAIN
+          ====================================================== */}
+
+          <div className="flex flex-1 items-center justify-center py-10">
+            <div className="w-full max-w-[1250px]">
+              <div className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-[0_12px_45px_rgba(15,23,42,0.07)]">
+                {/* Decorative gradients */}
+
+                <div className="pointer-events-none absolute right-[-120px] top-[-150px] h-[420px] w-[420px] rounded-full bg-violet-100/70 blur-3xl" />
+
+                <div className="pointer-events-none absolute bottom-[-180px] left-[-100px] h-[350px] w-[350px] rounded-full bg-indigo-50 blur-3xl" />
+
+                <div className="relative grid lg:grid-cols-[1.15fr_0.85fr]">
+                  {/* =================================================
+                      LEFT
+                  ================================================== */}
+
+                  <div className="px-9 py-12 lg:px-14 lg:py-14">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 ring-1 ring-violet-100">
+                      <UserRound
+                        size={27}
+                        strokeWidth={1.8}
+                        className="text-violet-600"
+                      />
+                    </div>
+
+                    <div className="mt-7 max-w-[650px]">
+                      <p className="text-sm font-medium text-slate-400">
+                        Welcome to your profile workspace
+                      </p>
+
+                      <h2 className="mt-2 text-[32px] font-semibold leading-[1.15] tracking-[-0.03em] text-slate-900">
+                        Make your profile{" "}
+                        <span className="text-violet-600">stand out.</span>
+                      </h2>
+
+                      <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-500">
+                        Add your professional information once and build a
+                        profile that recruiters can quickly understand. You
+                        can update everything later.
+                      </p>
+                    </div>
+
+                    {/* Benefits */}
+
+                    <div className="mt-9 space-y-3">
+                      <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3.5">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100">
+                          <Sparkles
+                            size={18}
+                            className="text-violet-600"
+                          />
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">
+                            Showcase your expertise
+                          </p>
+
+                          <p className="mt-0.5 text-[13px] text-slate-500">
+                            Skills, technologies, and professional strengths
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3.5">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100">
+                          <BriefcaseBusiness
+                            size={18}
+                            className="text-indigo-600"
+                          />
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">
+                            Highlight your experience
+                          </p>
+
+                          <p className="mt-0.5 text-[13px] text-slate-500">
+                            Work history, education, and projects
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3.5">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100">
+                          <Target
+                            size={18}
+                            className="text-blue-600"
+                          />
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">
+                            Define your career goals
+                          </p>
+
+                          <p className="mt-0.5 text-[13px] text-slate-500">
+                            Job type, location, and salary preferences
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CTA */}
+
+                    <div className="mt-9 flex items-center gap-4">
+                      <button
+                        onClick={handleOpenCreateProfile}
+                        type="button"
+                        className="inline-flex h-11 items-center gap-2.5 rounded-xl bg-[#6D28D9] px-6 text-[14px] font-semibold text-white shadow-[0_6px_18px_rgba(109,40,217,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#5B21B6] hover:shadow-[0_8px_24px_rgba(109,40,217,0.28)] active:translate-y-0"
+                      >
+                        <Plus size={18} />
+                        Create profile
+                      </button>
+
+                      <span className="text-[13px] text-slate-400">
+                        Takes only a few minutes
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* =================================================
+                      RIGHT PREVIEW
+                  ================================================== */}
+
+                  <div className="relative hidden min-h-[560px] items-center justify-center border-l border-slate-100 bg-[#FAFAFD] px-10 lg:flex">
+                    <div className="w-full max-w-[360px]">
+                      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_15px_40px_rgba(15,23,42,0.08)]">
+                        {/* Cover */}
+
+                        <div className="h-24 bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-500" />
+
+                        <div className="px-6 pb-6">
+                          {/* Avatar */}
+
+                          <div className="-mt-9 flex h-[72px] w-[72px] items-center justify-center rounded-full border-4 border-white bg-violet-50 shadow-sm">
+                            <UserRound
+                              size={30}
+                              className="text-violet-500"
+                            />
+                          </div>
+
+                          <div className="mt-4">
+                            <div className="h-4 w-36 rounded bg-slate-200" />
+
+                            <div className="mt-2 h-3 w-48 rounded bg-slate-100" />
+
+                            <div className="mt-5 flex gap-2">
+                              <span className="rounded-full bg-violet-50 px-3 py-1 text-[11px] font-medium text-violet-600">
+                                React
+                              </span>
+
+                              <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-500">
+                                Node.js
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="mt-7 space-y-5">
+                            <div>
+                              <div className="mb-2 h-3 w-16 rounded bg-slate-200" />
+
+                              <div className="h-2.5 w-full rounded bg-slate-100" />
+
+                              <div className="mt-1.5 h-2.5 w-4/5 rounded bg-slate-100" />
+                            </div>
+
+                            <div>
+                              <div className="mb-2 h-3 w-20 rounded bg-slate-200" />
+
+                              <div className="flex gap-2">
+                                <div className="h-8 flex-1 rounded-lg bg-slate-50" />
+
+                                <div className="h-8 flex-1 rounded-lg bg-slate-50" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Completion hint */}
+
+                      <div className="mt-4 flex items-center gap-3 rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white">
+                          <Sparkles
+                            size={15}
+                            className="text-violet-600"
+                          />
+                        </div>
+
+                        <div>
+                          <p className="text-xs font-semibold text-slate-700">
+                            Your profile, your story
+                          </p>
+
+                          <p className="mt-0.5 text-[11px] text-slate-500">
+                            Add details and make it yours.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // PROFILE EXISTS
+  // ============================================================
+
   return (
     <section className="min-h-full w-full bg-[#F7F7FA] px-4 py-6 md:px-8">
       <div className="mx-auto max-w-7xl">
+        {/* ======================================================
+            PROFILE HERO
+        ====================================================== */}
 
-        {/* ================= PROFILE HERO ================= */}
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
-
           {/* COVER */}
+
           <div className="relative h-36 overflow-hidden md:h-44">
             {user?.coverImage?.url ? (
               <img
@@ -74,6 +404,7 @@ console.log("PROFILE:", profile);
               <div className="h-full w-full bg-gradient-to-r from-violet-700 via-[#6D28D9] to-indigo-600">
                 <div className="absolute inset-0 opacity-20">
                   <div className="absolute -right-10 -top-20 h-72 w-72 rounded-full bg-white blur-3xl" />
+
                   <div className="absolute -bottom-24 -left-10 h-72 w-72 rounded-full bg-indigo-300 blur-3xl" />
                 </div>
 
@@ -87,13 +418,14 @@ console.log("PROFILE:", profile);
           </div>
 
           {/* PROFILE INFO */}
+
           <div className="px-6 pb-6 md:px-8">
             <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
-
               {/* AVATAR + INFO */}
-              <div className="flex flex-col gap-4 pt-5 sm:flex-row sm:items-center">
 
+              <div className="flex flex-col gap-4 pt-5 sm:flex-row sm:items-center">
                 {/* AVATAR */}
+
                 <div className="h-24 w-24 shrink-0 rounded-3xl border border-slate-200 bg-white p-1.5 shadow-sm">
                   <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-2xl bg-violet-600">
                     {user?.avatar?.url ? (
@@ -111,37 +443,42 @@ console.log("PROFILE:", profile);
                 </div>
 
                 {/* USER DETAILS */}
+
                 <div>
                   <div className="flex items-center gap-2">
                     <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">
                       {user?.name}
                     </h1>
 
-                    {/* Optional verified badge */}
                     {user?.isVerified && (
                       <CircleCheck className="h-5 w-5 text-emerald-500" />
                     )}
                   </div>
 
                   <p className="mt-1 font-medium text-violet-600">
-                    {profile?.headline ||
-                      "Software Developer | Full Stack Developer"}
+                    {profile?.headline || "Your Title"}
                   </p>
 
                   <div className="mt-2 flex items-center gap-1.5 text-sm text-slate-500">
                     <MapPin className="h-4 w-4" />
 
                     <span>
-                      {profile?.location?.city || "Agra"},{" "}
-                      {profile?.location?.state || "Uttar Pradesh"},{" "}
-                      {profile?.location?.country || "India"}
+                      {[
+                        profile?.location?.city,
+                        profile?.location?.state,
+                        profile?.location?.country,
+                      ]
+                        .filter(Boolean)
+                        .join(", ") || "Location not added"}
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* EDIT BUTTON */}
+
               <button
+                onClick={handleOpenEditProfile}
                 type="button"
                 className="flex self-start items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-violet-300 hover:bg-violet-50 hover:text-violet-600 md:self-center"
               >
@@ -152,15 +489,19 @@ console.log("PROFILE:", profile);
           </div>
         </div>
 
-        {/* ================= MAIN CONTENT ================= */}
+        {/* ======================================================
+            MAIN CONTENT
+        ====================================================== */}
+
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+          {/* ====================================================
+              SIDEBAR
+          ==================================================== */}
 
-          {/* ================= SIDEBAR ================= */}
           <aside className="space-y-5">
-
             {/* PROFILE STRENGTH */}
-            <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)]">
 
+            <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CircleCheck className="h-5 w-5 text-[#6D28D9]" />
@@ -194,8 +535,8 @@ console.log("PROFILE:", profile);
             </div>
 
             {/* JOB PREFERENCES */}
-            <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)]">
 
+            <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)]">
               <div className="mb-5 flex items-center gap-2">
                 <Briefcase className="h-5 w-5 text-[#6D28D9]" />
 
@@ -203,6 +544,8 @@ console.log("PROFILE:", profile);
                   Job Preferences
                 </h2>
               </div>
+
+              {/* LOOKING FOR JOB */}
 
               {profile?.preferences?.lookingForJob === true ? (
                 <div className="inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
@@ -217,6 +560,7 @@ console.log("PROFILE:", profile);
               )}
 
               {/* JOB TYPES */}
+
               <div className="mt-5">
                 <p className="text-[11px] font-bold tracking-wider text-[#94A3B8]">
                   JOB TYPES
@@ -241,6 +585,7 @@ console.log("PROFILE:", profile);
               </div>
 
               {/* SALARY */}
+
               <div className="mt-5 border-t border-[#F1F5F9] pt-5">
                 <p className="text-[11px] font-bold tracking-wider text-[#94A3B8]">
                   EXPECTED SALARY
@@ -248,9 +593,11 @@ console.log("PROFILE:", profile);
 
                 <p className="mt-2 text-sm font-semibold text-[#475569]">
                   {profile?.preferences?.expectedSalary?.currency || "INR"}
+
                   {profile?.preferences?.expectedSalary?.min
                     ? ` ${profile.preferences.expectedSalary.min}`
                     : ""}
+
                   {profile?.preferences?.expectedSalary?.max
                     ? ` - ${profile.preferences.expectedSalary.max}`
                     : ""}
@@ -259,18 +606,15 @@ console.log("PROFILE:", profile);
             </div>
 
             {/* PROFILE OVERVIEW */}
-            <div className="rounded-2xl bg-[#0F172A] p-5 text-white">
 
+            <div className="rounded-2xl bg-[#0F172A] p-5 text-white">
               <p className="text-xs font-medium tracking-wide text-[#94A3B8]">
                 PROFILE OVERVIEW
               </p>
 
               <div className="mt-5 grid grid-cols-2 gap-5">
-
                 <div>
-                  <p className="text-2xl font-bold">
-                    {skills.length}
-                  </p>
+                  <p className="text-2xl font-bold">{skills.length}</p>
 
                   <p className="mt-1 text-xs text-[#94A3B8]">
                     Skills
@@ -278,9 +622,7 @@ console.log("PROFILE:", profile);
                 </div>
 
                 <div>
-                  <p className="text-2xl font-bold">
-                    {projects.length}
-                  </p>
+                  <p className="text-2xl font-bold">{projects.length}</p>
 
                   <p className="mt-1 text-xs text-[#94A3B8]">
                     Projects
@@ -288,9 +630,7 @@ console.log("PROFILE:", profile);
                 </div>
 
                 <div>
-                  <p className="text-2xl font-bold">
-                    {education.length}
-                  </p>
+                  <p className="text-2xl font-bold">{education.length}</p>
 
                   <p className="mt-1 text-xs text-[#94A3B8]">
                     Education
@@ -306,17 +646,18 @@ console.log("PROFILE:", profile);
                     Experience
                   </p>
                 </div>
-
               </div>
             </div>
           </aside>
 
-          {/* ================= MAIN ================= */}
+          {/* ====================================================
+              MAIN
+          ==================================================== */}
+
           <main className="min-w-0 space-y-6">
-
             {/* ABOUT */}
-            <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-[0_2px_8px_rgba(15,23,42,0.03)]">
 
+            <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-[0_2px_8px_rgba(15,23,42,0.03)]">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-[#0F172A]">
                   About
@@ -328,20 +669,14 @@ console.log("PROFILE:", profile);
               </div>
 
               <p className="text-sm leading-7 text-[#64748B]">
-                {profile?.bio || (
-                  <span className="text-[#94A3B8]">
-                    Full-stack developer building modern web applications
-                    with JavaScript, React, Node.js, Express and MongoDB.
-                  </span>
-                )}
+                {profile?.bio || "No About Added"}
               </p>
             </div>
 
             {/* SKILLS */}
+
             <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-[0_2px_8px_rgba(15,23,42,0.03)]">
-
               <div className="mb-5 flex items-center justify-between">
-
                 <div className="flex items-center gap-2">
                   <Code2 className="h-5 w-5 text-[#6D28D9]" />
 
@@ -352,6 +687,7 @@ console.log("PROFILE:", profile);
 
                 <button
                   type="button"
+                  onClick={handleOpenEditProfile}
                   className="flex items-center gap-1.5 text-sm font-semibold text-[#6D28D9] transition hover:text-[#5B21B6]"
                 >
                   <Plus className="h-4 w-4" />
@@ -360,7 +696,6 @@ console.log("PROFILE:", profile);
               </div>
 
               <div className="flex flex-wrap gap-2.5">
-
                 {skills.length > 0 ? (
                   skills.map((item, index) => (
                     <div
@@ -383,15 +718,13 @@ console.log("PROFILE:", profile);
                     No skills added
                   </span>
                 )}
-
               </div>
             </div>
 
             {/* EXPERIENCE */}
+
             <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-[0_2px_8px_rgba(15,23,42,0.03)]">
-
               <div className="mb-5 flex items-center justify-between">
-
                 <div className="flex items-center gap-2">
                   <Briefcase className="h-5 w-5 text-[#6D28D9]" />
 
@@ -402,6 +735,7 @@ console.log("PROFILE:", profile);
 
                 <button
                   type="button"
+                  onClick={handleOpenEditProfile}
                   className="flex items-center gap-1.5 text-sm font-semibold text-[#6D28D9] transition hover:text-[#5B21B6]"
                 >
                   <Plus className="h-4 w-4" />
@@ -411,14 +745,12 @@ console.log("PROFILE:", profile);
 
               {experience.length > 0 ? (
                 <div className="space-y-7">
-
                   {experience.map((item, index) => (
                     <div
                       key={item?._id || index}
                       className="relative flex gap-4"
                     >
                       <div className="flex shrink-0 flex-col items-center">
-
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3E8FF] text-[#6D28D9]">
                           <Briefcase className="h-5 w-5" />
                         </div>
@@ -429,7 +761,6 @@ console.log("PROFILE:", profile);
                       </div>
 
                       <div className="min-w-0 pb-2">
-
                         <h3 className="font-bold text-[#0F172A]">
                           {item?.position}
                         </h3>
@@ -439,16 +770,13 @@ console.log("PROFILE:", profile);
                         </p>
 
                         <div className="mt-2 flex flex-wrap items-center gap-2">
-
                           {item?.employmentType?.type && (
                             <span className="text-xs font-semibold capitalize text-[#6D28D9]">
                               {item.employmentType.type}
                             </span>
                           )}
 
-                          <span className="text-[#CBD5E1]">
-                            •
-                          </span>
+                          <span className="text-[#CBD5E1]">•</span>
 
                           <span className="text-xs text-[#94A3B8]">
                             {formatDate(item?.startDate)}
@@ -457,7 +785,6 @@ console.log("PROFILE:", profile);
                               ? "Present"
                               : formatDate(item?.endDate) || "End date"}
                           </span>
-
                         </div>
 
                         {item?.description && (
@@ -465,15 +792,12 @@ console.log("PROFILE:", profile);
                             {item.description}
                           </p>
                         )}
-
                       </div>
                     </div>
                   ))}
-
                 </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-[#CBD5E1] py-8 text-center">
-
                   <Briefcase className="mx-auto h-6 w-6 text-[#CBD5E1]" />
 
                   <p className="mt-3 text-sm font-medium text-[#475569]">
@@ -483,16 +807,14 @@ console.log("PROFILE:", profile);
                   <p className="mt-1 text-xs text-[#94A3B8]">
                     Add your previous experience to strengthen your profile.
                   </p>
-
                 </div>
               )}
             </div>
 
             {/* EDUCATION */}
+
             <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-[0_2px_8px_rgba(15,23,42,0.03)]">
-
               <div className="mb-5 flex items-center justify-between">
-
                 <div className="flex items-center gap-2">
                   <GraduationCap className="h-5 w-5 text-[#6D28D9]" />
 
@@ -503,6 +825,7 @@ console.log("PROFILE:", profile);
 
                 <button
                   type="button"
+                  onClick={handleOpenEditProfile}
                   className="flex items-center gap-1.5 text-sm font-semibold text-[#6D28D9] transition hover:text-[#5B21B6]"
                 >
                   <Plus className="h-4 w-4" />
@@ -512,39 +835,31 @@ console.log("PROFILE:", profile);
 
               {education.length > 0 ? (
                 <div className="space-y-5">
-
                   {education.map((item, index) => (
                     <div
                       key={item?._id || index}
                       className="flex items-start gap-4"
                     >
-
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F3E8FF] text-[#6D28D9]">
                         <Building2 className="h-5 w-5" />
                       </div>
 
                       <div className="min-w-0">
-
                         <h3 className="font-semibold text-[#0F172A]">
                           {item?.institute}
                         </h3>
 
                         <p className="mt-1 text-sm text-[#475569]">
                           {item?.degree}
-
-                          {item?.field
-                            ? ` in ${item.field}`
-                            : ""}
+                          {item?.field ? ` in ${item.field}` : ""}
                         </p>
 
                         <p className="mt-2 text-xs text-[#94A3B8]">
                           {item?.startYear} - {item?.endYear}
                         </p>
-
                       </div>
                     </div>
                   ))}
-
                 </div>
               ) : (
                 <p className="text-sm text-[#94A3B8]">
@@ -554,10 +869,9 @@ console.log("PROFILE:", profile);
             </div>
 
             {/* PROJECTS */}
+
             <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-[0_2px_8px_rgba(15,23,42,0.03)]">
-
               <div className="mb-5 flex items-center justify-between">
-
                 <div className="flex items-center gap-2">
                   <Code2 className="h-5 w-5 text-[#6D28D9]" />
 
@@ -568,6 +882,7 @@ console.log("PROFILE:", profile);
 
                 <button
                   type="button"
+                  onClick={handleOpenEditProfile}
                   className="flex items-center gap-1.5 text-sm font-semibold text-[#6D28D9] transition hover:text-[#5B21B6]"
                 >
                   <Plus className="h-4 w-4" />
@@ -577,22 +892,19 @@ console.log("PROFILE:", profile);
 
               {projects.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-
                   {projects.map((item, index) => (
                     <div
                       key={item?._id || index}
                       className="group rounded-xl border border-[#E2E8F0] p-5 transition-all hover:border-[#C4B5FD] hover:shadow-sm"
                     >
-
                       <div className="flex items-start justify-between gap-3">
-
                         <h3 className="font-bold text-[#0F172A] transition-colors group-hover:text-[#6D28D9]">
                           {item?.title || "Project"}
                         </h3>
 
                         {item?.githubUrl && (
-                          <ArrowUpRight
-                            className="h-5 w-5 shrink-0 cursor-pointer text-[#94A3B8] transition-colors hover:text-[#6D28D9]"
+                          <button
+                            type="button"
                             onClick={() =>
                               window.open(
                                 item.githubUrl,
@@ -600,9 +912,11 @@ console.log("PROFILE:", profile);
                                 "noopener,noreferrer"
                               )
                             }
-                          />
+                            className="shrink-0"
+                          >
+                            <ArrowUpRight className="h-5 w-5 text-[#94A3B8] transition-colors hover:text-[#6D28D9]" />
+                          </button>
                         )}
-
                       </div>
 
                       <p className="mt-3 text-sm leading-6 text-[#64748B]">
@@ -611,7 +925,6 @@ console.log("PROFILE:", profile);
                       </p>
 
                       <div className="mt-4 flex flex-wrap gap-2">
-
                         {item?.technologies?.length > 0 ? (
                           item.technologies.map((technology) => (
                             <span
@@ -626,15 +939,12 @@ console.log("PROFILE:", profile);
                             No technologies added
                           </span>
                         )}
-
                       </div>
                     </div>
                   ))}
-
                 </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-[#CBD5E1] py-8 text-center">
-
                   <Code2 className="mx-auto h-6 w-6 text-[#CBD5E1]" />
 
                   <p className="mt-3 text-sm font-medium text-[#475569]">
@@ -644,11 +954,9 @@ console.log("PROFILE:", profile);
                   <p className="mt-1 text-xs text-[#94A3B8]">
                     Showcase your best projects here.
                   </p>
-
                 </div>
               )}
             </div>
-
           </main>
         </div>
       </div>
