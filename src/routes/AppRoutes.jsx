@@ -5,7 +5,6 @@ import ForgetPassword from "../pages/auth/ForgetPassword";
 import SendPasswordResetOtp from "../pages/auth/SendPasswordResetOtp";
 import Dashboard from "../pages/seeker/Dashboard";
 
-import Profile from "../pages/seeker/Profile";
 import JobLayout from "../components/jobs/JobLayout";
 
 import AdminDashboardS from "../components/Admin/AdminDashboardS";
@@ -18,7 +17,6 @@ import Settings from "../pages/seeker/Settings";
 import RecruiterLayout from "../recruiter/components/RecruiterLayout";
 import RecruiterJobs from "../recruiter/pages/RecruiterJobs";
 import RecruiterJobsLayout from "../recruiter/pages/RecruiterJobsLayout";
-import CreateProfile1 from "../components/profile/CreateProfile1";
 const AppRoutes = () => {
     return (
         <Routes>
@@ -30,14 +28,11 @@ const AppRoutes = () => {
             <Route path="/users" element={<Userss/>}/>
             <Route path="/companies" element={<Companies/>}/>
             <Route path="/settings" element={<Settings/>}/>
+
+
             <Route path="/recruiter" element={<RecruiterLayout/>}/>
             <Route path="/recruiter/jobs" element={<RecruiterJobs />}/>
             <Route path="/recruiter/jobsLayout" element={<RecruiterJobsLayout />}/>
-            <Route
-  path="/profile/edit"
-  element={<CreateProfile1 />}
-/>
-
 
 
             <Route element={<ProtectedRoutes allowedType="admin" />}>

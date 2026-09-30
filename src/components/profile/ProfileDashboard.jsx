@@ -64,22 +64,6 @@ function ProfileDashboard() {
   }, []);
 
   // ============================================================
-  // OPEN CREATE PROFILE PAGE
-  // ============================================================
-
-  const handleOpenCreateProfile = () => {
-    navigate("/profile/create");
-  };
-
-  // ============================================================
-  // OPEN EDIT PROFILE PAGE
-  // ============================================================
-
-  const handleOpenEditProfile = () => {
-    navigate("/profile/edit");
-  };
-
-  // ============================================================
   // SAFE ARRAYS
   // ============================================================
 
@@ -275,7 +259,6 @@ function ProfileDashboard() {
 
                     <div className="mt-9 flex items-center gap-4">
                       <button
-                        onClick={handleOpenCreateProfile}
                         type="button"
                         className="inline-flex h-11 items-center gap-2.5 rounded-xl bg-[#6D28D9] px-6 text-[14px] font-semibold text-white shadow-[0_6px_18px_rgba(109,40,217,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#5B21B6] hover:shadow-[0_8px_24px_rgba(109,40,217,0.28)] active:translate-y-0"
                       >
@@ -298,7 +281,7 @@ function ProfileDashboard() {
                       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_15px_40px_rgba(15,23,42,0.08)]">
                         {/* Cover */}
 
-                        <div className="h-24 bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-500" />
+                        <div className="h-24 bg-gradient-to-r   from-violet-600 via-purple-500 to-indigo-500" />
 
                         <div className="px-6 pb-6">
                           {/* Avatar */}
@@ -478,7 +461,6 @@ function ProfileDashboard() {
               {/* EDIT BUTTON */}
 
               <button
-                onClick={handleOpenEditProfile}
                 type="button"
                 className="flex self-start items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-violet-300 hover:bg-violet-50 hover:text-violet-600 md:self-center"
               >
@@ -687,7 +669,6 @@ function ProfileDashboard() {
 
                 <button
                   type="button"
-                  onClick={handleOpenEditProfile}
                   className="flex items-center gap-1.5 text-sm font-semibold text-[#6D28D9] transition hover:text-[#5B21B6]"
                 >
                   <Plus className="h-4 w-4" />
@@ -735,7 +716,6 @@ function ProfileDashboard() {
 
                 <button
                   type="button"
-                  onClick={handleOpenEditProfile}
                   className="flex items-center gap-1.5 text-sm font-semibold text-[#6D28D9] transition hover:text-[#5B21B6]"
                 >
                   <Plus className="h-4 w-4" />
@@ -825,7 +805,6 @@ function ProfileDashboard() {
 
                 <button
                   type="button"
-                  onClick={handleOpenEditProfile}
                   className="flex items-center gap-1.5 text-sm font-semibold text-[#6D28D9] transition hover:text-[#5B21B6]"
                 >
                   <Plus className="h-4 w-4" />
@@ -882,7 +861,6 @@ function ProfileDashboard() {
 
                 <button
                   type="button"
-                  onClick={handleOpenEditProfile}
                   className="flex items-center gap-1.5 text-sm font-semibold text-[#6D28D9] transition hover:text-[#5B21B6]"
                 >
                   <Plus className="h-4 w-4" />
