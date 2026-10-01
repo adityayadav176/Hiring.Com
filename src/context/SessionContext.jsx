@@ -2,84 +2,189 @@ import { createContext, useState } from "react";
 
 export const SessionContext = createContext();
 
-const SessionProvider = ({children}) => {
+const SessionProvider = ({ children }) => {
     const API_URL = import.meta.env.VITE_API_URL;
+
     const [sessions, setSessions] = useState([]);
+    const [sessionsLoading, setSessionsLoading] = useState(false);
 
-    const handleGetAllSession = async() => {
+    const handleGetAllSession = async () => {
+        setSessionsLoading(true);
+
         try {
-            const response = await fetch(`${API_URL}/session`, {
-                credentials: "include",
-                method: "GET"
-            });
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Failed To Fetch All Sessions");
+            const response = await fetch(
+                `${API_URL}/session`,
+                {
+                    method: "GET",
+                    credentials: "include",
+                }
+            );
+
+            /*
+             * If accessToken/session is missing or expired,
+             * do not show an alert.
+             *
+             * Send the user directly to login.
+             */
+            if (response.status === 401) {
+                setSessions([]);
+
+                window.location.replace("/login");
+
+                return [];
             }
-    
-            setSessions(data.data);
-    
-            console.log("Session Fetched Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
-    }
 
-    const handleLogoutAllDevices = async() => {
-        try {
-            const response = await fetch(`${API_URL}/session/logoutAllDevice`, {
-                credentials: "include",
-                method: "DELETE"
-            });
-    
             const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Failed To Logout All Sessions");
+
+            if (!response.ok) {
+                throw new Error(
+                    data?.message ||
+                    "Failed to fetch all sessions"
+                );
+            }
+
+            const sessionData = Array.isArray(data?.data)
+                ? data.data
+                : [];
+
+            setSessions(sessionData);
+
+            console.log(
+                "Sessions fetched successfully:",
+                sessionData
+            );
+
+            return sessionData;
+        } catch (error) {
+            console.error(
+                "Get all sessions error:",
+                error
+            );
+
+            setSessions([]);
+
+            throw error;
+        } finally {
+            setSessionsLoading(false);
+        }
+    };
+
+    const handleLogoutADevice = async ({ sessionId }) => {
+        if (!sessionId) {
+            throw new Error("Session ID is required");
+        }
+
+        try {
+            const response = await fetch(
+                `${API_URL}/session/logoutSpecificDevice/${sessionId}`,
+                {
+                    method: "DELETE",
+                    credentials: "include",
+                }
+            );
+
+            /*
+             * Current session expired.
+             * Redirect instead of showing an alert.
+             */
+            if (response.status === 401) {
+                setSessions([]);
+
+                window.location.replace("/login");
+
+                return;
+            }
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data?.message ||
+                    "Failed to logout this device"
+                );
+            }
+
+            setSessions((prev) =>
+                prev.filter(
+                    (session) =>
+                        session.sessionId !== sessionId
+                )
+            );
+
+            console.log(
+                "Specific device logged out successfully"
+            );
+
+            return data;
+        } catch (error) {
+            console.error(
+                "Logout specific device error:",
+                error
+            );
+
+            throw error;
+        }
+    };
+
+    const handleLogoutAllDevices = async () => {
+        try {
+            const response = await fetch(
+                `${API_URL}/session/logoutAllDevice`,
+                {
+                    method: "DELETE",
+                    credentials: "include",
+                }
+            );
+            
+            if (response.status === 401) {
+                setSessions([]);
+
+                window.location.replace("/login");
+
+                return;
+            }
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data?.message ||
+                    "Failed to logout all devices"
+                );
             }
 
             setSessions([]);
-    
-            console.log("Sessions Logout Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
-    }
 
-    const handleLogoutADevice = async({sessionId}) => {
+            console.log(
+                "Logged out from all devices successfully"
+            );
 
-        if(!sessionId) {
-            throw new Error("SessionId Is Required");
-        }
-        try {
-            const response = await fetch(`${API_URL}/session/logoutSpecificDevice/${sessionId}`, {
-                credentials: "include",
-                method: "DELETE"
-            });
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Failed To Logout A Session");
-            }
-            
-            setSessions((prev) => prev.filter((item) => item._id !== sessionId));
-            
-            console.log("Session Logout Successfully");
+            window.location.replace("/login");
+
+            return data;
         } catch (error) {
-            console.log(error);
-            alert(error.message);
+            console.error(
+                "Logout all devices error:",
+                error
+            );
+
+            throw error;
         }
-    }
+    };
+
     return (
-        <SessionContext.Provider value={{handleGetAllSession, handleLogoutADevice, handleLogoutAllDevices, sessions}}>
+        <SessionContext.Provider
+            value={{
+                sessions,
+                sessionsLoading,
+                handleGetAllSession,
+                handleLogoutADevice,
+                handleLogoutAllDevices,
+            }}
+        >
             {children}
         </SessionContext.Provider>
-    )
-}
+    );
+};
 
 export default SessionProvider;

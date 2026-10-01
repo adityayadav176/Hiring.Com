@@ -313,29 +313,39 @@ const handleLogin = async (details) => {
         }
     }
 
-    const handleDeleteAccount = async({otp, password}) => {
-        try {
-            const response = await fetch("http://localhost:9000/api/v1/auth/deleteAccount", {
+   const handleDeleteAccount = async ({ otp, password }) => {
+    try {
+        const response = await fetch(
+            "http://localhost:9000/api/v1/auth/deleteAccount",
+            {
+                method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                method: "DELETE",
                 credentials: "include",
-                body: JSON.stringify({otp, password})
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Account Deletion Failed");
+                body: JSON.stringify({
+                    otp,
+                    password,
+                }),
             }
-    
-            console.log("Account deleted Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data?.message || "Account deletion failed"
+            );
         }
+
+        console.log("Account deleted successfully");
+        navigate("/login");
+
+    } catch (error) {
+        console.error("Delete account error:", error);
+        alert(error.message || "Account deletion failed");
     }
+};
 
     const handleEmailVerificationOtp = async() => {
         try {
