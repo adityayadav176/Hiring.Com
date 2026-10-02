@@ -16,8 +16,10 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, useProfile } from "../../hooks/Hook";
+import CreateProfile from "./CreateProfile";
 
 function ProfileDashboard() {
+  const [createProfileModal, setCreateProfileModal] = useState(false);
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -30,10 +32,6 @@ function ProfileDashboard() {
   } = useProfile();
 
   const { user } = useAuth();
-
-  // ============================================================
-  // FETCH PROFILE
-  // ============================================================
 
   useEffect(() => {
     let mounted = true;
@@ -63,9 +61,6 @@ function ProfileDashboard() {
     };
   }, []);
 
-  // ============================================================
-  // SAFE ARRAYS
-  // ============================================================
 
   const skills = profile?.skills || [];
   const projects = profile?.projects || [];
@@ -74,9 +69,6 @@ function ProfileDashboard() {
 
   const score = profileCompletion?.score ?? 0;
 
-  // ============================================================
-  // DATE FORMATTER
-  // ============================================================
 
   const formatDate = (date) => {
     if (!date) return "";
@@ -93,10 +85,6 @@ function ProfileDashboard() {
     });
   };
 
-  // ============================================================
-  // LOADING STATE
-  // ============================================================
-
   if (loading) {
     return (
       <div className="flex min-h-full w-full items-center justify-center bg-[#F7F8FC]">
@@ -110,10 +98,6 @@ function ProfileDashboard() {
       </div>
     );
   }
-
-  // ============================================================
-  // PROFILE DOES NOT EXIST
-  // ============================================================
 
   if (!profile) {
     return (
@@ -259,12 +243,15 @@ function ProfileDashboard() {
 
                     <div className="mt-9 flex items-center gap-4">
                       <button
+                      onClick={() => setCreateProfileModal(true)}
                         type="button"
                         className="inline-flex h-11 items-center gap-2.5 rounded-xl bg-[#6D28D9] px-6 text-[14px] font-semibold text-white shadow-[0_6px_18px_rgba(109,40,217,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#5B21B6] hover:shadow-[0_8px_24px_rgba(109,40,217,0.28)] active:translate-y-0"
                       >
                         <Plus size={18} />
                         Create profile
                       </button>
+
+                      {createProfileModal && <CreateProfile/>}
 
                       <span className="text-[13px] text-slate-400">
                         Takes only a few minutes
@@ -942,4 +929,4 @@ function ProfileDashboard() {
   );
 }
 
-export default ProfileDashboard;
+export default ProfileDashboard;  

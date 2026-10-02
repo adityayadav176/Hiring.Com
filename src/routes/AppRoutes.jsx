@@ -4,9 +4,7 @@ import Signup from "../pages/auth/Signup";
 import ForgetPassword from "../pages/auth/ForgetPassword";
 import SendPasswordResetOtp from "../pages/auth/SendPasswordResetOtp";
 import Dashboard from "../pages/seeker/Dashboard";
-
 import JobLayout from "../components/jobs/JobLayout";
-
 import AdminDashboardS from "../components/Admin/AdminDashboardS";
 import ADashboard from "../pages/admin/ADashboard";
 import ProtectedRoutes from "./ProtectedRoutes";
@@ -17,6 +15,7 @@ import Settings from "../pages/seeker/Settings";
 import RecruiterLayout from "../recruiter/components/RecruiterLayout";
 import RecruiterJobs from "../recruiter/pages/RecruiterJobs";
 import RecruiterJobsLayout from "../recruiter/pages/RecruiterJobsLayout";
+import CreateProfile from "../components/profile/CreateProfile";
 const AppRoutes = () => {
     return (
         <Routes>
@@ -28,6 +27,7 @@ const AppRoutes = () => {
             <Route path="/users" element={<Userss/>}/>
             <Route path="/companies" element={<Companies/>}/>
             <Route path="/settings" element={<Settings/>}/>
+            <Route path="/createProfile" element={<CreateProfile/>}/>
 
 
             <Route path="/recruiter" element={<RecruiterLayout/>}/>

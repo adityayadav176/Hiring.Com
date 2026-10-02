@@ -9,8 +9,6 @@ const ProtectedRoutes = ({ allowedType }) => {
         recruiter,
     } = useAuth();
 
-
-
     // =========================================
     // ADMIN ROUTES
     // =========================================
@@ -20,8 +18,6 @@ const ProtectedRoutes = ({ allowedType }) => {
         // Not logged in as admin
         if (!admin) {
 
-            // If another account is logged in,
-            // don't logout them — just redirect them.
             if (user || recruiter) {
                 return <Navigate to="/" replace />;
             }

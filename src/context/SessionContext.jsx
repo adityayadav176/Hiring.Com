@@ -19,13 +19,6 @@ const SessionProvider = ({ children }) => {
                     credentials: "include",
                 }
             );
-
-            /*
-             * If accessToken/session is missing or expired,
-             * do not show an alert.
-             *
-             * Send the user directly to login.
-             */
             if (response.status === 401) {
                 setSessions([]);
 

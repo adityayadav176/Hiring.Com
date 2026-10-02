@@ -24,11 +24,24 @@ import { useAuth, useSession } from "../../hooks/Hook";
 ========================================================= */
 
 function DeviceIcon({ type }) {
-    if (type === "mobile") {
+    const normalizedType = String(type || "").toLowerCase();
+
+    if (
+        normalizedType.includes("mobile") ||
+        normalizedType.includes("phone") ||
+        normalizedType.includes("android") ||
+        normalizedType.includes("iphone")
+    ) {
         return <Smartphone size={18} strokeWidth={1.8} />;
     }
 
-    if (type === "laptop") {
+    if (
+        normalizedType.includes("laptop") ||
+        normalizedType.includes("desktop") ||
+        normalizedType.includes("windows") ||
+        normalizedType.includes("mac") ||
+        normalizedType.includes("linux")
+    ) {
         return <Laptop size={18} strokeWidth={1.8} />;
     }
 
@@ -72,7 +85,10 @@ function DeleteAccountSecurityModal({
             await onSendOtp();
             setOtpSent(true);
         } catch (error) {
-            console.error("Failed to send delete account OTP:", error);
+            console.error(
+                "Failed to send delete account OTP:",
+                error
+            );
         } finally {
             setSendingOtp(false);
         }
@@ -99,7 +115,10 @@ function DeleteAccountSecurityModal({
         try {
             await onConfirm();
         } catch (error) {
-            console.error("Account deletion failed:", error);
+            console.error(
+                "Account deletion failed:",
+                error
+            );
         } finally {
             setDeleting(false);
         }
@@ -147,7 +166,9 @@ function DeleteAccountSecurityModal({
                             <input
                                 type="password"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={(e) =>
+                                    setPassword(e.target.value)
+                                }
                                 placeholder="Enter your password"
                                 autoComplete="current-password"
                                 disabled={deleting}
@@ -165,7 +186,10 @@ function DeleteAccountSecurityModal({
                                 <button
                                     type="button"
                                     onClick={handleSendOtp}
-                                    disabled={sendingOtp || deleting}
+                                    disabled={
+                                        sendingOtp ||
+                                        deleting
+                                    }
                                     className="text-[11px] font-semibold text-violet-600 transition hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {sendingOtp
@@ -238,7 +262,9 @@ function DeleteAccountSecurityModal({
                         }
                         className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
                     >
-                        {deleting ? "Deleting..." : "Delete account"}
+                        {deleting
+                            ? "Deleting..."
+                            : "Delete account"}
                     </button>
                 </div>
             </div>
@@ -250,12 +276,19 @@ function DeleteAccountSecurityModal({
    STATUS PILL
 ========================================================= */
 
-function StatusPill({ children, tone = "neutral" }) {
+function StatusPill({
+    children,
+    tone = "neutral",
+}) {
     const style = {
-        success: "border-emerald-200 bg-emerald-50 text-emerald-700",
-        warning: "border-amber-200 bg-amber-50 text-amber-700",
-        danger: "border-red-200 bg-red-50 text-red-700",
-        neutral: "border-slate-200 bg-slate-50 text-slate-600",
+        success:
+            "border-emerald-200 bg-emerald-50 text-emerald-700",
+        warning:
+            "border-amber-200 bg-amber-50 text-amber-700",
+        danger:
+            "border-red-200 bg-red-50 text-red-700",
+        neutral:
+            "border-slate-200 bg-slate-50 text-slate-600",
     };
 
     return (
@@ -271,7 +304,10 @@ function StatusPill({ children, tone = "neutral" }) {
    SECTION HEADING
 ========================================================= */
 
-function SectionHeading({ title, description }) {
+function SectionHeading({
+    title,
+    description,
+}) {
     return (
         <div className="mb-3 px-1">
             <h2 className="text-[14px] font-bold tracking-[-0.01em] text-slate-900">
@@ -300,7 +336,9 @@ function SettingRow({
     return (
         <div
             className={`bg-white px-5 py-[18px] ${
-                border ? "border-b border-slate-100" : ""
+                border
+                    ? "border-b border-slate-100"
+                    : ""
             }`}
         >
             <div className="flex items-center gap-4">
@@ -435,7 +473,12 @@ function VerifyAccountModal({
     if (!open) return null;
 
     const handleSendOtp = async () => {
-        if (sendingOtp || verifying) return;
+        if (
+            sendingOtp ||
+            verifying
+        ) {
+            return;
+        }
 
         setSendingOtp(true);
 
@@ -443,7 +486,10 @@ function VerifyAccountModal({
             await onSendOtp();
             setOtpSent(true);
         } catch (error) {
-            console.error("Failed to send verification OTP:", error);
+            console.error(
+                "Failed to send verification OTP:",
+                error
+            );
         } finally {
             setSendingOtp(false);
         }
@@ -451,12 +497,16 @@ function VerifyAccountModal({
 
     const handleVerify = async () => {
         if (!otp.trim()) {
-            alert("Please enter the verification code.");
+            alert(
+                "Please enter the verification code."
+            );
             return;
         }
 
         if (otp.trim().length !== 6) {
-            alert("Please enter a valid 6-digit OTP.");
+            alert(
+                "Please enter a valid 6-digit OTP."
+            );
             return;
         }
 
@@ -465,7 +515,10 @@ function VerifyAccountModal({
         try {
             await onVerify();
         } catch (error) {
-            console.error("Account verification failed:", error);
+            console.error(
+                "Account verification failed:",
+                error
+            );
         } finally {
             setVerifying(false);
         }
@@ -478,7 +531,10 @@ function VerifyAccountModal({
                 {/* Header */}
                 <div className="flex items-start justify-between px-6 pt-6">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
-                        <ShieldCheck size={21} strokeWidth={1.8} />
+                        <ShieldCheck
+                            size={21}
+                            strokeWidth={1.8}
+                        />
                     </div>
 
                     <button
@@ -498,8 +554,9 @@ function VerifyAccountModal({
                     </h2>
 
                     <p className="mt-2 text-[13px] leading-5 text-slate-500">
-                        Verify your email address to add a trusted verification
-                        status to your Peer.Hiring account.
+                        Verify your email address to add a
+                        trusted verification status to your
+                        Peer.Hiring account.
                     </p>
 
                     {/* Information */}
@@ -515,8 +572,9 @@ function VerifyAccountModal({
                             </p>
 
                             <p className="mt-0.5 text-[11px] leading-4 text-violet-700">
-                                We'll send a 6-digit verification code to your
-                                registered email address.
+                                We'll send a 6-digit verification
+                                code to your registered email
+                                address.
                             </p>
                         </div>
                     </div>
@@ -531,7 +589,10 @@ function VerifyAccountModal({
                             <button
                                 type="button"
                                 onClick={handleSendOtp}
-                                disabled={sendingOtp || verifying}
+                                disabled={
+                                    sendingOtp ||
+                                    verifying
+                                }
                                 className="text-[11px] font-semibold text-violet-600 transition hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 {sendingOtp
@@ -550,7 +611,10 @@ function VerifyAccountModal({
                             onChange={(e) =>
                                 setOtp(
                                     e.target.value
-                                        .replace(/\D/g, "")
+                                        .replace(
+                                            /\D/g,
+                                            ""
+                                        )
                                         .slice(0, 6)
                                 )
                             }
@@ -562,7 +626,8 @@ function VerifyAccountModal({
 
                         {otpSent && (
                             <p className="mt-1.5 text-[11px] text-emerald-600">
-                                Verification code sent successfully.
+                                Verification code sent
+                                successfully.
                             </p>
                         )}
                     </div>
@@ -575,8 +640,9 @@ function VerifyAccountModal({
                         />
 
                         <p className="text-[11px] leading-4 text-emerald-700">
-                            Once verified, your account will display a trusted
-                            verification status.
+                            Once verified, your account will
+                            display a trusted verification
+                            status.
                         </p>
                     </div>
                 </div>
@@ -595,7 +661,10 @@ function VerifyAccountModal({
                     <button
                         onClick={handleVerify}
                         type="button"
-                        disabled={verifying || otp.trim().length !== 6}
+                        disabled={
+                            verifying ||
+                            otp.trim().length !== 6
+                        }
                         className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-violet-300"
                     >
                         {verifying
@@ -614,6 +683,7 @@ function VerifyAccountModal({
 
 function SessionsPanel({
     sessions,
+    sessionsLoading,
     onLogoutSession,
     onLogoutAll,
 }) {
@@ -627,14 +697,21 @@ function SessionsPanel({
                     </p>
 
                     <p className="mt-0.5 text-[11px] text-slate-400">
-                        {sessions.length} devices currently signed in
+                        {sessions.length} devices currently
+                        signed in
                     </p>
                 </div>
 
                 <button
                     onClick={onLogoutAll}
                     type="button"
-                    disabled={sessions.filter((session) => !session.current).length === 0}
+                    disabled={
+                        sessionsLoading ||
+                        sessions.filter(
+                            (session) =>
+                                !session.current
+                        ).length === 0
+                    }
                     className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     <LogOut size={14} />
@@ -643,7 +720,13 @@ function SessionsPanel({
             </div>
 
             <div className="divide-y divide-slate-100">
-                {sessions.length === 0 ? (
+                {sessionsLoading ? (
+                    <div className="px-5 py-8 text-center">
+                        <p className="text-[12px] font-medium text-slate-500">
+                            Loading active sessions...
+                        </p>
+                    </div>
+                ) : sessions.length === 0 ? (
                     <div className="px-5 py-8 text-center">
                         <p className="text-[12px] font-medium text-slate-600">
                             No active sessions found.
@@ -652,7 +735,11 @@ function SessionsPanel({
                 ) : (
                     sessions.map((session) => (
                         <div
-                            key={session.id}
+                            key={
+                                session.sessionId ||
+                                session.id ||
+                                `${session.browser}-${session.ipAddress}-${session.lastActive}`
+                            }
                             className="flex items-center gap-3 px-5 py-3.5"
                         >
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500">
@@ -660,7 +747,8 @@ function SessionsPanel({
                                     type={
                                         session.deviceName ||
                                         session.deviceType ||
-                                        session.type
+                                        session.type ||
+                                        session.device
                                     }
                                 />
                             </div>
@@ -668,7 +756,8 @@ function SessionsPanel({
                             <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">
                                     <p className="text-[13px] font-semibold text-slate-800">
-                                        {session.browser || "Unknown browser"}
+                                        {session.browser ||
+                                            "Unknown browser"}
                                     </p>
 
                                     {session.current && (
@@ -680,18 +769,30 @@ function SessionsPanel({
                                 </div>
 
                                 <p className="mt-0.5 text-[11px] text-slate-400">
-                                    {session.browser || "Unknown browser"}
+                                    {session.deviceName ||
+                                        session.deviceType ||
+                                        session.device ||
+                                        "Unknown device"}
                                     {" · "}
-                                    {session.ipAddress || "Unknown IP"}
+                                    {session.browser ||
+                                        "Unknown browser"}
                                     {" · "}
-                                    {session.lastActive || "Unknown activity"}
+                                    {session.ipAddress ||
+                                        "Unknown IP"}
+                                    {" · "}
+                                    {session.lastActive ||
+                                        "Unknown activity"}
                                 </p>
                             </div>
 
                             {!session.current && (
                                 <button
                                     type="button"
-                                    onClick={() => onLogoutSession(session)}
+                                    onClick={() =>
+                                        onLogoutSession(
+                                            session
+                                        )
+                                    }
                                     className="rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-slate-500 transition hover:bg-red-50 hover:text-red-600"
                                 >
                                     Sign out
@@ -711,6 +812,7 @@ function SessionsPanel({
 
 function Settings() {
     const {
+        user,
         handleLogout,
         handleDeleteAccount,
         handleSendDeleteAccountOtp,
@@ -718,48 +820,65 @@ function Settings() {
         handleVerifyEmail,
     } = useAuth();
 
-const {
-    sessions,
-    sessionsLoading,
-    handleGetAllSession,
-    handleLogoutADevice,
-    handleLogoutAllDevices,
-} = useSession();
+    const {
+        sessions,
+        sessionsLoading,
+        handleGetAllSession,
+        handleLogoutADevice,
+        handleLogoutAllDevices,
+    } = useSession();
 
-useEffect(() => {
-    const fetchSessions = async () => {
-        try {
-            await handleGetAllSession();
-        } catch (error) {
-            console.error(
-                "Failed to fetch sessions:",
-                error
-            );
-        }
-    };
+    const [localSessions, setLocalSessions] =
+        useState([]);
 
-    fetchSessions();
-}, []);
+    const [deletePassword, setDeletePassword] =
+        useState("");
 
-    const { sessions: authSessions = [] } = useSession();
+    const [deleteOtp, setDeleteOtp] =
+        useState("");
 
-    const [localSessions, setLocalSessions] = useState([]);
+    const [verifyOtp, setVerifyOtp] =
+        useState("");
 
-    const [deletePassword, setDeletePassword] = useState("");
-    const [deleteOtp, setDeleteOtp] = useState("");
+    const [showVerifyModal, setShowVerifyModal] =
+        useState(false);
 
-    const [verifyOtp, setVerifyOtp] = useState("");
-    const [showVerifyModal, setShowVerifyModal] = useState(false);
+    const [showSessions, setShowSessions] =
+        useState(false);
 
-    const [showSessions, setShowSessions] = useState(false);
-    const [show2FA, setShow2FA] = useState(false);
+    const [show2FA, setShow2FA] =
+        useState(false);
 
-    const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+    const [twoFactorEnabled, setTwoFactorEnabled] =
+        useState(false);
 
-    const [accountVerified, setAccountVerified] = useState(false);
+    const [accountVerified, setAccountVerified] =
+        useState(Boolean(user?.isVerified));
 
-    const [modal, setModal] = useState(null);
-    const [selectedSession, setSelectedSession] = useState(null);
+    const [modal, setModal] =
+        useState(null);
+
+    const [selectedSession, setSelectedSession] =
+        useState(null);
+
+    /* =====================================================
+       GET SESSIONS
+    ===================================================== */
+
+    useEffect(() => {
+        const fetchSessions = async () => {
+            try {
+                await handleGetAllSession();
+            } catch (error) {
+                console.error(
+                    "Failed to fetch sessions:",
+                    error
+                );
+            }
+        };
+
+        fetchSessions();
+    }, [handleGetAllSession]);
 
     /* =====================================================
        SYNC SESSIONS
@@ -767,11 +886,21 @@ useEffect(() => {
 
     useEffect(() => {
         setLocalSessions(
-            Array.isArray(authSessions)
-                ? authSessions
+            Array.isArray(sessions)
+                ? sessions
                 : []
         );
-    }, [authSessions]);
+    }, [sessions]);
+
+    /* =====================================================
+       SYNC VERIFICATION
+    ===================================================== */
+
+    useEffect(() => {
+        setAccountVerified(
+            Boolean(user?.isVerified)
+        );
+    }, [user?.isVerified]);
 
     /* =====================================================
        MODAL HELPERS
@@ -787,6 +916,10 @@ useEffect(() => {
     ===================================================== */
 
     const openVerifyAccount = () => {
+        if (accountVerified) {
+            return;
+        }
+
         setVerifyOtp("");
         setShowVerifyModal(true);
     };
@@ -796,170 +929,215 @@ useEffect(() => {
         setShowVerifyModal(false);
     };
 
-    const handleSendVerificationOtp = async () => {
-        try {
-            await handleEmailVerificationOtp();
-        } catch (error) {
-            console.error(
-                "Failed to send verification OTP:",
-                error
-            );
+    const handleSendVerificationOtp =
+        async () => {
+            try {
+                await handleEmailVerificationOtp();
+            } catch (error) {
+                console.error(
+                    "Failed to send verification OTP:",
+                    error
+                );
 
-            alert(
-                error?.message ||
-                "Failed to send verification OTP."
-            );
+                alert(
+                    error?.message ||
+                    "Failed to send verification OTP."
+                );
 
-            throw error;
-        }
-    };
+                throw error;
+            }
+        };
 
-    const handleVerifyAccount = async () => {
-        if (!verifyOtp.trim()) {
-            alert("Please enter the verification code.");
-            return;
-        }
+    const handleVerifyAccount =
+        async () => {
+            if (!verifyOtp.trim()) {
+                alert(
+                    "Please enter the verification code."
+                );
+                return;
+            }
 
-        if (verifyOtp.trim().length !== 6) {
-            alert("Please enter a valid 6-digit OTP.");
-            return;
-        }
+            if (
+                verifyOtp.trim().length !== 6
+            ) {
+                alert(
+                    "Please enter a valid 6-digit OTP."
+                );
+                return;
+            }
 
-        try {
-            /*
-             IMPORTANT:
-             handleVerifyEmail must THROW when API fails.
-             Therefore accountVerified will only be changed
-             after a successful API response.
-            */
+            try {
+                await handleVerifyEmail({
+                    otp: verifyOtp.trim(),
+                });
 
-            await handleVerifyEmail({
-                otp: verifyOtp.trim(),
-            });
+                setAccountVerified(true);
 
-            setAccountVerified(true);
+                closeVerifyAccount();
+            } catch (error) {
+                console.error(
+                    "Account verification failed:",
+                    error
+                );
 
-            closeVerifyAccount();
-        } catch (error) {
-            console.error(
-                "Account verification failed:",
-                error
-            );
+                alert(
+                    error?.message ||
+                    "Account verification failed."
+                );
 
-            alert(
-                error?.message ||
-                "Account verification failed."
-            );
-
-            throw error;
-        }
-    };
+                throw error;
+            }
+        };
 
     /* =====================================================
        SESSION ACTIONS
     ===================================================== */
 
-    const openLogoutSession = (session) => {
-        setModal("session");
-        setSelectedSession(session);
-    };
+    const openLogoutSession =
+        (session) => {
+            setModal("session");
+            setSelectedSession(session);
+        };
 
+    const handleLogoutSession =
+        async () => {
+            const sessionId =
+                selectedSession?.sessionId ||
+                selectedSession?.id;
 
-  const handleLogoutSession = async () => {
-    if (!selectedSession?.sessionId) {
-        return;
-    }
+            if (!sessionId) {
+                alert(
+                    "This session does not have a valid session ID."
+                );
+                return;
+            }
 
-    try {
-        await handleLogoutADevice({
-            sessionId: selectedSession.sessionId,
-        });
+            try {
+                await handleLogoutADevice({
+                    sessionId,
+                });
 
-        closeModal();
-    } catch (error) {
-        console.error(
-            "Specific session logout failed:",
-            error
-        );
+                setLocalSessions(
+                    (previousSessions) =>
+                        previousSessions.filter(
+                            (session) =>
+                                (
+                                    session.sessionId ||
+                                    session.id
+                                ) !== sessionId
+                        )
+                );
 
-        alert(
-            error?.message ||
-            "Failed to logout this device."
-        );
-    }
-};
+                closeModal();
+            } catch (error) {
+                console.error(
+                    "Specific session logout failed:",
+                    error
+                );
 
-   const handleLogoutAll = async () => {
-    try {
-        await handleLogoutAllDevices();
+                alert(
+                    error?.message ||
+                    "Failed to logout this device."
+                );
+            }
+        };
 
-        closeModal();
-    } catch (error) {
-        console.error(
-            "Logout all devices failed:",
-            error
-        );
+    const handleLogoutAll =
+        async () => {
+            try {
+                await handleLogoutAllDevices();
 
-        alert(
-            error?.message ||
-            "Failed to logout all devices."
-        );
-    }
-};
+                setLocalSessions(
+                    (previousSessions) =>
+                        previousSessions.filter(
+                            (session) =>
+                                session.current
+                        )
+                );
 
-    const handleLogoutCurrent = async () => {
-        try {
-            await handleLogout();
-            closeModal();
-        } catch (error) {
-            console.error(
-                "Current session logout failed:",
-                error
-            );
-        }
-    };
+                closeModal();
+            } catch (error) {
+                console.error(
+                    "Logout all devices failed:",
+                    error
+                );
+
+                alert(
+                    error?.message ||
+                    "Failed to logout all devices."
+                );
+            }
+        };
+
+    const handleLogoutCurrent =
+        async () => {
+            try {
+                await handleLogout();
+
+                closeModal();
+            } catch (error) {
+                console.error(
+                    "Current session logout failed:",
+                    error
+                );
+
+                alert(
+                    error?.message ||
+                    "Failed to sign out."
+                );
+            }
+        };
 
     /* =====================================================
        DELETE ACCOUNT
     ===================================================== */
 
-    const handleDeleteAccountC = async () => {
-        if (!deletePassword.trim()) {
-            alert("Please enter your password.");
-            return;
-        }
+    const handleDeleteAccountC =
+        async () => {
+            if (!deletePassword.trim()) {
+                alert(
+                    "Please enter your password."
+                );
+                return;
+            }
 
-        if (!deleteOtp.trim()) {
-            alert("Please enter the OTP.");
-            return;
-        }
+            if (!deleteOtp.trim()) {
+                alert(
+                    "Please enter the OTP."
+                );
+                return;
+            }
 
-        if (deleteOtp.trim().length !== 6) {
-            alert("Please enter a valid 6-digit OTP.");
-            return;
-        }
+            if (
+                deleteOtp.trim().length !== 6
+            ) {
+                alert(
+                    "Please enter a valid 6-digit OTP."
+                );
+                return;
+            }
 
-        try {
-            await handleDeleteAccount({
-                otp: deleteOtp.trim(),
-                password: deletePassword,
-            });
+            try {
+                await handleDeleteAccount({
+                    otp: deleteOtp.trim(),
+                    password: deletePassword,
+                });
 
-            closeModal();
-        } catch (error) {
-            console.error(
-                "Account deletion failed:",
-                error
-            );
+                closeModal();
+            } catch (error) {
+                console.error(
+                    "Account deletion failed:",
+                    error
+                );
 
-            alert(
-                error?.message ||
-                "Account deletion failed."
-            );
+                alert(
+                    error?.message ||
+                    "Account deletion failed."
+                );
 
-            throw error;
-        }
-    };
+                throw error;
+            }
+        };
 
     /* =====================================================
        RENDER
@@ -983,8 +1161,9 @@ useEffect(() => {
                             </h1>
 
                             <p className="mt-1.5 max-w-2xl text-[13px] leading-5 text-slate-500">
-                                Manage your account, security preferences and
-                                active sessions.
+                                Manage your account, security
+                                preferences and active
+                                sessions.
                             </p>
                         </header>
 
@@ -1029,12 +1208,16 @@ useEffect(() => {
                                                 >
                                                     {accountVerified ? (
                                                         <>
-                                                            <CircleCheck size={12} />
+                                                            <CircleCheck
+                                                                size={12}
+                                                            />
                                                             Verified
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <TriangleAlert size={12} />
+                                                            <TriangleAlert
+                                                                size={12}
+                                                            />
                                                             Not Verified
                                                         </>
                                                     )}
@@ -1047,14 +1230,19 @@ useEffect(() => {
                                                             ? undefined
                                                             : openVerifyAccount
                                                     }
-                                                    className="hidden items-center gap-1 rounded-lg px-2 py-1.5 text-[12px] font-semibold text-violet-600 transition hover:bg-violet-50 sm:flex"
+                                                    disabled={
+                                                        accountVerified
+                                                    }
+                                                    className="hidden items-center gap-1 rounded-lg px-2 py-1.5 text-[12px] font-semibold text-violet-600 transition hover:bg-violet-50 disabled:cursor-default disabled:opacity-100 sm:flex"
                                                 >
                                                     {accountVerified
                                                         ? "Verified"
                                                         : "Verify"}
 
                                                     {!accountVerified && (
-                                                        <ChevronRight size={14} />
+                                                        <ChevronRight
+                                                            size={14}
+                                                        />
                                                     )}
                                                 </button>
 
@@ -1074,19 +1262,26 @@ useEffect(() => {
 
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-[12px] font-semibold text-amber-900">
-                                                    Verify your account
+                                                    Verify your
+                                                    account
                                                 </p>
 
                                                 <p className="mt-0.5 text-[11px] leading-4 text-amber-700">
-                                                    Complete verification to strengthen
-                                                    your profile and improve trust
-                                                    across Peer.Hiring.
+                                                    Complete
+                                                    verification
+                                                    to strengthen
+                                                    your profile
+                                                    and improve
+                                                    trust across
+                                                    Peer.Hiring.
                                                 </p>
                                             </div>
 
                                             <button
                                                 className="shrink-0 rounded-lg bg-white px-3 py-1.5 text-[11px] font-semibold text-amber-800 shadow-sm ring-1 ring-amber-200 transition hover:bg-amber-100"
-                                                onClick={openVerifyAccount}
+                                                onClick={
+                                                    openVerifyAccount
+                                                }
                                                 type="button"
                                             >
                                                 Verify account
@@ -1115,7 +1310,9 @@ useEffect(() => {
                                             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
                                         >
                                             Open
-                                            <ChevronRight size={14} />
+                                            <ChevronRight
+                                                size={14}
+                                            />
                                         </button>
                                     }
                                 />
@@ -1165,12 +1362,16 @@ useEffect(() => {
                                                 >
                                                     {twoFactorEnabled ? (
                                                         <>
-                                                            <CircleCheck size={12} />
+                                                            <CircleCheck
+                                                                size={12}
+                                                            />
                                                             Enabled
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <TriangleAlert size={12} />
+                                                            <TriangleAlert
+                                                                size={12}
+                                                            />
                                                             Disabled
                                                         </>
                                                     )}
@@ -1208,12 +1409,18 @@ useEffect(() => {
 
                                                 <div>
                                                     <p className="text-[12px] font-semibold text-slate-800">
-                                                        Authenticator app
+                                                        Authenticator
+                                                        app
                                                     </p>
 
                                                     <p className="mt-0.5 text-[11px] leading-4 text-slate-400">
-                                                        Use a verification code from your
-                                                        authenticator app when signing in.
+                                                        Use a
+                                                        verification
+                                                        code from
+                                                        your
+                                                        authenticator
+                                                        app when
+                                                        signing in.
                                                     </p>
                                                 </div>
 
@@ -1283,15 +1490,19 @@ useEffect(() => {
 
                                     {showSessions && (
                                         <SessionsPanel
-                                            sessions={localSessions}
+                                            sessions={
+                                                localSessions
+                                            }
+                                            sessionsLoading={
+                                                sessionsLoading
+                                            }
                                             onLogoutSession={
                                                 openLogoutSession
                                             }
-                                            onLogoutAll={
-                                                () =>
-                                                    setModal(
-                                                        "allSessions"
-                                                    )
+                                            onLogoutAll={() =>
+                                                setModal(
+                                                    "allSessions"
+                                                )
                                             }
                                         />
                                     )}
@@ -1320,19 +1531,25 @@ useEffect(() => {
                                     </p>
 
                                     <p className="mt-1 max-w-2xl text-[12px] leading-5 text-slate-500">
-                                        Review your active sessions regularly and
-                                        remove devices you no longer recognize.
+                                        Review your active
+                                        sessions regularly and
+                                        remove devices you no
+                                        longer recognize.
                                     </p>
 
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            setShowSessions(true)
+                                            setShowSessions(
+                                                true
+                                            )
                                         }
                                         className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-violet-700 transition hover:text-violet-800"
                                     >
                                         Review security
-                                        <ArrowUpRight size={14} />
+                                        <ArrowUpRight
+                                            size={14}
+                                        />
                                     </button>
 
                                 </div>
@@ -1366,11 +1583,15 @@ useEffect(() => {
                                         <button
                                             type="button"
                                             onClick={() =>
-                                                setModal("logout")
+                                                setModal(
+                                                    "logout"
+                                                )
                                             }
                                             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-[12px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
                                         >
-                                            <LogOut size={14} />
+                                            <LogOut
+                                                size={14}
+                                            />
                                             Sign out
                                         </button>
                                     }
@@ -1391,7 +1612,8 @@ useEffect(() => {
                                 </p>
 
                                 <p className="mt-1 text-[12px] text-slate-400">
-                                    Irreversible account actions.
+                                    Irreversible account
+                                    actions.
                                 </p>
                             </div>
 
@@ -1411,12 +1633,16 @@ useEffect(() => {
                                         <button
                                             type="button"
                                             onClick={() =>
-                                                setModal("delete")
+                                                setModal(
+                                                    "delete"
+                                                )
                                             }
                                             className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-3.5 py-2 text-[12px] font-semibold text-red-600 transition hover:bg-red-50"
                                         >
                                             Delete account
-                                            <ChevronRight size={14} />
+                                            <ChevronRight
+                                                size={14}
+                                            />
                                         </button>
                                     }
                                 />
@@ -1431,9 +1657,11 @@ useEffect(() => {
                                         />
 
                                         <p className="text-[11px] leading-4 text-red-700">
-                                            Account deletion is permanent. Make sure
-                                            you've backed up anything you need before
-                                            continuing.
+                                            Account deletion is
+                                            permanent. Make sure
+                                            you've backed up
+                                            anything you need
+                                            before continuing.
                                         </p>
 
                                     </div>
@@ -1458,7 +1686,9 @@ useEffect(() => {
                 description="You'll be signed out from this device. You'll need to sign in again to access your account."
                 confirmText="Sign out"
                 onClose={closeModal}
-                onConfirm={handleLogoutCurrent}
+                onConfirm={
+                    handleLogoutCurrent
+                }
             />
 
             {/* =============================================================
@@ -1477,7 +1707,9 @@ useEffect(() => {
                 description="This device will lose access to your Peer.Hiring account. You can sign in again later."
                 confirmText="Sign out device"
                 onClose={closeModal}
-                onConfirm={handleLogoutSession}
+                onConfirm={
+                    handleLogoutSession
+                }
             />
 
             {/* =============================================================
@@ -1485,13 +1717,17 @@ useEffect(() => {
             ============================================================= */}
 
             <ConfirmModal
-                open={modal === "allSessions"}
+                open={
+                    modal === "allSessions"
+                }
                 icon={<LogOut size={19} />}
                 title="Sign out all other devices?"
                 description="Every other active session will be signed out. Your current device will remain signed in."
                 confirmText="Sign out others"
                 onClose={closeModal}
-                onConfirm={handleLogoutAll}
+                onConfirm={
+                    handleLogoutAll
+                }
             />
 
             {/* =============================================================
@@ -1509,7 +1745,9 @@ useEffect(() => {
                 onConfirm={() => {
                     setDeletePassword("");
                     setDeleteOtp("");
-                    setModal("delete-security");
+                    setModal(
+                        "delete-security"
+                    );
                 }}
             />
 
@@ -1518,27 +1756,38 @@ useEffect(() => {
             ============================================================= */}
 
             <DeleteAccountSecurityModal
-                open={modal === "delete-security"}
+                open={
+                    modal ===
+                    "delete-security"
+                }
                 password={deletePassword}
-                setPassword={setDeletePassword}
+                setPassword={
+                    setDeletePassword
+                }
                 otp={deleteOtp}
                 setOtp={setDeleteOtp}
                 onClose={closeModal}
-                onSendOtp={handleSendDeleteAccountOtp}
-                onConfirm={handleDeleteAccountC}
+                onSendOtp={
+                    handleSendDeleteAccountOtp
+                }
+                onConfirm={
+                    handleDeleteAccountC
+                }
             />
-
-            {/* =============================================================
-                VERIFY ACCOUNT
-            ============================================================= */}
 
             <VerifyAccountModal
                 open={showVerifyModal}
                 otp={verifyOtp}
                 setOtp={setVerifyOtp}
-                onClose={closeVerifyAccount}
-                onSendOtp={handleSendVerificationOtp}
-                onVerify={handleVerifyAccount}
+                onClose={
+                    closeVerifyAccount
+                }
+                onSendOtp={
+                    handleSendVerificationOtp
+                }
+                onVerify={
+                    handleVerifyAccount
+                }
             />
         </>
     );
