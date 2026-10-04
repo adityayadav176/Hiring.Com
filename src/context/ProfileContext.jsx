@@ -29,6 +29,7 @@ const ProfileProvider = ({children}) => {
          }
 
          setProfile(data.data);
+        await handleGetMyProfile();
  
          console.log("Profile Created Successfully");
        } catch (error) {

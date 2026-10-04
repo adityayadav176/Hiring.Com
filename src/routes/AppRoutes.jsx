@@ -15,7 +15,6 @@ import Settings from "../pages/seeker/Settings";
 import RecruiterLayout from "../recruiter/components/RecruiterLayout";
 import RecruiterJobs from "../recruiter/pages/RecruiterJobs";
 import RecruiterJobsLayout from "../recruiter/pages/RecruiterJobsLayout";
-import CreateProfile from "../components/profile/CreateProfile";
 const AppRoutes = () => {
     return (
         <Routes>
@@ -27,8 +26,6 @@ const AppRoutes = () => {
             <Route path="/users" element={<Userss/>}/>
             <Route path="/companies" element={<Companies/>}/>
             <Route path="/settings" element={<Settings/>}/>
-            <Route path="/createProfile" element={<CreateProfile/>}/>
-
 
             <Route path="/recruiter" element={<RecruiterLayout/>}/>
             <Route path="/recruiter/jobs" element={<RecruiterJobs />}/>
