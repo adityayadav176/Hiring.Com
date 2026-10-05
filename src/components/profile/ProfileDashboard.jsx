@@ -49,6 +49,199 @@ function ProfileDashboard() {
     updateProfileModalS
   } = useProfile();
 
+  const [addItemModal, setAddItemModal] = useState({
+  open: false,
+  type: null,
+});
+
+const [addItemForm, setAddItemForm] = useState({});
+const [addItemLoading, setAddItemLoading] = useState(false);
+
+const openAddItemModal = (type) => {
+  setAddItemModal({
+    open: true,
+    type,
+  });
+
+  if (type === "skill") {
+    setAddItemForm({
+      name: "",
+      level: "beginner",
+    });
+  }
+
+  if (type === "experience") {
+    setAddItemForm({
+      position: "",
+      company: "",
+      employmentType: "full-time",
+      startDate: "",
+      endDate: "",
+      currentlyWorking: false,
+      description: "",
+    });
+  }
+
+  if (type === "education") {
+    setAddItemForm({
+      degree: "",
+      field: "",
+      institute: "",
+      startYear: "",
+      endYear: "",
+      grade: "",
+    });
+  }
+
+  if (type === "project") {
+    setAddItemForm({
+      title: "",
+      description: "",
+      technologies: "",
+      githubUrl: "",
+      liveUrl: "",
+      startDate: "",
+      endDate: "",
+    });
+  }
+};
+
+const closeAddItemModal = () => {
+  if (addItemLoading) return;
+
+  setAddItemModal({
+    open: false,
+    type: null,
+  });
+
+  setAddItemForm({});
+};
+
+const updateAddItemForm = (field, value) => {
+  setAddItemForm((prev) => ({
+    ...prev,
+    [field]: value,
+  }));
+};
+
+const handleAddItem = async (e) => {
+  e.preventDefault();
+
+  if (!addItemModal.type) return;
+
+  try {
+    setAddItemLoading(true);
+
+    let updatedProfile = {
+      ...profile,
+    };
+
+    if (addItemModal.type === "skill") {
+      if (!addItemForm.name?.trim()) {
+        alert("Please enter a skill name.");
+        return;
+      }
+
+      updatedProfile.skills = [
+        ...(profile?.skills || []),
+        {
+          name: addItemForm.name.trim(),
+          level: addItemForm.level,
+        },
+      ];
+    }
+
+    if (addItemModal.type === "experience") {
+      if (
+        !addItemForm.position?.trim() ||
+        !addItemForm.company?.trim()
+      ) {
+        alert("Please enter position and company.");
+        return;
+      }
+
+      updatedProfile.experience = [
+        ...(profile?.experience || []),
+        {
+          position: addItemForm.position.trim(),
+          company: addItemForm.company.trim(),
+          employmentType: addItemForm.employmentType,
+          startDate: addItemForm.startDate || null,
+          endDate: addItemForm.currentlyWorking
+            ? null
+            : addItemForm.endDate || null,
+          currentlyWorking: addItemForm.currentlyWorking,
+          description: addItemForm.description.trim(),
+        },
+      ];
+    }
+
+    if (addItemModal.type === "education") {
+      if (
+        !addItemForm.degree?.trim() ||
+        !addItemForm.institute?.trim()
+      ) {
+        alert("Please enter degree and institute.");
+        return;
+      }
+
+      updatedProfile.education = [
+        ...(profile?.education || []),
+        {
+          degree: addItemForm.degree.trim(),
+          field: addItemForm.field.trim(),
+          institute: addItemForm.institute.trim(),
+          startYear: addItemForm.startYear
+            ? Number(addItemForm.startYear)
+            : null,
+          endYear: addItemForm.endYear
+            ? Number(addItemForm.endYear)
+            : null,
+          grade: addItemForm.grade.trim(),
+        },
+      ];
+    }
+
+    if (addItemModal.type === "project") {
+      if (!addItemForm.title?.trim()) {
+        alert("Please enter a project title.");
+        return;
+      }
+
+      updatedProfile.projects = [
+        ...(profile?.projects || []),
+        {
+          title: addItemForm.title.trim(),
+          description: addItemForm.description.trim(),
+          technologies: addItemForm.technologies
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean),
+          githubUrl: addItemForm.githubUrl.trim(),
+          liveUrl: addItemForm.liveUrl.trim(),
+          startDate: addItemForm.startDate || null,
+          endDate: addItemForm.endDate || null,
+        },
+      ];
+    }
+
+    await handleUpdateProfile(updatedProfile);
+
+    closeAddItemModal();
+
+    await handleGetMyProfile();
+    await handleProfileCompletion();
+  } catch (error) {
+    console.error("Failed to add profile item:", error);
+    alert(
+      error?.response?.data?.message ||
+        "Something went wrong while saving."
+    );
+  } finally {
+    setAddItemLoading(false);
+  }
+};
+
   const { user } = useAuth();
 
   useEffect(() => {
@@ -817,6 +1010,7 @@ function ProfileDashboard() {
 
                 <button
                   type="button"
+                  onClick={() => openAddItemModal("skill")}
                   className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700"
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -877,6 +1071,7 @@ function ProfileDashboard() {
 
                 <button
                   type="button"
+                  onClick={() => openAddItemModal("experience")}
                   className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700"
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -993,6 +1188,7 @@ function ProfileDashboard() {
 
                 <button
                   type="button"
+                  onClick={() => openAddItemModal("education")}
                   className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700"
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -1099,6 +1295,7 @@ function ProfileDashboard() {
 
                 <button
                   type="button"
+                  onClick={() => openAddItemModal("project")}
                   className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700"
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -1570,6 +1767,508 @@ function ProfileDashboard() {
           onSubmit={handleCreateProfile}
         />
       )}
+
+      {addItemModal.open && (
+  <div
+    className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
+    onMouseDown={(e) => {
+      if (e.target === e.currentTarget) {
+        closeAddItemModal();
+      }
+    }}
+  >
+    <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+        <div>
+          <h2 className="text-base font-bold text-slate-900">
+            {addItemModal.type === "skill" && "Add Skill"}
+            {addItemModal.type === "experience" && "Add Experience"}
+            {addItemModal.type === "education" && "Add Education"}
+            {addItemModal.type === "project" && "Add Project"}
+          </h2>
+
+          <p className="mt-0.5 text-xs text-slate-500">
+            Add information to your professional profile
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={closeAddItemModal}
+          disabled={addItemLoading}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* FORM */}
+      <form onSubmit={handleAddItem}>
+
+        <div className="max-h-[65vh] overflow-y-auto p-5">
+
+          {addItemModal.type === "skill" && (
+            <div className="space-y-4">
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  Skill name
+                </label>
+
+                <input
+                  type="text"
+                  value={addItemForm.name || ""}
+                  onChange={(e) =>
+                    updateAddItemForm("name", e.target.value)
+                  }
+                  placeholder="e.g. React.js"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  Proficiency
+                </label>
+
+                <select
+                  value={addItemForm.level || "beginner"}
+                  onChange={(e) =>
+                    updateAddItemForm("level", e.target.value)
+                  }
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                >
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="expert">Expert</option>
+                </select>
+              </div>
+
+            </div>
+          )}
+
+          {addItemModal.type === "experience" && (
+            <div className="space-y-4">
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    Position
+                  </label>
+
+                  <input
+                    type="text"
+                    value={addItemForm.position || ""}
+                    onChange={(e) =>
+                      updateAddItemForm("position", e.target.value)
+                    }
+                    placeholder="Software Developer"
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    Company
+                  </label>
+
+                  <input
+                    type="text"
+                    value={addItemForm.company || ""}
+                    onChange={(e) =>
+                      updateAddItemForm("company", e.target.value)
+                    }
+                    placeholder="Company name"
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  />
+                </div>
+
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  Employment type
+                </label>
+
+                <select
+                  value={addItemForm.employmentType || "full-time"}
+                  onChange={(e) =>
+                    updateAddItemForm(
+                      "employmentType",
+                      e.target.value
+                    )
+                  }
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                >
+                  <option value="full-time">Full-time</option>
+                  <option value="part-time">Part-time</option>
+                  <option value="internship">Internship</option>
+                  <option value="freelance">Freelance</option>
+                  <option value="contract">Contract</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    Start date
+                  </label>
+
+                  <input
+                    type="date"
+                    value={addItemForm.startDate || ""}
+                    onChange={(e) =>
+                      updateAddItemForm("startDate", e.target.value)
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  />
+                </div>
+
+                {!addItemForm.currentlyWorking && (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                      End date
+                    </label>
+
+                    <input
+                      type="date"
+                      value={addItemForm.endDate || ""}
+                      onChange={(e) =>
+                        updateAddItemForm("endDate", e.target.value)
+                      }
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                    />
+                  </div>
+                )}
+
+              </div>
+
+              <label className="flex cursor-pointer items-center gap-2 rounded-xl bg-slate-50 p-3">
+                <input
+                  type="checkbox"
+                  checked={addItemForm.currentlyWorking || false}
+                  onChange={(e) =>
+                    updateAddItemForm(
+                      "currentlyWorking",
+                      e.target.checked
+                    )
+                  }
+                  className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                />
+
+                <span className="text-sm font-medium text-slate-700">
+                  I currently work here
+                </span>
+              </label>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  Description
+                </label>
+
+                <textarea
+                  rows={4}
+                  value={addItemForm.description || ""}
+                  onChange={(e) =>
+                    updateAddItemForm("description", e.target.value)
+                  }
+                  placeholder="Describe your responsibilities and achievements..."
+                  className="w-full resize-none rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                />
+              </div>
+
+            </div>
+          )}
+
+          {addItemModal.type === "education" && (
+            <div className="space-y-4">
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  Degree
+                </label>
+
+                <input
+                  type="text"
+                  value={addItemForm.degree || ""}
+                  onChange={(e) =>
+                    updateAddItemForm("degree", e.target.value)
+                  }
+                  placeholder="Bachelor of Computer Applications"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  Field of study
+                </label>
+
+                <input
+                  type="text"
+                  value={addItemForm.field || ""}
+                  onChange={(e) =>
+                    updateAddItemForm("field", e.target.value)
+                  }
+                  placeholder="Computer Science"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  Institute
+                </label>
+
+                <input
+                  type="text"
+                  value={addItemForm.institute || ""}
+                  onChange={(e) =>
+                    updateAddItemForm("institute", e.target.value)
+                  }
+                  placeholder="University / College"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    Start year
+                  </label>
+
+                  <input
+                    type="number"
+                    value={addItemForm.startYear || ""}
+                    onChange={(e) =>
+                      updateAddItemForm("startYear", e.target.value)
+                    }
+                    placeholder="2024"
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    End year
+                  </label>
+
+                  <input
+                    type="number"
+                    value={addItemForm.endYear || ""}
+                    onChange={(e) =>
+                      updateAddItemForm("endYear", e.target.value)
+                    }
+                    placeholder="2027"
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  />
+                </div>
+
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  Grade / CGPA
+                </label>
+
+                <input
+                  type="text"
+                  value={addItemForm.grade || ""}
+                  onChange={(e) =>
+                    updateAddItemForm("grade", e.target.value)
+                  }
+                  placeholder="8.2 CGPA"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                />
+              </div>
+
+            </div>
+          )}
+
+          {addItemModal.type === "project" && (
+            <div className="space-y-4">
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  Project title
+                </label>
+
+                <input
+                  type="text"
+                  value={addItemForm.title || ""}
+                  onChange={(e) =>
+                    updateAddItemForm("title", e.target.value)
+                  }
+                  placeholder="Peer.Hiring"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  Description
+                </label>
+
+                <textarea
+                  rows={4}
+                  value={addItemForm.description || ""}
+                  onChange={(e) =>
+                    updateAddItemForm("description", e.target.value)
+                  }
+                  placeholder="What did you build?"
+                  className="w-full resize-none rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  Technologies
+                </label>
+
+                <input
+                  type="text"
+                  value={addItemForm.technologies || ""}
+                  onChange={(e) =>
+                    updateAddItemForm(
+                      "technologies",
+                      e.target.value
+                    )
+                  }
+                  placeholder="React, Node.js, MongoDB, Tailwind"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                />
+
+                <p className="mt-1.5 text-[11px] text-slate-400">
+                  Separate technologies with commas
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    GitHub URL
+                  </label>
+
+                  <input
+                    type="url"
+                    value={addItemForm.githubUrl || ""}
+                    onChange={(e) =>
+                      updateAddItemForm(
+                        "githubUrl",
+                        e.target.value
+                      )
+                    }
+                    placeholder="https://github.com/..."
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    Live URL
+                  </label>
+
+                  <input
+                    type="url"
+                    value={addItemForm.liveUrl || ""}
+                    onChange={(e) =>
+                      updateAddItemForm(
+                        "liveUrl",
+                        e.target.value
+                      )
+                    }
+                    placeholder="https://..."
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  />
+                </div>
+
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    Start date
+                  </label>
+
+                  <input
+                    type="date"
+                    value={addItemForm.startDate || ""}
+                    onChange={(e) =>
+                      updateAddItemForm("startDate", e.target.value)
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    End date
+                  </label>
+
+                  <input
+                    type="date"
+                    value={addItemForm.endDate || ""}
+                    onChange={(e) =>
+                      updateAddItemForm("endDate", e.target.value)
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  />
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/70 px-5 py-4">
+
+          <button
+            type="button"
+            onClick={closeAddItemModal}
+            disabled={addItemLoading}
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            disabled={addItemLoading}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#6d28d9] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5b21b6] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {addItemLoading ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                Save
+              </>
+            )}
+          </button>
+
+        </div>
+
+      </form>
+    </div>
+  </div>
+)}
 
       {updateProfileModalS && (
   <UpdateProfileModal
