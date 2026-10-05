@@ -30,9 +30,8 @@ import UpdateProfileModal from "../../routes/updateProfileModal";
 
 function ProfileDashboard() {
   const [createProfileModal, setCreateProfileModal] = useState(false);
-  const [updateProfileModalS, setUpdateProfileModal] = useState(false);
   const [loading, setLoading] = useState(true);
-
+  
   const [detailsModal, setDetailsModal] = useState({
     open: false,
     type: null,
@@ -45,7 +44,9 @@ function ProfileDashboard() {
     handleGetMyProfile,
     handleProfileCompletion,
     handleCreateProfile,
-    handleUpdateProfile
+    handleUpdateProfile,
+    setUpdateProfileModal,
+    updateProfileModalS
   } = useProfile();
 
   const { user } = useAuth();

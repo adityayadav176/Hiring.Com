@@ -59,10 +59,6 @@ const UpdateProfileModal = ({
     },
   });
 
-  /* --------------------------------
-     LOAD EXISTING PROFILE
-  -------------------------------- */
-
   useEffect(() => {
     if (!profile || !open) return;
 
@@ -125,10 +121,6 @@ const UpdateProfileModal = ({
     });
   }, [profile, open]);
 
-  /* --------------------------------
-     BASIC CHANGE
-  -------------------------------- */
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -137,10 +129,6 @@ const UpdateProfileModal = ({
       [name]: value,
     }));
   };
-
-  /* --------------------------------
-     NESTED CHANGE
-  -------------------------------- */
 
   const handleNestedChange = (
     section,
@@ -155,10 +143,6 @@ const UpdateProfileModal = ({
       },
     }));
   };
-
-  /* --------------------------------
-     SALARY CHANGE
-  -------------------------------- */
 
   const handleSalaryChange = (
     field,
@@ -178,10 +162,6 @@ const UpdateProfileModal = ({
       },
     }));
   };
-
-  /* --------------------------------
-     SKILLS
-  -------------------------------- */
 
   const addSkill = () => {
     setForm((prev) => ({
@@ -227,10 +207,6 @@ const UpdateProfileModal = ({
       ),
     }));
   };
-
-  /* --------------------------------
-     EXPERIENCE
-  -------------------------------- */
 
   const addExperience = () => {
     setForm((prev) => ({
@@ -283,10 +259,6 @@ const UpdateProfileModal = ({
     }));
   };
 
-  /* --------------------------------
-     EDUCATION
-  -------------------------------- */
-
   const addEducation = () => {
     setForm((prev) => ({
       ...prev,
@@ -336,10 +308,6 @@ const UpdateProfileModal = ({
         ),
     }));
   };
-
-  /* --------------------------------
-     PROJECTS
-  -------------------------------- */
 
   const addProject = () => {
     setForm((prev) => ({
@@ -421,10 +389,6 @@ const UpdateProfileModal = ({
     }));
   };
 
-  /* --------------------------------
-     SUBMIT
-  -------------------------------- */
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -433,18 +397,12 @@ const UpdateProfileModal = ({
     await onUpdate(form);
   };
 
-  /* --------------------------------
-     MODAL
-  -------------------------------- */
-
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
 
       <div className="flex h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
-
-        {/* ================= HEADER ================= */}
 
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-5">
 
@@ -476,16 +434,12 @@ const UpdateProfileModal = ({
 
         </div>
 
-        {/* ================= FORM ================= */}
-
         <form
           onSubmit={handleSubmit}
           className="flex-1 overflow-y-auto"
         >
 
           <div className="space-y-8 p-6">
-
-            {/* ================= BASIC INFO ================= */}
 
             <section>
 
@@ -523,8 +477,6 @@ const UpdateProfileModal = ({
               </div>
 
             </section>
-
-            {/* ================= LOCATION ================= */}
 
             <section>
 
@@ -578,8 +530,6 @@ const UpdateProfileModal = ({
               </div>
 
             </section>
-
-            {/* ================= SOCIAL LINKS ================= */}
 
             <section>
 
@@ -648,8 +598,6 @@ const UpdateProfileModal = ({
               </div>
 
             </section>
-
-            {/* ================= SKILLS ================= */}
 
             <section>
 
@@ -735,8 +683,6 @@ const UpdateProfileModal = ({
               </div>
 
             </section>
-
-            {/* ================= EXPERIENCE ================= */}
 
             <section>
 

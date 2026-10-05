@@ -8,6 +8,7 @@ const ProfileProvider = ({children}) => {
     const [selectedProfile, setSelectedProfile] = useState(null);
     const [profileCompletion, setProfileCompletion] = useState(null);
     const [profiles, setProfiles] = useState([]);
+    const [updateProfileModalS, setUpdateProfileModal] = useState(false);
 
     const handleCreateProfile = async(details) => {
 
@@ -82,6 +83,8 @@ const ProfileProvider = ({children}) => {
             console.log("Profile Updated Successfully");
 
             setProfile(data.data);
+            handleGetMyProfile();
+            setUpdateProfileModal(null);
         } catch (error) {
             console.log(error);
             alert(error.message);
@@ -151,7 +154,7 @@ const ProfileProvider = ({children}) => {
     }
 
     return (
-        <ProfileContext.Provider value={{profile, profiles, selectedProfile, profileCompletion, handleCreateProfile, handleGetMyProfile, handleGetProfileByUserId, handleProfileCompletion, handleSearchProfile, handleUpdateProfile}}>
+        <ProfileContext.Provider value={{setUpdateProfileModal, updateProfileModalS,profile, profiles, selectedProfile, profileCompletion, handleCreateProfile, handleGetMyProfile, handleGetProfileByUserId, handleProfileCompletion, handleSearchProfile, handleUpdateProfile}}>
             {children}
         </ProfileContext.Provider>
     )
