@@ -11,8 +11,6 @@ const Applications = () => {
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
 
-  // Temporary data
-  // Later this will come from ApplicationContext/API.
   const applications = [
     {
       id: 1,

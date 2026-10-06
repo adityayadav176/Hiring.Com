@@ -1,4 +1,3 @@
-import React, { useState } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import Sidebar from '../../components/layout/Sidebar'
 import Navbar from '../../components/layout/Navbar'
@@ -9,6 +8,7 @@ import Application from "./Application"
 import { useHome } from '../../hooks/Hook'
 import Overview from './../pubic/Overview';
 import ADashboard from './../admin/ADashboard';
+import InterviewPage from './InterviewPage'
 
 function Dashboard() {
     const {activePage, setActivePage} = useHome();
@@ -40,7 +40,9 @@ function Dashboard() {
 
                     {activePage === "overview" && <Overview/>}
 
-                    {activePage == "admin/dashboard" && <ADashboard/>}
+                    {activePage === "admin/dashboard" && <ADashboard/>}
+
+                    {activePage === "interviews" && <InterviewPage/>}
 
                 </main>
 
