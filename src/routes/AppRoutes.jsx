@@ -17,6 +17,8 @@ import RecruiterJobs from "../recruiter/pages/RecruiterJobs";
 import RecruiterJobsLayout from "../recruiter/pages/RecruiterJobsLayout";
 import InterviewDashboard from "../pages/seeker/InterviewDashboard";
 import InterviewPage from "../pages/seeker/InterviewPage";
+// import TwoFactorModal from "../pages/seeker/2FA";
+import TwoFactorModal from './../pages/seeker/TwoFactorModal';
 const AppRoutes = () => {
     return (
         <Routes>
@@ -30,6 +32,8 @@ const AppRoutes = () => {
             <Route path="/settings" element={<Settings/>}/>
             <Route path="/interview" element={<InterviewDashboard/>}/>
             <Route path="/page" element={<InterviewPage/>}/>
+            {/* <Route path="/2fa" element={<TwoFactorModal/>}/> */}
+            <Route path="/2fa" element={<TwoFactorModal/>}/>
 
             <Route path="/recruiter" element={<RecruiterLayout/>}/>
             <Route path="/recruiter/jobs" element={<RecruiterJobs />}/>

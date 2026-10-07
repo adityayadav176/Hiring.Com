@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowRight, ArrowUpRight, CalendarClock, CalendarDays, Check, CheckCircle2, ChevronDown, Clock3, Code2, Filter, Globe2, MessageSquare, MoreHorizontal, Search, Sparkles, UserRound, Users, Video, X, XCircle } from 'lucide-react'
+import { AlertCircle, ArrowRight, ArrowUpRight, CalendarClock, CalendarDays, Check, CheckCircle2, ChevronDown, Clock3, Code2, Filter, Globe2, MessageSquare, MoreHorizontal, RotateCcw, Search, Sparkles, Star, UserRound, Users, Video, X, XCircle } from 'lucide-react'
 import React, { useState } from 'react'
 
 const statusStyles = {
@@ -105,6 +105,9 @@ function InterviewCard({interview, onView}) {
 
 function DetailModal({onClose}) {
     const [response, setResponse] = useState("Pending");
+    const trueY = () => {
+        return true;
+    }
 
     return (
         <div onMouseDown={onClose} className='fixed inset-0 z-50 flex items-center justify-center bg-[#10101A]/45 p-4 backdrop-blur-[3px]'>
@@ -170,17 +173,34 @@ function DetailModal({onClose}) {
                                     </button>
                                 </div>
                             </div>
+                            
 
-                            <div className='mt-3 space-y-2'>
-                                {["Review graph and dynamic programming concepts", "Prepare to explain your problem-solving approach", "Keep your camera and microphone ready"].map((item, index) => (
-                                    <div className='flex items-center gap-3 rounded-xl bg-[#FAFAFD] p-3' key={index}>
-                                        <div className='mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#EEEAFE] text-[#6D28D9]'>
-                                            <Check size={12}/>
-                                            <p className='text-xs leading-5 text-[#616476]'>{item}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                             {true === true && (
+                                            <div className="mt-6">
+                                              <div className="flex items-center gap-2">
+                                                <Sparkles size={17} className="text-[#6D28D9]" />
+                                                <h3 className="text-sm font-bold text-[#202132]">
+                                                  Preparation
+                                                </h3>
+                                              </div>
+                            
+                                              <div className="mt-3 space-y-2">
+                                                {true === true && (
+                                                  <div
+                                                
+                                                    className="flex items-start gap-3 rounded-xl bg-[#FAFAFD] p-3"
+                                                  >
+                                                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#EEEAFE] text-[#6D28D9]">
+                                                      <Check size={12} />
+                                                    </div>
+                                                    <p className="text-xs leading-5 text-[#616476]">
+                                                      Review graph and dynamic programming concepts
+                                                    </p>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
                         </div>
 
                             <div className="rounded-2xl border border-[#ECECF2] p-4">
@@ -561,7 +581,7 @@ function InterviewPage() {
             </aside>
         </div>
       </div>
-      <DetailModal/>
+      {/* <DetailModal/> */}
     </div>
   )
 }

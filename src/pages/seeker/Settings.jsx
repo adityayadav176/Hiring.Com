@@ -18,6 +18,7 @@ import {
 
 import React, { useEffect, useState } from "react";
 import { useAuth, useSession } from "../../hooks/Hook";
+import TwoFactorModal from "./TwoFactorModal";
 
 /* =========================================================
    DEVICE ICON
@@ -806,9 +807,6 @@ function SessionsPanel({
     );
 }
 
-/* =========================================================
-   SETTINGS
-========================================================= */
 
 function Settings() {
     const {
@@ -818,6 +816,9 @@ function Settings() {
         handleSendDeleteAccountOtp,
         handleEmailVerificationOtp,
         handleVerifyEmail,
+        handleEnable2FA,
+        handleVerify2fa,
+        handleLoginWith2FA
     } = useAuth();
 
     const {
@@ -849,8 +850,10 @@ function Settings() {
     const [show2FA, setShow2FA] =
         useState(false);
 
+    const [show2FAModal, setShow2FAModal] = useState(false);
+
     const [twoFactorEnabled, setTwoFactorEnabled] =
-        useState(false);
+        useState(Boolean(user?.twoFactorEnabled));
 
     const [accountVerified, setAccountVerified] =
         useState(Boolean(user?.isVerified));
@@ -860,10 +863,6 @@ function Settings() {
 
     const [selectedSession, setSelectedSession] =
         useState(null);
-
-    /* =====================================================
-       GET SESSIONS
-    ===================================================== */
 
     useEffect(() => {
         const fetchSessions = async () => {
@@ -879,6 +878,10 @@ function Settings() {
 
         fetchSessions();
     }, [handleGetAllSession]);
+
+    useEffect(() => {
+    setTwoFactorEnabled(Boolean(user?.twoFactorEnabled));
+}, [user?.twoFactorEnabled]);
 
     /* =====================================================
        SYNC SESSIONS
@@ -1170,7 +1173,6 @@ function Settings() {
                         {/* =================================================
                             ACCOUNT
                         ================================================= */}
-
                         <section>
                             <SectionHeading
                                 title="Account"
@@ -1424,23 +1426,21 @@ function Settings() {
                                                     </p>
                                                 </div>
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setTwoFactorEnabled(
-                                                            !twoFactorEnabled
-                                                        )
-                                                    }
-                                                    className={`rounded-xl px-3.5 py-2 text-[12px] font-semibold transition ${
-                                                        twoFactorEnabled
-                                                            ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                                                            : "bg-violet-600 text-white hover:bg-violet-700"
-                                                    }`}
-                                                >
-                                                    {twoFactorEnabled
-                                                        ? "Disable 2FA"
-                                                        : "Enable 2FA"}
-                                                </button>
+                                                {!twoFactorEnabled && (
+    <button
+        type="button"
+        onClick={() => setShow2FAModal(true)}
+        className="rounded-xl bg-violet-600 px-3.5 py-2 text-[12px] font-semibold text-white transition hover:bg-violet-700"
+    >
+        Enable 2FA
+    </button>
+)}
+
+{twoFactorEnabled && (
+    <span className="text-[12px] font-semibold text-emerald-600">
+        Active
+    </span>
+)}
 
                                             </div>
                                         </div>
@@ -1789,6 +1789,16 @@ function Settings() {
                     handleVerifyAccount
                 }
             />
+
+            <TwoFactorModal
+    open={show2FAModal}
+    onClose={() => setShow2FAModal(false)}
+    onEnabled={() => {
+        setTwoFactorEnabled(true);
+    }}
+    enable2FA={handleEnable2FA}
+    verify2FASetup={handleVerify2fa}
+/>
         </>
     );
 }

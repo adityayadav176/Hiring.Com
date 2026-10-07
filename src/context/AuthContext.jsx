@@ -45,8 +45,9 @@ const handleLogin = async (details) => {
         const { email, password, phoneNo } = details;
 
         if ((!email && !phoneNo) || !password) {
-            alert("Please enter email/phone number and password");
-            return;
+            throw new Error(
+                "Please enter email/phone number and password"
+            );
         }
 
         const response = await fetch(
@@ -67,59 +68,47 @@ const handleLogin = async (details) => {
 
         const data = await response.json();
 
-
         if (!response.ok) {
-            throw new Error(data.message || "Login Failed");
+            throw new Error(
+                data?.message || "Login Failed"
+            );
         }
 
-        // ---------------------------------------
-        // 2FA Required
-        // ---------------------------------------
-        if (data.data.twoFactorRequired) {
-            console.log("Two-factor authentication required");
-
-            navigate("/verify-2fa", {
-                state: {
-                    userId: data.data.userId,
-                },
-            });
-
-            return;
+        // 2FA REQUIRED
+        if (data?.data?.twoFactorRequired) {
+            console.log("2FA required");
+            console.log(data.data.userId);
+            console.log(data.data.type);
+            return {
+                requires2FA: true,
+                userId: data.data.userId,
+                type: data.data.type,
+            };
         }
 
-        // ---------------------------------------
-        // Admin Login
-        // ---------------------------------------
-        if (data.data.type === "admin") {
+        
+
+        // ADMIN
+        if (data?.data?.type === "admin") {
             setAdmin(data.data);
-
-            console.log(
-                "Admin Login Successfully:",
-                data.data
-            );
-
             navigate("/admin");
-            return;
+            return {
+                requires2FA: false,
+                success: true,
+            };
         }
 
-        // ---------------------------------------
-        // Recruiter Login
-        // ---------------------------------------
-        if (data.data.user.role === "recruiter") {
+        // RECRUITER
+        if (data?.data?.user?.role === "recruiter") {
             setRecruiter(data.data.user);
-
-            console.log(
-                "Recruiter Login Successfully",
-                data.data
-            );
-
             navigate("/recruiter");
-            return;
+            return {
+                requires2FA: false,
+                success: true,
+            };
         }
 
-        // ---------------------------------------
-        // Normal User Login
-        // ---------------------------------------
+        // NORMAL USER
         setUser(data.data.user);
 
         console.log(
@@ -127,15 +116,16 @@ const handleLogin = async (details) => {
             data.data.user
         );
 
-        alert(
-            `Hello ${data.data.user.name}, welcome to my application`
-        );
-
         navigate("/");
 
+        return {
+            requires2FA: false,
+            success: true,
+        };
+
     } catch (error) {
-        console.log("Login error:", error);
-        alert(error.message);
+        console.error("Login error:", error);
+        throw error;
     }
 };
 
@@ -466,76 +456,128 @@ const handleLogin = async (details) => {
         }
     }
 
-    const handleEnable2FA = async() => {
-        try {
-            const response = await fetch("http://localhost:9000/api/v1/auth/2fa/enable" ,{
-                headers: {
-                    "Content-Type":"application/json",
-                },
+   const handleEnable2FA = async () => {
+    try {
+        const response = await fetch(
+            "http://localhost:9000/api/v1/auth/2fa/enable",
+            {
                 method: "POST",
-                credentials: "include",
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "2FA Enable Failed");
-            }
-    
-            console.log("2FA Enable Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message)
-        }
-    }
-
-    const handleVerify2fa = async({token}) => {
-        try {
-            const response = await fetch("http://localhost:9000/api/v1/auth/2fa/verify-setup", {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                method: "POST",
                 credentials: "include",
-                body: JSON.stringify({token})
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "2FA Veify Failed");
             }
-    
-            console.log("2Fa Verify Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
-    }
+        );
 
-    const handleLoginWith2FA = async({token, otp}) => {
-        try {
-            const response = await fetch("http://localhost:9000/api/v1/auth/login/2fa", {
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data?.message || "2FA Enable Failed"
+            );
+        }
+
+        console.log("2FA Enable Successfully:", data);
+
+        return data;
+    } catch (error) {
+        console.error("2FA Enable Error:", error);
+        throw error;
+    }
+};
+
+const handleVerify2fa = async ({ token }) => {
+    try {
+        const response = await fetch(
+            "http://localhost:9000/api/v1/auth/2fa/verify-setup",
+            {
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                method: "POST",
                 credentials: "include",
-                body: JSON.stringify({token, otp})
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "LoginWith2FA Failed");
+                body: JSON.stringify({ token }),
             }
-    
-            console.log("LoginWith2FA Successfully");
-        } catch (error) {
-            console.log(error)
-            alert(error.message);
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data?.message || "2FA Verify Failed"
+            );
         }
+
+        console.log("2FA Verify Successfully:", data);
+
+        return data;
+    } catch (error) {
+        console.error("2FA Verify Error:", error);
+        throw error;
     }
+};
+
+   const handleLoginWith2FA = async ({ userId, token }) => {
+    try {
+        const response = await fetch(
+            "http://localhost:9000/api/v1/auth/login/2fa",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    userId,
+                    token,
+                }),
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data?.message || "Login with 2FA failed"
+            );
+        }
+
+        console.log("Login with 2FA successfully:", data);
+
+        if (data?.data?.type === "admin") {
+            setAdmin(data.data);
+            navigate("/admin");
+            return {
+                requires2FA: false,
+                success: true,
+            };
+        }
+
+        // RECRUITER
+        if (data?.data?.user?.role === "recruiter") {
+            setRecruiter(data.data.user);
+            navigate("/recruiter");
+            return {
+                requires2FA: false,
+                success: true,
+            };
+        }
+
+         setUser(data.data.user);
+
+        console.log(
+            "User Login Successfully:",
+            data.data.user
+        );
+
+        navigate("/");
+
+        return data.data.user;
+    } catch (error) {
+        console.error("Login with 2FA error:", error);
+        throw error;
+    }
+};
 
     const handleRefreshAccessToken = async() => {
         try {
