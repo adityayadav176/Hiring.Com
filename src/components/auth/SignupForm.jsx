@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Building2, User } from "lucide-react";
 import {useAuth} from "../../hooks/Hook"
+import GoogleButton from "./GoogleButton";
 
 
 
@@ -299,18 +300,28 @@ function SignupForm() {
 
                 {/* Google */}
 
-                <button
-                    type="button"
-                    className="w-full cursor-pointer flex items-center justify-center gap-2 p-2.5 border border-slate-200 rounded-xl text-slate-500 font-medium text-[12px] transition-all duration-200 hover:bg-slate-50"
-                >
-                    <span className="text-violet-600 text-xl leading-none">
-                        G
-                    </span>
+                {role ? (
+    <GoogleButton
+        role={role}
+        onError={(message) => {
+            console.error(message);
+        }}
+    />
+) : (
+    <button
+        type="button"
+        disabled
+        className="w-full flex items-center justify-center gap-2 p-2.5 border border-slate-200 rounded-xl text-slate-300 font-medium text-[12px] cursor-not-allowed"
+    >
+        <span className="text-slate-300 text-xl leading-none">
+            G
+        </span>
 
-                    <span>
-                        Continue with Google
-                    </span>
-                </button>
+        <span>
+            Select a role to continue with Google
+        </span>
+    </button>
+)}
 
                 {/* Terms */}
 

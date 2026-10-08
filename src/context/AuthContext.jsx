@@ -10,34 +10,77 @@ function AuthProvider({children}) {
     const [authLoading, setAuthLoading] = useState(true);
     const navigate = useNavigate();
 
-    const getUser = async() => {
-        try {
-            const response = await fetch("http://localhost:9000/api/v1/auth/fetchUser", {
-                headers: {
-                    "Content-Type": "application/json"
-                },
+    const getUser = async () => {
+    try {
+        let response = await fetch(
+            "http://localhost:9000/api/v1/auth/fetchUser",
+            {
                 method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
                 credentials: "include",
-                
-            });
-            
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Failed to fetch User");  
+            }
+        );
+
+        let data = await response.json();
+
+        if (response.status === 401) {
+            console.log("Access token expired. Trying refresh...");
+
+            const refreshed = await handleRefreshAccessToken();
+
+            if (!refreshed) {
+                throw new Error(
+                    "Session expired. Please login again."
+                );
             }
 
-            console.log(data);
+            response = await fetch(
+                "http://localhost:9000/api/v1/auth/fetchUser",
+                {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    credentials: "include",
+                }
+            );
 
-            setUser(data.data);
-            console.log(data);
-    
-            console.log("User fatched Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message)
+            data = await response.json();
         }
+
+        
+        if (!response.ok) {
+            throw new Error(
+                data.message || "Failed to fetch User"
+            );
+        }
+
+        console.log("User fetched successfully:", data);
+
+        const account = data.data;
+
+        if (account?.role === "recruiter") {
+            setRecruiter(account);
+            setUser(null);
+
+            console.log("Recruiter data set successfully");
+        } else {
+            setUser(account);
+            setRecruiter(null);
+
+            console.log("User data set successfully");
+        }
+    } catch (error) {
+        console.error("getUser error:", error);
+
+        setUser(null);
+        setRecruiter(null);
+
+        window.location.href = "/login";
     }
+};
 
     console.log(user);
     console.log("recruiter", recruiter);
@@ -127,6 +170,96 @@ const handleLogin = async (details) => {
 
     } catch (error) {
         console.error("Login error:", error);
+        throw error;
+    }
+};
+
+const handleGoogleAuth = async ({ credential, role = null }) => {
+    try {
+        if (!credential) {
+            throw new Error("Google credential is required");
+        }
+
+        const response = await fetch(
+            "http://localhost:9000/api/v1/auth/google",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    credential,
+                    ...(role ? { role } : {}),
+                }),
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data?.message || "Google Authentication Failed"
+            );
+        }
+
+        console.log(
+            "Google Authentication Successfully:",
+            data
+        );
+
+        const account = data?.data?.user;
+
+        if (!account) {
+            throw new Error("User data was not returned");
+        }
+
+        // ADMIN
+        if (data?.data?.type === "admin") {
+            setAdmin(data.data);
+
+            return {
+                success: true,
+                requires2FA: false,
+                type: "admin",
+                user: account,
+            };
+        }
+
+        // RECRUITER
+        if (account.role === "recruiter") {
+            setRecruiter(account);
+            setUser(null);
+
+            navigate("/recruiter");
+
+            return {
+                success: true,
+                requires2FA: false,
+                type: "recruiter",
+                user: account,
+            };
+        }
+
+        // NORMAL USER
+        setUser(account);
+        setRecruiter(null);
+
+        navigate("/");
+
+        return {
+            success: true,
+            requires2FA: false,
+            type: "user",
+            user: account,
+        };
+
+    } catch (error) {
+        console.error(
+            "Google Authentication Error:",
+            error
+        );
+
         throw error;
     }
 };
@@ -581,39 +714,42 @@ const handleVerify2fa = async ({ token }) => {
     }
 };
 
-    const handleRefreshAccessToken = async() => {
-        try {
-            const response = await fetch("http://localhost:9000/api/v1/auth/refreshAccessToken", {
-                headers: {
-                    "Content-Type":"application/json",
-                },
+    const handleRefreshAccessToken = async () => {
+    try {
+        const response = await fetch(
+            "http://localhost:9000/api/v1/auth/refreshAccessToken",
+            {
                 method: "POST",
-                credentials: "include"
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "refreshAccessToken Failed");
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
             }
-    
-            console.log("refreshAccessToken Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error(
+                "Refresh token failed:",
+                data?.message
+            );
+
+            return false;
         }
+
+        console.log("Access token refreshed successfully");
+
+        return true;
+
+    } catch (error) {
+        console.error("Refresh access token error:", error);
+
+        return false;
     }
-
-    useEffect(() => {
-        if(!user) {
-            getUser();
-        }
-    }, [user])
-    
-
-
+};
     return (
-        <AuthContext.Provider value={{user, admin, recruiter, authLoading, getUser, handleLogin, handleForgetPassword, handleDeleteAccount, handleLogout ,handleSignup, changeName, handlePasswordResetOtp, handleEnable2FA, handleLoginWith2FA, handleVerify2fa, handleEmailVerificationOtp, handleVerifyEmail, handleUpdateAvatar, handleUpdateCoverImage, handleSendDeleteAccountOtp, handleRefreshAccessToken}}>
+        <AuthContext.Provider value={{user, admin, recruiter, handleGoogleAuth, authLoading, getUser, handleLogin, handleForgetPassword, handleDeleteAccount, handleLogout ,handleSignup, changeName, handlePasswordResetOtp, handleEnable2FA, handleLoginWith2FA, handleVerify2fa, handleEmailVerificationOtp, handleVerifyEmail, handleUpdateAvatar, handleUpdateCoverImage, handleSendDeleteAccountOtp, handleRefreshAccessToken}}>
             {children}
         </AuthContext.Provider>
     )

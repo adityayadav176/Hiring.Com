@@ -19,6 +19,7 @@ import InterviewDashboard from "../pages/seeker/InterviewDashboard";
 import InterviewPage from "../pages/seeker/InterviewPage";
 // import TwoFactorModal from "../pages/seeker/2FA";
 import TwoFactorModal from './../pages/seeker/TwoFactorModal';
+import GoogleButton from "../components/auth/GoogleButton";
 const AppRoutes = () => {
     return (
         <Routes>
@@ -32,6 +33,7 @@ const AppRoutes = () => {
             <Route path="/settings" element={<Settings/>}/>
             <Route path="/interview" element={<InterviewDashboard/>}/>
             <Route path="/page" element={<InterviewPage/>}/>
+            <Route path="/google" element={<GoogleButton/>}/>
 
             <Route path="/recruiter" element={<RecruiterLayout/>}/>
             <Route path="/recruiter/jobs" element={<RecruiterJobs />}/>

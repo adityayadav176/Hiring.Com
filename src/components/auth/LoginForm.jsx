@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../hooks/Hook";
+import GoogleButton from "./GoogleButton";
 
 function LoginForm() {
     const [email, setEmail] = useState("");
@@ -124,10 +125,7 @@ function LoginForm() {
                         : "Enter your details to continue your search."}
                 </p>
 
-                {/* ============================= */}
-                {/* NORMAL LOGIN */}
-                {/* ============================= */}
-
+                
                 {!twoFactorRequired && (
                     <>
                         <span className="text-slate-600 font-medium text-xs">
@@ -283,50 +281,39 @@ function LoginForm() {
 
             {/* Social login only on normal login */}
             {!twoFactorRequired && (
-                <>
-                    <div className="flex items-center gap-3 mt-5 mb-5">
+    <>
+        <div className="flex items-center gap-3 mt-5 mb-5">
+            <div className="flex-1 border-t border-slate-200" />
 
-                        <div className="flex-1 border-t border-slate-200" />
+            <span className="text-slate-400 font-medium text-[9px] whitespace-nowrap">
+                or continue with
+            </span>
 
-                        <span className="text-slate-400 font-medium text-[9px] whitespace-nowrap">
-                            or continue with
-                        </span>
+            <div className="flex-1 border-t border-slate-200" />
+        </div>
 
-                        <div className="flex-1 border-t border-slate-200" />
+        <GoogleButton
+            onError={(message) => setError(message)}
+        />
 
-                    </div>
-
-                    <button
-                        type="button"
-                        className="w-full cursor-pointer max-w-md flex items-center justify-center gap-2 p-2.5 mt-4 mb-4 border border-gray-200 rounded-xl text-slate-500 font-medium text-[12px] transition-all duration-200 hover:bg-slate-50"
-                    >
-                        <span className="text-violet-600 text-xl leading-none">
-                            G
-                        </span>
-
-                        <span>
-                            Continue with Google
-                        </span>
-                    </button>
-
-                    <p className="text-slate-500 flex justify-center gap-0.5 font-medium text-[8px]">
-                        By continuing, you agree to our{" "}
-                        <NavLink
-                            className="text-blue-500"
-                            to=""
-                        >
-                            Terms
-                        </NavLink>{" "}
-                        and{" "}
-                        <NavLink
-                            className="text-blue-500"
-                            to=""
-                        >
-                            Privacy Policy.
-                        </NavLink>
-                    </p>
-                </>
-            )}
+        <p className="text-slate-500 flex justify-center gap-0.5 font-medium text-[8px] mt-4">
+            By continuing, you agree to our{" "}
+            <NavLink
+                className="text-blue-500 hover:underline"
+                to="/terms"
+            >
+                Terms
+            </NavLink>{" "}
+            and{" "}
+            <NavLink
+                className="text-blue-500 hover:underline"
+                to="/privacy"
+            >
+                Privacy Policy.
+            </NavLink>
+        </p>
+    </>
+)}
 
         </div>
     );
