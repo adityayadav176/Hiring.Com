@@ -6,11 +6,9 @@ import GoogleButton from "./GoogleButton";
 function LoginForm() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
     const [twoFactorRequired, setTwoFactorRequired] = useState(false);
     const [twoFactorUserId, setTwoFactorUserId] = useState("");
     const [token, setToken] = useState("");
-
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -29,13 +27,11 @@ function LoginForm() {
                 password,
             });
 
-            // 2FA required
             if (result?.requires2FA) {
                 setTwoFactorRequired(true);
                 setTwoFactorUserId(result.userId);
                 return;
             }
-
         } catch (error) {
             console.error("Login error:", error);
 
@@ -63,25 +59,25 @@ function LoginForm() {
                 userId: twoFactorUserId,
                 token,
             });
-
         } catch (error) {
             console.error("2FA verification error:", error);
 
             setError(
                 error?.message ||
-                "Invalid authentication code."
+                    "Invalid authentication code."
             );
         } finally {
             setLoading(false);
         }
     };
 
+    const LoadingSpinner = () => (
+        <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+    );
+
     return (
         <div className="bg-white max-w-sm rounded-xl border border-slate-200 p-6 h-[560px] mt-2 mb-2">
-
-            {/* Tabs */}
             <div className="flex gap-6 border-b border-slate-200">
-
                 <NavLink
                     to="/login"
                     className={({ isActive }) =>
@@ -107,12 +103,9 @@ function LoginForm() {
                 >
                     Create account
                 </NavLink>
-
             </div>
 
             <div className="mt-4">
-
-                {/* Header */}
                 <h1 className="text-2xl font-bold">
                     {twoFactorRequired
                         ? "Verify your identity"
@@ -125,7 +118,6 @@ function LoginForm() {
                         : "Enter your details to continue your search."}
                 </p>
 
-                
                 {!twoFactorRequired && (
                     <>
                         <span className="text-slate-600 font-medium text-xs">
@@ -134,11 +126,12 @@ function LoginForm() {
 
                         <input
                             required
+                            disabled={loading}
                             onChange={(e) =>
                                 setEmail(e.target.value)
                             }
                             value={email}
-                            className="text-slate-500 outline-none font-medium mt-3 text-[12px] p-2.5 border-gray-200 focus:border-blue-500 border rounded-xl max-w-md w-full"
+                            className="text-slate-500 outline-none font-medium mt-3 text-[12px] p-2.5 border-gray-200 focus:border-blue-500 border rounded-xl max-w-md w-full disabled:bg-slate-50 disabled:cursor-not-allowed"
                             type="email"
                             placeholder="you@company.com"
                         />
@@ -149,20 +142,21 @@ function LoginForm() {
 
                         <input
                             required
+                            disabled={loading}
                             onChange={(e) =>
                                 setPassword(e.target.value)
                             }
                             value={password}
-                            className="text-slate-500 outline-none font-medium mt-3 text-[12px] p-2.5 border-gray-200 focus:border-blue-500 border rounded-xl max-w-md w-full"
+                            className="text-slate-500 outline-none font-medium mt-3 text-[12px] p-2.5 border-gray-200 focus:border-blue-500 border rounded-xl max-w-md w-full disabled:bg-slate-50 disabled:cursor-not-allowed"
                             type="password"
                             placeholder="....."
                         />
 
                         <div className="flex items-center justify-between mt-4">
-
                             <div className="flex items-center mb-2 gap-2">
                                 <input
                                     type="checkbox"
+                                    disabled={loading}
                                     className="cursor-pointer"
                                 />
 
@@ -177,7 +171,6 @@ function LoginForm() {
                             >
                                 Forget Password?
                             </NavLink>
-
                         </div>
 
                         {error && (
@@ -190,24 +183,23 @@ function LoginForm() {
                             type="button"
                             onClick={handleSubmit}
                             disabled={loading}
-                            className="text-white mt-2 bg-blue-600 p-2.5 text-[12px] rounded-xl max-w-md w-full flex items-center justify-center cursor-pointer disabled:opacity-50"
+                            className="text-white mt-2 bg-blue-600 hover:bg-blue-700 p-2.5 text-[12px] rounded-xl max-w-md w-full flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {loading
-                                ? "Logging in..."
-                                : "Log in"}
+                            {loading ? (
+                                <>
+                                    <LoadingSpinner />
+                                    <span>Logging in...</span>
+                                </>
+                            ) : (
+                                "Log in"
+                            )}
                         </button>
                     </>
                 )}
 
-                {/* ============================= */}
-                {/* 2FA LOGIN */}
-                {/* ============================= */}
-
                 {twoFactorRequired && (
                     <div className="mt-6">
-
                         <div className="rounded-xl border border-violet-100 bg-violet-50 p-4">
-
                             <p className="text-violet-700 text-xs font-semibold">
                                 Two-factor authentication
                             </p>
@@ -216,7 +208,6 @@ function LoginForm() {
                                 Open your Authenticator app and enter
                                 the 6-digit security code.
                             </p>
-
                         </div>
 
                         <label className="block text-slate-600 font-medium text-xs mt-5">
@@ -229,6 +220,7 @@ function LoginForm() {
                             inputMode="numeric"
                             type="text"
                             maxLength={6}
+                            disabled={loading}
                             value={token}
                             onChange={(e) =>
                                 setToken(
@@ -238,7 +230,7 @@ function LoginForm() {
                                 )
                             }
                             placeholder="000000"
-                            className="text-slate-700 outline-none font-semibold tracking-[0.4em] text-center mt-3 text-lg p-3 border border-gray-200 focus:border-violet-500 rounded-xl w-full"
+                            className="text-slate-700 outline-none font-semibold tracking-[0.4em] text-center mt-3 text-lg p-3 border border-gray-200 focus:border-violet-500 rounded-xl w-full disabled:bg-slate-50 disabled:cursor-not-allowed"
                         />
 
                         {error && (
@@ -254,67 +246,72 @@ function LoginForm() {
                                 loading ||
                                 token.length !== 6
                             }
-                            className="text-white mt-4 bg-violet-600 p-2.5 text-[12px] rounded-xl w-full flex items-center justify-center cursor-pointer disabled:opacity-50"
+                            className="text-white mt-4 bg-violet-600 hover:bg-violet-700 p-2.5 text-[12px] rounded-xl w-full flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {loading
-                                ? "Verifying..."
-                                : "Verify & Login"}
+                            {loading ? (
+                                <>
+                                    <LoadingSpinner />
+                                    <span>Verifying...</span>
+                                </>
+                            ) : (
+                                "Verify & Login"
+                            )}
                         </button>
 
                         <button
                             type="button"
+                            disabled={loading}
                             onClick={() => {
                                 setTwoFactorRequired(false);
                                 setTwoFactorUserId("");
                                 setToken("");
                                 setError("");
                             }}
-                            className="text-slate-500 hover:text-slate-700 text-[10px] font-medium mt-3 w-full"
+                            className="text-slate-500 hover:text-slate-700 text-[10px] font-medium mt-3 w-full disabled:opacity-50"
                         >
                             ← Back to login
                         </button>
-
                     </div>
                 )}
-
             </div>
 
-            {/* Social login only on normal login */}
             {!twoFactorRequired && (
-    <>
-        <div className="flex items-center gap-3 mt-5 mb-5">
-            <div className="flex-1 border-t border-slate-200" />
+                <>
+                    <div className="flex items-center gap-3 mt-5 mb-5">
+                        <div className="flex-1 border-t border-slate-200" />
 
-            <span className="text-slate-400 font-medium text-[9px] whitespace-nowrap">
-                or continue with
-            </span>
+                        <span className="text-slate-400 font-medium text-[9px] whitespace-nowrap">
+                            or continue with
+                        </span>
 
-            <div className="flex-1 border-t border-slate-200" />
-        </div>
+                        <div className="flex-1 border-t border-slate-200" />
+                    </div>
 
-        <GoogleButton
-            onError={(message) => setError(message)}
-        />
+                    <GoogleButton
+                        onError={(message) => setError(message)}
+                    />
 
-        <p className="text-slate-500 flex justify-center gap-0.5 font-medium text-[8px] mt-4">
-            By continuing, you agree to our{" "}
-            <NavLink
-                className="text-blue-500 hover:underline"
-                to="/terms"
-            >
-                Terms
-            </NavLink>{" "}
-            and{" "}
-            <NavLink
-                className="text-blue-500 hover:underline"
-                to="/privacy"
-            >
-                Privacy Policy.
-            </NavLink>
-        </p>
-    </>
-)}
+                    <p className="text-slate-500 flex justify-center gap-0.5 font-medium text-[8px] mt-4">
+                        By continuing, you agree to our{" "}
 
+                        <NavLink
+                            className="text-blue-500 hover:underline"
+                            to="/terms"
+                        >
+                            Terms
+                        </NavLink>{" "}
+
+                        and{" "}
+
+                        <NavLink
+                            className="text-blue-500 hover:underline"
+                            to="/privacy"
+                        >
+                            Privacy Policy.
+                        </NavLink>
+                    </p>
+                </>
+            )}
         </div>
     );
 }

@@ -82,9 +82,6 @@ function AuthProvider({children}) {
     }
 };
 
-    console.log(user);
-    console.log("recruiter", recruiter);
-
 const handleLogin = async (details) => {
     try {
         const { email, password, phoneNo } = details;
@@ -212,18 +209,6 @@ const handleGoogleAuth = async ({ credential, role = null }) => {
 
         if (!account) {
             throw new Error("User data was not returned");
-        }
-
-        // ADMIN
-        if (data?.data?.type === "admin") {
-            setAdmin(data.data);
-
-            return {
-                success: true,
-                requires2FA: false,
-                type: "admin",
-                user: account,
-            };
         }
 
         // RECRUITER

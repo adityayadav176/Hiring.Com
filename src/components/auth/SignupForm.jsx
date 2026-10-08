@@ -1,10 +1,8 @@
 import React, { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { Building2, User } from "lucide-react";
-import {useAuth} from "../../hooks/Hook"
+import { useAuth } from "../../hooks/Hook";
 import GoogleButton from "./GoogleButton";
-
-
 
 function SignupForm() {
     const [role, setRole] = useState("");
@@ -12,25 +10,40 @@ function SignupForm() {
     const [password, setPassword] = useState("");
     const [name, setName] = useState("");
     const [phoneNo, setPhoneNo] = useState("");
-
     const [avatar, setAvatar] = useState(null);
     const [coverImage, setCoverImage] = useState(null);
-    const {handleSignup} = useAuth();
-    const navigate = useNavigate();
-    const handleSubmit = async(e) => {
-        e.preventDefault()
+    const [loading, setLoading] = useState(false);
 
-       await handleSignup({role, email, password, name, phoneNo, avatar, coverImage})
-    }
+    const { handleSignup } = useAuth();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (loading || !role) return;
+
+        try {
+            setLoading(true);
+
+            await handleSignup({
+                role,
+                email,
+                password,
+                name,
+                phoneNo,
+                avatar,
+                coverImage,
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <form
             onSubmit={handleSubmit}
             className="bg-white w-full max-w-sm rounded-xl border border-slate-200 p-5 sm:p-6 mt-2 mb-2"
         >
-            {/* Tabs */}
             <div className="flex gap-8 border-b border-slate-200">
-
                 <NavLink
                     to="/login"
                     className={({ isActive }) =>
@@ -56,12 +69,9 @@ function SignupForm() {
                 >
                     Create account
                 </NavLink>
-
             </div>
 
-            {/* Content */}
             <div className="mt-4">
-
                 <h1 className="text-2xl font-bold text-slate-950">
                     Join Peer Hiring
                 </h1>
@@ -72,11 +82,12 @@ function SignupForm() {
 
                 <button
                     type="button"
+                    disabled={loading || role === "User"}
                     onClick={() => setRole("User")}
-                    className={`outline-none cursor-pointer mt-3 p-3 border rounded-xl w-full flex items-center gap-4 text-left transition-all duration-200 ${
+                    className={`outline-none mt-3 p-3 border rounded-xl w-full flex items-center gap-4 text-left transition-all duration-200 ${
                         role === "User"
-                            ? "border-violet-500 bg-violet-50"
-                            : "border-slate-200 hover:border-violet-300"
+                            ? "border-violet-500 bg-violet-50 cursor-not-allowed"
+                            : "border-slate-200 hover:border-violet-300 cursor-pointer"
                     }`}
                 >
                     <User
@@ -95,23 +106,25 @@ function SignupForm() {
                                     : "text-slate-900"
                             }`}
                         >
-                            Job seeker
+                            {role === "User" ? "User selected" : "Job seeker"}
                         </p>
 
                         <p className="text-[10px] text-slate-500 mt-1">
-                            Find your next opportunity
+                            {role === "User"
+                                ? "You are creating a user account"
+                                : "Find your next opportunity"}
                         </p>
                     </div>
                 </button>
 
-
                 <button
                     type="button"
+                    disabled={loading || role === "recruiter"}
                     onClick={() => setRole("recruiter")}
-                    className={`outline-none cursor-pointer mt-3 p-3 border rounded-xl w-full flex items-center gap-4 text-left transition-all duration-200 ${
+                    className={`outline-none mt-3 p-3 border rounded-xl w-full flex items-center gap-4 text-left transition-all duration-200 ${
                         role === "recruiter"
-                            ? "border-violet-500 bg-violet-50"
-                            : "border-slate-200 hover:border-violet-300"
+                            ? "border-violet-500 bg-violet-50 cursor-not-allowed"
+                            : "border-slate-200 hover:border-violet-300 cursor-pointer"
                     }`}
                 >
                     <Building2
@@ -130,11 +143,15 @@ function SignupForm() {
                                     : "text-slate-900"
                             }`}
                         >
-                            Recruiter
+                            {role === "recruiter"
+                                ? "Recruiter selected"
+                                : "Recruiter"}
                         </p>
 
                         <p className="text-[10px] text-slate-500 mt-1">
-                            Build your next great team
+                            {role === "recruiter"
+                                ? "You are creating a recruiter account"
+                                : "Build your next great team"}
                         </p>
                     </div>
                 </button>
@@ -149,8 +166,9 @@ function SignupForm() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
+                        disabled={loading}
                         placeholder="you@company.com"
-                        className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl"
+                        className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl disabled:bg-slate-50 disabled:cursor-not-allowed"
                     />
                 </div>
 
@@ -164,9 +182,10 @@ function SignupForm() {
                         value={phoneNo}
                         onChange={(e) => setPhoneNo(e.target.value)}
                         required
+                        disabled={loading}
                         placeholder="0000000000"
                         maxLength={10}
-                        className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl"
+                        className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl disabled:bg-slate-50 disabled:cursor-not-allowed"
                     />
                 </div>
 
@@ -179,9 +198,10 @@ function SignupForm() {
                         type="text"
                         placeholder="John Doe"
                         required
+                        disabled={loading}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl"
+                        className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl disabled:bg-slate-50 disabled:cursor-not-allowed"
                     />
                 </div>
 
@@ -195,98 +215,134 @@ function SignupForm() {
                         onChange={(e) => setPassword(e.target.value)}
                         value={password}
                         required
+                        disabled={loading}
                         placeholder="••••••••"
-                        className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl"
+                        className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl disabled:bg-slate-50 disabled:cursor-not-allowed"
                     />
                 </div>
 
-{/* Avatar + Cover Upload */}
-<div className="grid grid-cols-2 mt-8 gap-3">
+                <div className="grid grid-cols-2 mt-8 gap-3">
+                    <div>
+                        <label className="text-sm font-medium text-gray-700">
+                            Profile Photo
+                        </label>
 
-  {/* Avatar */}
-  <div>
-    <label className="text-sm font-medium text-gray-700">
-      Profile Photo
-    </label>
+                        <label
+                            className={`mt-1 flex items-center gap-3 border border-dashed border-gray-300 rounded-lg p-2 ${
+                                loading
+                                    ? "cursor-not-allowed opacity-60"
+                                    : "cursor-pointer hover:bg-gray-50"
+                            }`}
+                        >
+                            {avatar ? (
+                                <img
+                                    src={URL.createObjectURL(avatar)}
+                                    alt="Avatar preview"
+                                    className="w-10 h-10 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                                    <User size={18} />
+                                </div>
+                            )}
 
-    <label className="mt-1 flex items-center gap-3 border border-dashed border-gray-300 rounded-lg p-2 cursor-pointer hover:bg-gray-50">
-      {avatar ? (
-        <img
-          src={URL.createObjectURL(avatar)}
-          alt="Avatar preview"
-          className="w-10 h-10 rounded-full object-cover"
-        />
-      ) : (
-        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-          <User size={18} />
-        </div>
-      )}
+                            <div className="min-w-0">
+                                <p className="text-xs font-medium text-gray-700">
+                                    {avatar ? "Change photo" : "Choose photo"}
+                                </p>
 
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-gray-700">
-          {avatar ? "Change photo" : "Choose photo"}
-        </p>
-        <p className="text-[10px] text-gray-400 truncate">
-          {avatar ? avatar.name : "PNG, JPG"}
-        </p>
-      </div>
+                                <p className="text-[10px] text-gray-400 truncate">
+                                    {avatar ? avatar.name : "PNG, JPG"}
+                                </p>
+                            </div>
 
-      <input
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => setAvatar(e.target.files[0])}
-      />
-    </label>
-  </div>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                disabled={loading}
+                                className="hidden"
+                                onChange={(e) =>
+                                    setAvatar(e.target.files[0])
+                                }
+                            />
+                        </label>
+                    </div>
 
+                    <div>
+                        <label className="text-sm font-medium text-gray-700">
+                            Cover Image
+                        </label>
 
-  {/* Cover Image */}
-  <div>
-    <label className="text-sm font-medium text-gray-700">
-      Cover Image
-    </label>
+                        <label
+                            className={`mt-1 flex items-center gap-3 border border-dashed border-gray-300 rounded-lg p-2 ${
+                                loading
+                                    ? "cursor-not-allowed opacity-60"
+                                    : "cursor-pointer hover:bg-gray-50"
+                            }`}
+                        >
+                            {coverImage ? (
+                                <img
+                                    src={URL.createObjectURL(coverImage)}
+                                    alt="Cover preview"
+                                    className="w-14 h-10 rounded-md object-cover"
+                                />
+                            ) : (
+                                <div className="w-14 h-10 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                                    Cover
+                                </div>
+                            )}
 
-    <label className="mt-1 flex items-center gap-3 border border-dashed border-gray-300 rounded-lg p-2 cursor-pointer hover:bg-gray-50">
-      {coverImage ? (
-        <img
-          src={URL.createObjectURL(coverImage)}
-          alt="Cover preview"
-          className="w-14 h-10 rounded-md object-cover"
-        />
-      ) : (
-        <div className="w-14 h-10 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
-          Cover
-        </div>
-      )}
+                            <div className="min-w-0">
+                                <p className="text-xs font-medium text-gray-700">
+                                    {coverImage
+                                        ? "Change cover"
+                                        : "Choose cover"}
+                                </p>
 
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-gray-700">
-          {coverImage ? "Change cover" : "Choose cover"}
-        </p>
-        <p className="text-[10px] text-gray-400 truncate">
-          {coverImage ? coverImage.name : "PNG, JPG"}
-        </p>
-      </div>
+                                <p className="text-[10px] text-gray-400 truncate">
+                                    {coverImage
+                                        ? coverImage.name
+                                        : "PNG, JPG"}
+                                </p>
+                            </div>
 
-      <input
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => setCoverImage(e.target.files[0])}
-      />
-    </label>
-  </div>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                disabled={loading}
+                                className="hidden"
+                                onChange={(e) =>
+                                    setCoverImage(e.target.files[0])
+                                }
+                            />
+                        </label>
+                    </div>
+                </div>
 
-</div>      
-          <button
+                <button
                     type="submit"
-                    className="text-white mt-4 bg-violet-600 cursor-pointer hover:bg-violet-700 transition-colors p-2.5 text-[12px] rounded-xl w-full flex items-center justify-center"
+                    disabled={!role || loading}
+                    className={`text-white mt-4 transition-colors p-2.5 text-[12px] rounded-xl w-full flex items-center justify-center gap-2 ${
+                        !role || loading
+                            ? "bg-violet-300 cursor-not-allowed"
+                            : "bg-violet-600 hover:bg-violet-700 cursor-pointer"
+                    }`}
                 >
-                    Create Account
+                    {loading ? (
+                        <>
+                            <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            Creating Account...
+                        </>
+                    ) : (
+                        <>
+                            {role === "User"
+                                ? "Create User Account"
+                                : role === "recruiter"
+                                ? "Create Recruiter Account"
+                                : "Select Role"}
+                        </>
+                    )}
                 </button>
-
-                {/* Divider */}
 
                 <div className="flex items-center gap-3 mt-5 mb-5">
                     <div className="flex-1 border-t border-slate-200"></div>
@@ -298,38 +354,31 @@ function SignupForm() {
                     <div className="flex-1 border-t border-slate-200"></div>
                 </div>
 
-                {/* Google */}
-
                 {role ? (
-    <GoogleButton
-        role={role}
-        onError={(message) => {
-            console.error(message);
-        }}
-    />
-) : (
-    <button
-        type="button"
-        disabled
-        className="w-full flex items-center justify-center gap-2 p-2.5 border border-slate-200 rounded-xl text-slate-300 font-medium text-[12px] cursor-not-allowed"
-    >
-        <span className="text-slate-300 text-xl leading-none">
-            G
-        </span>
+                    <GoogleButton
+                        role={role}
+                        onError={(message) => {
+                            console.error(message);
+                        }}
+                    />
+                ) : (
+                    <button
+                        type="button"
+                        disabled
+                        className="w-full flex items-center justify-center gap-2 p-2.5 border border-slate-200 rounded-xl text-slate-300 font-medium text-[12px] cursor-not-allowed"
+                    >
+                        <span className="text-slate-300 text-xl leading-none">
+                            G
+                        </span>
 
-        <span>
-            Select a role to continue with Google
-        </span>
-    </button>
-)}
-
-                {/* Terms */}
+                        <span>
+                            Select a role to continue with Google
+                        </span>
+                    </button>
+                )}
 
                 <p className="text-slate-500 flex justify-center flex-wrap gap-0.5 font-medium text-[8px] mt-4 text-center">
-
-                    <span>
-                        By continuing, you agree to our
-                    </span>
+                    <span>By continuing, you agree to our</span>
 
                     <NavLink
                         className="text-blue-500 hover:underline"
@@ -346,9 +395,7 @@ function SignupForm() {
                     >
                         Privacy Policy.
                     </NavLink>
-
                 </p>
-
             </div>
         </form>
     );
