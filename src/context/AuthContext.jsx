@@ -27,6 +27,8 @@ function AuthProvider({children}) {
                 throw new Error(data.message || "Failed to fetch User");  
             }
 
+            console.log(data);
+
             setUser(data.data);
             console.log(data);
     

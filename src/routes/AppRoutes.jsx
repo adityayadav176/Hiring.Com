@@ -32,8 +32,6 @@ const AppRoutes = () => {
             <Route path="/settings" element={<Settings/>}/>
             <Route path="/interview" element={<InterviewDashboard/>}/>
             <Route path="/page" element={<InterviewPage/>}/>
-            {/* <Route path="/2fa" element={<TwoFactorModal/>}/> */}
-            <Route path="/2fa" element={<TwoFactorModal/>}/>
 
             <Route path="/recruiter" element={<RecruiterLayout/>}/>
             <Route path="/recruiter/jobs" element={<RecruiterJobs />}/>

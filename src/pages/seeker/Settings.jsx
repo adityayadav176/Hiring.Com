@@ -20,10 +20,6 @@ import React, { useEffect, useState } from "react";
 import { useAuth, useSession } from "../../hooks/Hook";
 import TwoFactorModal from "./TwoFactorModal";
 
-/* =========================================================
-   DEVICE ICON
-========================================================= */
-
 function DeviceIcon({ type }) {
     const normalizedType = String(type || "").toLowerCase();
 
@@ -48,10 +44,6 @@ function DeviceIcon({ type }) {
 
     return <Monitor size={18} strokeWidth={1.8} />;
 }
-
-/* =========================================================
-   DELETE ACCOUNT SECURITY MODAL
-========================================================= */
 
 function DeleteAccountSecurityModal({
     open,
@@ -128,8 +120,6 @@ function DeleteAccountSecurityModal({
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-[4px]">
             <div className="w-full max-w-[440px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.20)]">
-
-                {/* Header */}
                 <div className="flex items-start justify-between px-6 pt-6">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-red-600">
                         <KeyRound size={20} strokeWidth={1.8} />
@@ -145,7 +135,6 @@ function DeleteAccountSecurityModal({
                     </button>
                 </div>
 
-                {/* Content */}
                 <div className="px-6 pb-5 pt-4">
                     <h2 className="text-[17px] font-bold tracking-[-0.02em] text-slate-900">
                         Confirm account deletion
@@ -157,8 +146,6 @@ function DeleteAccountSecurityModal({
                     </p>
 
                     <div className="mt-5 space-y-4">
-
-                        {/* Password */}
                         <div>
                             <label className="mb-1.5 block text-[12px] font-semibold text-slate-700">
                                 Password
@@ -177,7 +164,6 @@ function DeleteAccountSecurityModal({
                             />
                         </div>
 
-                        {/* OTP */}
                         <div>
                             <div className="mb-1.5 flex items-center justify-between">
                                 <label className="text-[12px] font-semibold text-slate-700">
@@ -187,17 +173,14 @@ function DeleteAccountSecurityModal({
                                 <button
                                     type="button"
                                     onClick={handleSendOtp}
-                                    disabled={
-                                        sendingOtp ||
-                                        deleting
-                                    }
+                                    disabled={sendingOtp || deleting}
                                     className="text-[11px] font-semibold text-violet-600 transition hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {sendingOtp
                                         ? "Sending..."
                                         : otpSent
-                                            ? "Resend OTP"
-                                            : "Send OTP"}
+                                          ? "Resend OTP"
+                                          : "Send OTP"}
                                 </button>
                             </div>
 
@@ -227,7 +210,6 @@ function DeleteAccountSecurityModal({
                         </div>
                     </div>
 
-                    {/* Warning */}
                     <div className="mt-4 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50/70 px-3.5 py-3">
                         <TriangleAlert
                             size={15}
@@ -242,7 +224,6 @@ function DeleteAccountSecurityModal({
                     </div>
                 </div>
 
-                {/* Footer */}
                 <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
                     <button
                         onClick={onClose}
@@ -263,9 +244,7 @@ function DeleteAccountSecurityModal({
                         }
                         className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
                     >
-                        {deleting
-                            ? "Deleting..."
-                            : "Delete account"}
+                        {deleting ? "Deleting..." : "Delete account"}
                     </button>
                 </div>
             </div>
@@ -273,14 +252,7 @@ function DeleteAccountSecurityModal({
     );
 }
 
-/* =========================================================
-   STATUS PILL
-========================================================= */
-
-function StatusPill({
-    children,
-    tone = "neutral",
-}) {
+function StatusPill({ children, tone = "neutral" }) {
     const style = {
         success:
             "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -301,14 +273,7 @@ function StatusPill({
     );
 }
 
-/* =========================================================
-   SECTION HEADING
-========================================================= */
-
-function SectionHeading({
-    title,
-    description,
-}) {
+function SectionHeading({ title, description }) {
     return (
         <div className="mb-3 px-1">
             <h2 className="text-[14px] font-bold tracking-[-0.01em] text-slate-900">
@@ -322,10 +287,6 @@ function SectionHeading({
     );
 }
 
-/* =========================================================
-   SETTING ROW
-========================================================= */
-
 function SettingRow({
     icon,
     title,
@@ -337,9 +298,7 @@ function SettingRow({
     return (
         <div
             className={`bg-white px-5 py-[18px] ${
-                border
-                    ? "border-b border-slate-100"
-                    : ""
+                border ? "border-b border-slate-100" : ""
             }`}
         >
             <div className="flex items-center gap-4">
@@ -371,10 +330,6 @@ function SettingRow({
     );
 }
 
-/* =========================================================
-   CONFIRM MODAL
-========================================================= */
-
 function ConfirmModal({
     open,
     icon,
@@ -390,7 +345,6 @@ function ConfirmModal({
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-[3px]">
             <div className="w-full max-w-[420px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
-
                 <div className="flex items-start justify-between px-6 pt-6">
                     <div
                         className={`flex h-10 w-10 items-center justify-center rounded-xl ${
@@ -447,10 +401,6 @@ function ConfirmModal({
     );
 }
 
-/* =========================================================
-   VERIFY ACCOUNT MODAL
-========================================================= */
-
 function VerifyAccountModal({
     open,
     otp,
@@ -474,12 +424,7 @@ function VerifyAccountModal({
     if (!open) return null;
 
     const handleSendOtp = async () => {
-        if (
-            sendingOtp ||
-            verifying
-        ) {
-            return;
-        }
+        if (sendingOtp || verifying) return;
 
         setSendingOtp(true);
 
@@ -498,16 +443,12 @@ function VerifyAccountModal({
 
     const handleVerify = async () => {
         if (!otp.trim()) {
-            alert(
-                "Please enter the verification code."
-            );
+            alert("Please enter the verification code.");
             return;
         }
 
         if (otp.trim().length !== 6) {
-            alert(
-                "Please enter a valid 6-digit OTP."
-            );
+            alert("Please enter a valid 6-digit OTP.");
             return;
         }
 
@@ -528,14 +469,9 @@ function VerifyAccountModal({
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-[4px]">
             <div className="w-full max-w-[440px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.20)]">
-
-                {/* Header */}
                 <div className="flex items-start justify-between px-6 pt-6">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
-                        <ShieldCheck
-                            size={21}
-                            strokeWidth={1.8}
-                        />
+                        <ShieldCheck size={21} strokeWidth={1.8} />
                     </div>
 
                     <button
@@ -548,19 +484,16 @@ function VerifyAccountModal({
                     </button>
                 </div>
 
-                {/* Content */}
                 <div className="px-6 pb-6 pt-4">
                     <h2 className="text-[17px] font-bold tracking-[-0.02em] text-slate-900">
                         Verify your account
                     </h2>
 
                     <p className="mt-2 text-[13px] leading-5 text-slate-500">
-                        Verify your email address to add a
-                        trusted verification status to your
-                        Peer.Hiring account.
+                        Verify your email address to add a trusted
+                        verification status to your Peer.Hiring account.
                     </p>
 
-                    {/* Information */}
                     <div className="mt-5 flex items-start gap-3 rounded-xl border border-violet-100 bg-violet-50/60 px-3.5 py-3">
                         <ShieldCheck
                             size={16}
@@ -573,14 +506,12 @@ function VerifyAccountModal({
                             </p>
 
                             <p className="mt-0.5 text-[11px] leading-4 text-violet-700">
-                                We'll send a 6-digit verification
-                                code to your registered email
-                                address.
+                                We'll send a 6-digit verification code to your
+                                registered email address.
                             </p>
                         </div>
                     </div>
 
-                    {/* OTP */}
                     <div className="mt-5">
                         <div className="mb-1.5 flex items-center justify-between">
                             <label className="text-[12px] font-semibold text-slate-700">
@@ -590,17 +521,14 @@ function VerifyAccountModal({
                             <button
                                 type="button"
                                 onClick={handleSendOtp}
-                                disabled={
-                                    sendingOtp ||
-                                    verifying
-                                }
+                                disabled={sendingOtp || verifying}
                                 className="text-[11px] font-semibold text-violet-600 transition hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 {sendingOtp
                                     ? "Sending..."
                                     : otpSent
-                                        ? "Resend OTP"
-                                        : "Send OTP"}
+                                      ? "Resend OTP"
+                                      : "Send OTP"}
                             </button>
                         </div>
 
@@ -612,10 +540,7 @@ function VerifyAccountModal({
                             onChange={(e) =>
                                 setOtp(
                                     e.target.value
-                                        .replace(
-                                            /\D/g,
-                                            ""
-                                        )
+                                        .replace(/\D/g, "")
                                         .slice(0, 6)
                                 )
                             }
@@ -627,13 +552,11 @@ function VerifyAccountModal({
 
                         {otpSent && (
                             <p className="mt-1.5 text-[11px] text-emerald-600">
-                                Verification code sent
-                                successfully.
+                                Verification code sent successfully.
                             </p>
                         )}
                     </div>
 
-                    {/* Security notice */}
                     <div className="mt-4 flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3.5 py-3">
                         <CircleCheck
                             size={15}
@@ -641,14 +564,12 @@ function VerifyAccountModal({
                         />
 
                         <p className="text-[11px] leading-4 text-emerald-700">
-                            Once verified, your account will
-                            display a trusted verification
-                            status.
+                            Once verified, your account will display a trusted
+                            verification status.
                         </p>
                     </div>
                 </div>
 
-                {/* Footer */}
                 <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
                     <button
                         onClick={onClose}
@@ -668,9 +589,7 @@ function VerifyAccountModal({
                         }
                         className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-violet-300"
                     >
-                        {verifying
-                            ? "Verifying..."
-                            : "Verify account"}
+                        {verifying ? "Verifying..." : "Verify account"}
                     </button>
                 </div>
             </div>
@@ -678,135 +597,230 @@ function VerifyAccountModal({
     );
 }
 
-/* =========================================================
-   SESSIONS PANEL
-========================================================= */
-
-function SessionsPanel({
+const SessionsPanel = ({
     sessions,
     sessionsLoading,
     onLogoutSession,
     onLogoutAll,
-}) {
+}) => {
+    const safeSessions = Array.isArray(sessions) ? sessions : [];
+
+    const [showSkeleton, setShowSkeleton] = useState(false);
+
+    useEffect(() => {
+        let timer;
+
+        if (sessionsLoading) {
+            setShowSkeleton(true);
+        } else {
+            timer = setTimeout(() => {
+                setShowSkeleton(false);
+            }, 500);
+        }
+
+        return () => {
+            if (timer) clearTimeout(timer);
+        };
+    }, [sessionsLoading]);
+
+    if (showSkeleton && safeSessions.length === 0) {
+        return (
+            <div className="overflow-hidden rounded-2xl border border-[#E8E9F0] bg-white">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-[#E8E9F0] px-5 py-4">
+                    <div>
+                        <div className="h-4 w-32 animate-pulse rounded-md bg-slate-200" />
+
+                        <div className="mt-2 h-3 w-56 animate-pulse rounded-md bg-slate-100" />
+                    </div>
+
+                    {/* Skeleton button */}
+                    <div className="h-9 w-24 animate-pulse rounded-lg bg-slate-100" />
+                </div>
+
+                {/* Skeleton sessions */}
+                <div className="divide-y divide-[#F0F1F5]">
+                    {[1, 2, 3].map((item) => (
+                        <div
+                            key={item}
+                            className="flex items-center gap-3 px-5 py-4"
+                        >
+                            {/* Icon skeleton */}
+                            <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-slate-100" />
+
+                            {/* Content skeleton */}
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-4 w-36 animate-pulse rounded-md bg-slate-200" />
+
+                                    <div className="h-5 w-24 animate-pulse rounded-full bg-slate-100" />
+                                </div>
+
+                                <div className="mt-2 h-3 w-64 animate-pulse rounded-md bg-slate-100" />
+                            </div>
+
+                            {/* Button skeleton */}
+                            <div className="h-8 w-16 animate-pulse rounded-lg bg-slate-100" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="border-t border-slate-100 bg-slate-50/40">
-
-            <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="overflow-hidden rounded-2xl border border-[#E8E9F0] bg-white">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#E8E9F0] px-5 py-4">
                 <div>
-                    <p className="text-[12px] font-semibold text-slate-800">
+                    <h3 className="text-sm font-bold text-slate-900">
                         Active sessions
-                    </p>
+                    </h3>
 
-                    <p className="mt-0.5 text-[11px] text-slate-400">
-                        {sessions.length} devices currently
-                        signed in
+                    <p className="mt-1 text-xs text-slate-500">
+                        Manage devices currently signed in to your account.
                     </p>
                 </div>
 
-                <button
-                    onClick={onLogoutAll}
-                    type="button"
-                    disabled={
-                        sessionsLoading ||
-                        sessions.filter(
-                            (session) =>
-                                !session.current
-                        ).length === 0
-                    }
-                    className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    <LogOut size={14} />
-                    Sign out others
-                </button>
-            </div>
-
-            <div className="divide-y divide-slate-100">
-                {sessionsLoading ? (
-                    <div className="px-5 py-8 text-center">
-                        <p className="text-[12px] font-medium text-slate-500">
-                            Loading active sessions...
-                        </p>
-                    </div>
-                ) : sessions.length === 0 ? (
-                    <div className="px-5 py-8 text-center">
-                        <p className="text-[12px] font-medium text-slate-600">
-                            No active sessions found.
-                        </p>
-                    </div>
-                ) : (
-                    sessions.map((session) => (
-                        <div
-                            key={
-                                session.sessionId ||
-                                session.id ||
-                                `${session.browser}-${session.ipAddress}-${session.lastActive}`
-                            }
-                            className="flex items-center gap-3 px-5 py-3.5"
-                        >
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500">
-                                <DeviceIcon
-                                    type={
-                                        session.deviceName ||
-                                        session.deviceType ||
-                                        session.type ||
-                                        session.device
-                                    }
-                                />
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <p className="text-[13px] font-semibold text-slate-800">
-                                        {session.browser ||
-                                            "Unknown browser"}
-                                    </p>
-
-                                    {session.current && (
-                                        <StatusPill tone="success">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                            Current
-                                        </StatusPill>
-                                    )}
-                                </div>
-
-                                <p className="mt-0.5 text-[11px] text-slate-400">
-                                    {session.deviceName ||
-                                        session.deviceType ||
-                                        session.device ||
-                                        "Unknown device"}
-                                    {" · "}
-                                    {session.browser ||
-                                        "Unknown browser"}
-                                    {" · "}
-                                    {session.ipAddress ||
-                                        "Unknown IP"}
-                                    {" · "}
-                                    {session.lastActive ||
-                                        "Unknown activity"}
-                                </p>
-                            </div>
-
-                            {!session.current && (
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        onLogoutSession(
-                                            session
-                                        )
-                                    }
-                                    className="rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-slate-500 transition hover:bg-red-50 hover:text-red-600"
-                                >
-                                    Sign out
-                                </button>
-                            )}
-                        </div>
-                    ))
+                {safeSessions.length > 1 && (
+                    <button
+                        type="button"
+                        onClick={onLogoutAll}
+                        className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:border-red-300 hover:bg-red-100"
+                    >
+                        Sign out all
+                    </button>
                 )}
             </div>
+
+            {/* Sessions */}
+            {safeSessions.length > 0 ? (
+                <div className="divide-y divide-[#F0F1F5]">
+                    {safeSessions.map((session) => {
+                        const isCurrent = session.current === true;
+
+                        const sessionKey =
+                            session.sessionId ||
+                            session._id ||
+                            session.id;
+
+                        return (
+                            <div
+                                key={sessionKey}
+                                className={`flex items-center gap-3 px-5 py-4 transition ${
+                                    isCurrent
+                                        ? "bg-emerald-50/40"
+                                        : "hover:bg-slate-50/70"
+                                }`}
+                            >
+                                {/* Device */}
+                                <div
+                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                                        isCurrent
+                                            ? "bg-emerald-100 text-emerald-600"
+                                            : "bg-[#F4F3FF] text-[#6D28D9]"
+                                    }`}
+                                >
+                                    <Laptop className="h-5 w-5" />
+                                </div>
+
+                                {/* Information */}
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <p className="truncate text-sm font-semibold text-slate-900">
+                                            {session.device ||
+                                                session.deviceType ||
+                                                "Unknown device"}
+                                        </p>
+
+                                        {/* Current session */}
+                                        {isCurrent && (
+                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                                                <span className="relative flex h-2 w-2">
+                                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+
+                                                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                                                </span>
+
+                                                Current session
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <p className="mt-1 flex flex-wrap gap-x-1.5 text-[11px] text-slate-400">
+                                        <span>
+                                            {session.browser ||
+                                                "Unknown browser"}
+                                        </span>
+
+                                        <span>·</span>
+
+                                        <span>
+                                            {session.ipAddress ||
+                                                "Unknown IP"}
+                                        </span>
+
+                                        <span>·</span>
+
+                                        <span>
+                                            {isCurrent
+                                                ? "Active now"
+                                                : session.lastActive ||
+                                                  "Unknown activity"}
+                                        </span>
+                                    </p>
+                                </div>
+
+                                {/* Action */}
+                                {isCurrent ? (
+                                    <div className="hidden items-center gap-1.5 text-xs font-semibold text-emerald-600 sm:flex">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+
+                                        Active
+                                    </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            onLogoutSession(session)
+                                        }
+                                        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                    >
+                                        Sign out
+                                    </button>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="px-5 py-10 text-center">
+                    <p className="text-xs font-medium text-slate-500">
+                        No active sessions found.
+                    </p>
+
+                    <p className="mt-1 text-[11px] text-slate-400">
+                        Your active devices will appear here.
+                    </p>
+                </div>
+            )}
+
+            {/* Footer */}
+            {safeSessions.length > 0 && (
+                <div className="border-t border-[#E8E9F0] bg-slate-50/50 px-5 py-3">
+                    <div className="flex items-start gap-2">
+                        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#6D28D9]" />
+
+                        <p className="text-[11px] leading-5 text-slate-500">
+                            If you don't recognize a session, sign it out
+                            immediately and consider changing your password.
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
-}
-
+};
 
 function Settings() {
     const {
@@ -818,7 +832,6 @@ function Settings() {
         handleVerifyEmail,
         handleEnable2FA,
         handleVerify2fa,
-        handleLoginWith2FA
     } = useAuth();
 
     const {
@@ -829,17 +842,9 @@ function Settings() {
         handleLogoutAllDevices,
     } = useSession();
 
-    const [localSessions, setLocalSessions] =
-        useState([]);
-
-    const [deletePassword, setDeletePassword] =
-        useState("");
-
-    const [deleteOtp, setDeleteOtp] =
-        useState("");
-
-    const [verifyOtp, setVerifyOtp] =
-        useState("");
+    const [deletePassword, setDeletePassword] = useState("");
+    const [deleteOtp, setDeleteOtp] = useState("");
+    const [verifyOtp, setVerifyOtp] = useState("");
 
     const [showVerifyModal, setShowVerifyModal] =
         useState(false);
@@ -850,7 +855,8 @@ function Settings() {
     const [show2FA, setShow2FA] =
         useState(false);
 
-    const [show2FAModal, setShow2FAModal] = useState(false);
+    const [show2FAModal, setShow2FAModal] =
+        useState(false);
 
     const [twoFactorEnabled, setTwoFactorEnabled] =
         useState(Boolean(user?.twoFactorEnabled));
@@ -858,13 +864,13 @@ function Settings() {
     const [accountVerified, setAccountVerified] =
         useState(Boolean(user?.isVerified));
 
-    const [modal, setModal] =
-        useState(null);
-
+    const [modal, setModal] = useState(null);
     const [selectedSession, setSelectedSession] =
         useState(null);
 
     useEffect(() => {
+        if (!showSessions) return;
+
         const fetchSessions = async () => {
             try {
                 await handleGetAllSession();
@@ -877,27 +883,13 @@ function Settings() {
         };
 
         fetchSessions();
-    }, [handleGetAllSession]);
+    }, [showSessions]);
 
     useEffect(() => {
-    setTwoFactorEnabled(Boolean(user?.twoFactorEnabled));
-}, [user?.twoFactorEnabled]);
-
-    /* =====================================================
-       SYNC SESSIONS
-    ===================================================== */
-
-    useEffect(() => {
-        setLocalSessions(
-            Array.isArray(sessions)
-                ? sessions
-                : []
+        setTwoFactorEnabled(
+            Boolean(user?.twoFactorEnabled)
         );
-    }, [sessions]);
-
-    /* =====================================================
-       SYNC VERIFICATION
-    ===================================================== */
+    }, [user?.twoFactorEnabled]);
 
     useEffect(() => {
         setAccountVerified(
@@ -905,23 +897,13 @@ function Settings() {
         );
     }, [user?.isVerified]);
 
-    /* =====================================================
-       MODAL HELPERS
-    ===================================================== */
-
     const closeModal = () => {
         setModal(null);
         setSelectedSession(null);
     };
 
-    /* =====================================================
-       VERIFY ACCOUNT
-    ===================================================== */
-
     const openVerifyAccount = () => {
-        if (accountVerified) {
-            return;
-        }
+        if (accountVerified) return;
 
         setVerifyOtp("");
         setShowVerifyModal(true);
@@ -932,232 +914,176 @@ function Settings() {
         setShowVerifyModal(false);
     };
 
-    const handleSendVerificationOtp =
-        async () => {
-            try {
-                await handleEmailVerificationOtp();
-            } catch (error) {
-                console.error(
-                    "Failed to send verification OTP:",
-                    error
-                );
+    const handleSendVerificationOtp = async () => {
+        try {
+            await handleEmailVerificationOtp();
+        } catch (error) {
+            console.error(
+                "Failed to send verification OTP:",
+                error
+            );
 
-                alert(
-                    error?.message ||
+            alert(
+                error?.message ||
                     "Failed to send verification OTP."
-                );
+            );
 
-                throw error;
-            }
-        };
+            throw error;
+        }
+    };
 
-    const handleVerifyAccount =
-        async () => {
-            if (!verifyOtp.trim()) {
-                alert(
-                    "Please enter the verification code."
-                );
-                return;
-            }
+    const handleVerifyAccount = async () => {
+        if (!verifyOtp.trim()) {
+            alert("Please enter the verification code.");
+            return;
+        }
 
-            if (
-                verifyOtp.trim().length !== 6
-            ) {
-                alert(
-                    "Please enter a valid 6-digit OTP."
-                );
-                return;
-            }
+        if (verifyOtp.trim().length !== 6) {
+            alert("Please enter a valid 6-digit OTP.");
+            return;
+        }
 
-            try {
-                await handleVerifyEmail({
-                    otp: verifyOtp.trim(),
-                });
+        try {
+            await handleVerifyEmail({
+                otp: verifyOtp.trim(),
+            });
 
-                setAccountVerified(true);
+            setAccountVerified(true);
+            closeVerifyAccount();
+        } catch (error) {
+            console.error(
+                "Account verification failed:",
+                error
+            );
 
-                closeVerifyAccount();
-            } catch (error) {
-                console.error(
-                    "Account verification failed:",
-                    error
-                );
-
-                alert(
-                    error?.message ||
+            alert(
+                error?.message ||
                     "Account verification failed."
-                );
+            );
 
-                throw error;
-            }
-        };
+            throw error;
+        }
+    };
 
-    /* =====================================================
-       SESSION ACTIONS
-    ===================================================== */
+    const openLogoutSession = (session) => {
+        setModal("session");
+        setSelectedSession(session);
+    };
 
-    const openLogoutSession =
-        (session) => {
-            setModal("session");
-            setSelectedSession(session);
-        };
+    const handleLogoutSession = async () => {
+        const sessionId =
+            selectedSession?.sessionId ||
+            selectedSession?._id ||
+            selectedSession?.id;
 
-    const handleLogoutSession =
-        async () => {
-            const sessionId =
-                selectedSession?.sessionId ||
-                selectedSession?.id;
+        if (!sessionId) {
+            alert(
+                "This session does not have a valid session ID."
+            );
+            return;
+        }
 
-            if (!sessionId) {
-                alert(
-                    "This session does not have a valid session ID."
-                );
-                return;
-            }
+        try {
+            await handleLogoutADevice({
+                sessionId,
+            });
 
-            try {
-                await handleLogoutADevice({
-                    sessionId,
-                });
+            await handleGetAllSession();
 
-                setLocalSessions(
-                    (previousSessions) =>
-                        previousSessions.filter(
-                            (session) =>
-                                (
-                                    session.sessionId ||
-                                    session.id
-                                ) !== sessionId
-                        )
-                );
+            closeModal();
+        } catch (error) {
+            console.error(
+                "Specific session logout failed:",
+                error
+            );
 
-                closeModal();
-            } catch (error) {
-                console.error(
-                    "Specific session logout failed:",
-                    error
-                );
-
-                alert(
-                    error?.message ||
+            alert(
+                error?.message ||
                     "Failed to logout this device."
-                );
-            }
-        };
+            );
+        }
+    };
 
-    const handleLogoutAll =
-        async () => {
-            try {
-                await handleLogoutAllDevices();
+    const handleLogoutAll = async () => {
+        try {
+            await handleLogoutAllDevices();
 
-                setLocalSessions(
-                    (previousSessions) =>
-                        previousSessions.filter(
-                            (session) =>
-                                session.current
-                        )
-                );
+            await handleGetAllSession();
 
-                closeModal();
-            } catch (error) {
-                console.error(
-                    "Logout all devices failed:",
-                    error
-                );
+            closeModal();
+        } catch (error) {
+            console.error(
+                "Logout all devices failed:",
+                error
+            );
 
-                alert(
-                    error?.message ||
+            alert(
+                error?.message ||
                     "Failed to logout all devices."
-                );
-            }
-        };
+            );
+        }
+    };
 
-    const handleLogoutCurrent =
-        async () => {
-            try {
-                await handleLogout();
+    const handleLogoutCurrent = async () => {
+        try {
+            await handleLogout();
+            closeModal();
+        } catch (error) {
+            console.error(
+                "Current session logout failed:",
+                error
+            );
 
-                closeModal();
-            } catch (error) {
-                console.error(
-                    "Current session logout failed:",
-                    error
-                );
-
-                alert(
-                    error?.message ||
+            alert(
+                error?.message ||
                     "Failed to sign out."
-                );
-            }
-        };
+            );
+        }
+    };
 
-    /* =====================================================
-       DELETE ACCOUNT
-    ===================================================== */
+    const handleDeleteAccountC = async () => {
+        if (!deletePassword.trim()) {
+            alert("Please enter your password.");
+            return;
+        }
 
-    const handleDeleteAccountC =
-        async () => {
-            if (!deletePassword.trim()) {
-                alert(
-                    "Please enter your password."
-                );
-                return;
-            }
+        if (!deleteOtp.trim()) {
+            alert("Please enter the OTP.");
+            return;
+        }
 
-            if (!deleteOtp.trim()) {
-                alert(
-                    "Please enter the OTP."
-                );
-                return;
-            }
+        if (deleteOtp.trim().length !== 6) {
+            alert("Please enter a valid 6-digit OTP.");
+            return;
+        }
 
-            if (
-                deleteOtp.trim().length !== 6
-            ) {
-                alert(
-                    "Please enter a valid 6-digit OTP."
-                );
-                return;
-            }
+        try {
+            await handleDeleteAccount({
+                otp: deleteOtp.trim(),
+                password: deletePassword,
+            });
 
-            try {
-                await handleDeleteAccount({
-                    otp: deleteOtp.trim(),
-                    password: deletePassword,
-                });
+            closeModal();
+        } catch (error) {
+            console.error(
+                "Account deletion failed:",
+                error
+            );
 
-                closeModal();
-            } catch (error) {
-                console.error(
-                    "Account deletion failed:",
-                    error
-                );
-
-                alert(
-                    error?.message ||
+            alert(
+                error?.message ||
                     "Account deletion failed."
-                );
+            );
 
-                throw error;
-            }
-        };
-
-    /* =====================================================
-       RENDER
-    ===================================================== */
+            throw error;
+        }
+    };
 
     return (
         <>
             <div className="min-h-full bg-[#F7F8FC]">
-
                 <div className="w-full px-5 py-7 sm:px-7 lg:px-9 xl:px-10">
-
                     <div className="w-full max-w-[1180px]">
-
-                        {/* =================================================
-                            HEADER
-                        ================================================= */}
-
                         <header className="mb-8">
                             <h1 className="text-[25px] font-bold tracking-[-0.035em] text-slate-900 sm:text-[27px]">
                                 Settings
@@ -1165,14 +1091,10 @@ function Settings() {
 
                             <p className="mt-1.5 max-w-2xl text-[13px] leading-5 text-slate-500">
                                 Manage your account, security
-                                preferences and active
-                                sessions.
+                                preferences and active sessions.
                             </p>
                         </header>
 
-                        {/* =================================================
-                            ACCOUNT
-                        ================================================= */}
                         <section>
                             <SectionHeading
                                 title="Account"
@@ -1180,11 +1102,7 @@ function Settings() {
                             />
 
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.025)]">
-
                                 <div className="border-b border-slate-100">
-
-                                    {/* ACCOUNT VERIFICATION */}
-
                                     <SettingRow
                                         icon={
                                             <ShieldCheck
@@ -1200,7 +1118,6 @@ function Settings() {
                                         }
                                         right={
                                             <div className="flex items-center gap-2">
-
                                                 <StatusPill
                                                     tone={
                                                         accountVerified
@@ -1210,16 +1127,12 @@ function Settings() {
                                                 >
                                                     {accountVerified ? (
                                                         <>
-                                                            <CircleCheck
-                                                                size={12}
-                                                            />
+                                                            <CircleCheck size={12} />
                                                             Verified
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <TriangleAlert
-                                                                size={12}
-                                                            />
+                                                            <TriangleAlert size={12} />
                                                             Not Verified
                                                         </>
                                                     )}
@@ -1242,21 +1155,15 @@ function Settings() {
                                                         : "Verify"}
 
                                                     {!accountVerified && (
-                                                        <ChevronRight
-                                                            size={14}
-                                                        />
+                                                        <ChevronRight size={14} />
                                                     )}
                                                 </button>
-
                                             </div>
                                         }
                                     />
 
-                                    {/* WARNING */}
-
                                     {!accountVerified && (
                                         <div className="mx-5 mb-4 flex items-start gap-3 rounded-xl border border-amber-200/80 bg-amber-50/60 px-3.5 py-3">
-
                                             <TriangleAlert
                                                 size={16}
                                                 className="mt-0.5 shrink-0 text-amber-600"
@@ -1264,37 +1171,27 @@ function Settings() {
 
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-[12px] font-semibold text-amber-900">
-                                                    Verify your
-                                                    account
+                                                    Verify your account
                                                 </p>
 
                                                 <p className="mt-0.5 text-[11px] leading-4 text-amber-700">
-                                                    Complete
-                                                    verification
-                                                    to strengthen
-                                                    your profile
-                                                    and improve
-                                                    trust across
+                                                    Complete verification to
+                                                    strengthen your profile and
+                                                    improve trust across
                                                     Peer.Hiring.
                                                 </p>
                                             </div>
 
                                             <button
                                                 className="shrink-0 rounded-lg bg-white px-3 py-1.5 text-[11px] font-semibold text-amber-800 shadow-sm ring-1 ring-amber-200 transition hover:bg-amber-100"
-                                                onClick={
-                                                    openVerifyAccount
-                                                }
+                                                onClick={openVerifyAccount}
                                                 type="button"
                                             >
                                                 Verify account
                                             </button>
-
                                         </div>
                                     )}
-
                                 </div>
-
-                                {/* RECYCLE BIN */}
 
                                 <SettingRow
                                     icon={
@@ -1312,33 +1209,21 @@ function Settings() {
                                             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
                                         >
                                             Open
-                                            <ChevronRight
-                                                size={14}
-                                            />
+                                            <ChevronRight size={14} />
                                         </button>
                                     }
                                 />
-
                             </div>
                         </section>
 
-                        {/* =================================================
-                            SECURITY
-                        ================================================= */}
-
                         <section className="mt-9">
-
                             <SectionHeading
                                 title="Security"
                                 description="Protect your account and control where you're signed in."
                             />
 
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.025)]">
-
-                                {/* 2FA */}
-
                                 <div className="border border-slate-100">
-
                                     <SettingRow
                                         icon={
                                             <LockKeyhole
@@ -1354,7 +1239,6 @@ function Settings() {
                                         }
                                         right={
                                             <div className="flex items-center gap-2">
-
                                                 <StatusPill
                                                     tone={
                                                         twoFactorEnabled
@@ -1364,16 +1248,12 @@ function Settings() {
                                                 >
                                                     {twoFactorEnabled ? (
                                                         <>
-                                                            <CircleCheck
-                                                                size={12}
-                                                            />
+                                                            <CircleCheck size={12} />
                                                             Enabled
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <TriangleAlert
-                                                                size={12}
-                                                            />
+                                                            <TriangleAlert size={12} />
                                                             Disabled
                                                         </>
                                                     )}
@@ -1388,7 +1268,7 @@ function Settings() {
                                                     }
                                                     className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:bg-slate-50"
                                                 >
-                                                    Manage
+                                                    {!show2FA ? "Manage" : "Hide"}
 
                                                     <ChevronDown
                                                         size={14}
@@ -1399,59 +1279,50 @@ function Settings() {
                                                         }`}
                                                     />
                                                 </button>
-
                                             </div>
                                         }
                                     />
 
                                     {show2FA && (
                                         <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-4">
-
                                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
                                                 <div>
                                                     <p className="text-[12px] font-semibold text-slate-800">
-                                                        Authenticator
-                                                        app
+                                                        Authenticator app
                                                     </p>
 
                                                     <p className="mt-0.5 text-[11px] leading-4 text-slate-400">
-                                                        Use a
-                                                        verification
-                                                        code from
-                                                        your
-                                                        authenticator
-                                                        app when
-                                                        signing in.
+                                                        Use a verification code
+                                                        from your authenticator
+                                                        app when signing in.
                                                     </p>
                                                 </div>
 
                                                 {!twoFactorEnabled && (
-    <button
-        type="button"
-        onClick={() => setShow2FAModal(true)}
-        className="rounded-xl bg-violet-600 px-3.5 py-2 text-[12px] font-semibold text-white transition hover:bg-violet-700"
-    >
-        Enable 2FA
-    </button>
-)}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setShow2FAModal(
+                                                                true
+                                                            )
+                                                        }
+                                                        className="rounded-xl bg-violet-600 px-3.5 py-2 text-[12px] font-semibold text-white transition hover:bg-violet-700"
+                                                    >
+                                                        Enable 2FA
+                                                    </button>
+                                                )}
 
-{twoFactorEnabled && (
-    <span className="text-[12px] font-semibold text-emerald-600">
-        Active
-    </span>
-)}
-
+                                                {twoFactorEnabled && (
+                                                    <span className="text-[12px] font-semibold text-emerald-600">
+                                                        Active
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     )}
-
                                 </div>
 
-                                {/* ACTIVE SESSIONS */}
-
                                 <div>
-
                                     <SettingRow
                                         icon={
                                             <Monitor
@@ -1466,7 +1337,8 @@ function Settings() {
                                             <button
                                                 onClick={() =>
                                                     setShowSessions(
-                                                        !showSessions
+                                                        (previous) =>
+                                                            !previous
                                                     )
                                                 }
                                                 type="button"
@@ -1491,7 +1363,11 @@ function Settings() {
                                     {showSessions && (
                                         <SessionsPanel
                                             sessions={
-                                                localSessions
+                                                Array.isArray(
+                                                    sessions
+                                                )
+                                                    ? sessions
+                                                    : []
                                             }
                                             sessionsLoading={
                                                 sessionsLoading
@@ -1506,69 +1382,48 @@ function Settings() {
                                             }
                                         />
                                     )}
-
                                 </div>
-
                             </div>
                         </section>
 
-                        {/* =================================================
-                            SECURITY INFO
-                        ================================================= */}
-
                         <section className="mt-7">
-
                             <div className="flex items-start gap-4 rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50/80 via-white to-white px-5 py-5">
-
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-violet-600 shadow-sm ring-1 ring-violet-100">
                                     <ShieldCheck size={20} />
                                 </div>
 
                                 <div className="min-w-0 flex-1">
-
                                     <p className="text-[13px] font-semibold text-slate-900">
                                         Keep your account secure
                                     </p>
 
                                     <p className="mt-1 max-w-2xl text-[12px] leading-5 text-slate-500">
-                                        Review your active
-                                        sessions regularly and
-                                        remove devices you no
-                                        longer recognize.
+                                        Review your active sessions regularly
+                                        and remove devices you no longer
+                                        recognize.
                                     </p>
 
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            setShowSessions(
-                                                true
-                                            )
+                                            setShowSessions(true)
                                         }
                                         className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-violet-700 transition hover:text-violet-800"
                                     >
                                         Review security
-                                        <ArrowUpRight
-                                            size={14}
-                                        />
+                                        <ArrowUpRight size={14} />
                                     </button>
-
                                 </div>
                             </div>
                         </section>
 
-                        {/* =================================================
-                            SESSION
-                        ================================================= */}
-
                         <section className="mt-9">
-
                             <SectionHeading
                                 title="Session"
                                 description="Sign out from this device or end other active sessions."
                             />
 
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.025)]">
-
                                 <SettingRow
                                     icon={
                                         <LogOut
@@ -1589,36 +1444,26 @@ function Settings() {
                                             }
                                             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-[12px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
                                         >
-                                            <LogOut
-                                                size={14}
-                                            />
+                                            <LogOut size={14} />
                                             Sign out
                                         </button>
                                     }
                                 />
-
                             </div>
                         </section>
 
-                        {/* =================================================
-                            DANGER ZONE
-                        ================================================= */}
-
                         <section className="mt-9 pb-12">
-
                             <div>
                                 <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-red-600">
                                     Danger zone
                                 </p>
 
                                 <p className="mt-1 text-[12px] text-slate-400">
-                                    Irreversible account
-                                    actions.
+                                    Irreversible account actions.
                                 </p>
                             </div>
 
                             <div className="mt-3 overflow-hidden rounded-2xl border border-red-200/80 bg-white">
-
                                 <SettingRow
                                     icon={
                                         <Trash2
@@ -1640,44 +1485,31 @@ function Settings() {
                                             className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-3.5 py-2 text-[12px] font-semibold text-red-600 transition hover:bg-red-50"
                                         >
                                             Delete account
-                                            <ChevronRight
-                                                size={14}
-                                            />
+                                            <ChevronRight size={14} />
                                         </button>
                                     }
                                 />
 
                                 <div className="border-t border-red-100 bg-red-50/50 px-5 py-3">
-
                                     <div className="flex items-start gap-2">
-
                                         <TriangleAlert
                                             size={14}
                                             className="mt-0.5 shrink-0 text-red-500"
                                         />
 
                                         <p className="text-[11px] leading-4 text-red-700">
-                                            Account deletion is
-                                            permanent. Make sure
-                                            you've backed up
-                                            anything you need
-                                            before continuing.
+                                            Account deletion is permanent.
+                                            Make sure you've backed up
+                                            anything you need before
+                                            continuing.
                                         </p>
-
                                     </div>
-
                                 </div>
-
                             </div>
                         </section>
-
                     </div>
                 </div>
             </div>
-
-            {/* =============================================================
-                LOGOUT CURRENT
-            ============================================================= */}
 
             <ConfirmModal
                 open={modal === "logout"}
@@ -1686,14 +1518,8 @@ function Settings() {
                 description="You'll be signed out from this device. You'll need to sign in again to access your account."
                 confirmText="Sign out"
                 onClose={closeModal}
-                onConfirm={
-                    handleLogoutCurrent
-                }
+                onConfirm={handleLogoutCurrent}
             />
-
-            {/* =============================================================
-                LOGOUT SESSION
-            ============================================================= */}
 
             <ConfirmModal
                 open={modal === "session"}
@@ -1707,32 +1533,18 @@ function Settings() {
                 description="This device will lose access to your Peer.Hiring account. You can sign in again later."
                 confirmText="Sign out device"
                 onClose={closeModal}
-                onConfirm={
-                    handleLogoutSession
-                }
+                onConfirm={handleLogoutSession}
             />
 
-            {/* =============================================================
-                LOGOUT ALL
-            ============================================================= */}
-
             <ConfirmModal
-                open={
-                    modal === "allSessions"
-                }
+                open={modal === "allSessions"}
                 icon={<LogOut size={19} />}
                 title="Sign out all other devices?"
                 description="Every other active session will be signed out. Your current device will remain signed in."
                 confirmText="Sign out others"
                 onClose={closeModal}
-                onConfirm={
-                    handleLogoutAll
-                }
+                onConfirm={handleLogoutAll}
             />
-
-            {/* =============================================================
-                DELETE CONFIRMATION
-            ============================================================= */}
 
             <ConfirmModal
                 open={modal === "delete"}
@@ -1745,60 +1557,39 @@ function Settings() {
                 onConfirm={() => {
                     setDeletePassword("");
                     setDeleteOtp("");
-                    setModal(
-                        "delete-security"
-                    );
+                    setModal("delete-security");
                 }}
             />
 
-            {/* =============================================================
-                DELETE SECURITY
-            ============================================================= */}
-
             <DeleteAccountSecurityModal
-                open={
-                    modal ===
-                    "delete-security"
-                }
+                open={modal === "delete-security"}
                 password={deletePassword}
-                setPassword={
-                    setDeletePassword
-                }
+                setPassword={setDeletePassword}
                 otp={deleteOtp}
                 setOtp={setDeleteOtp}
                 onClose={closeModal}
-                onSendOtp={
-                    handleSendDeleteAccountOtp
-                }
-                onConfirm={
-                    handleDeleteAccountC
-                }
+                onSendOtp={handleSendDeleteAccountOtp}
+                onConfirm={handleDeleteAccountC}
             />
 
             <VerifyAccountModal
                 open={showVerifyModal}
                 otp={verifyOtp}
                 setOtp={setVerifyOtp}
-                onClose={
-                    closeVerifyAccount
-                }
-                onSendOtp={
-                    handleSendVerificationOtp
-                }
-                onVerify={
-                    handleVerifyAccount
-                }
+                onClose={closeVerifyAccount}
+                onSendOtp={handleSendVerificationOtp}
+                onVerify={handleVerifyAccount}
             />
 
             <TwoFactorModal
-    open={show2FAModal}
-    onClose={() => setShow2FAModal(false)}
-    onEnabled={() => {
-        setTwoFactorEnabled(true);
-    }}
-    enable2FA={handleEnable2FA}
-    verify2FASetup={handleVerify2fa}
-/>
+                open={show2FAModal}
+                onClose={() => setShow2FAModal(false)}
+                onEnabled={() => {
+                    setTwoFactorEnabled(true);
+                }}
+                enable2FA={handleEnable2FA}
+                verify2FASetup={handleVerify2fa}
+            />
         </>
     );
 }
