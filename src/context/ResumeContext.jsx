@@ -5,6 +5,8 @@ export const ResumeContext = createContext();
 const ResumeProvider = ({ children }) => {
     const API_URL = import.meta.env.VITE_API_URL;
 
+    const BASE_URL = `${API_URL}/api/v1/resumes`;
+
     const [resume, setResume] = useState(null);
     const [resumes, setResumes] = useState([]);
     const [resumePagination, setResumePagination] = useState({
@@ -12,59 +14,66 @@ const ResumeProvider = ({ children }) => {
         totalPages: 0,
         totalResumes: 0,
         limit: 10,
+        hasNextPage: false,
+        hasPreviousPage: false,
     });
-
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const handleUploadResume = async ({
-        resumeLocalFilePath,
-        title,
-    }) => {
-        if (!resumeLocalFilePath) {
-            throw new Error("Resume file is required");
+    const parseResponse = async (response) => {
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data?.message || "Something went wrong"
+            );
         }
 
-        if (!title?.trim()) {
-            throw new Error("Resume title is required");
-        }
+        return data;
+    };
 
+    const handleUploadResume = async (formData) => {
         try {
             setLoading(true);
             setError(null);
 
-            const formData = new FormData();
-
-            formData.append("resume", resumeLocalFilePath);
-            formData.append("title", title.trim());
-
-            const response = await fetch(`${API_URL}/resume`, {
+            const response = await fetch(BASE_URL, {
                 method: "POST",
                 credentials: "include",
                 body: formData,
             });
 
-            const data = await response.json();
+            const result = await parseResponse(response);
+            const uploadedResume = result.data;
 
-            if (!response.ok) {
-                throw new Error(
-                    data?.message || "Failed to upload resume"
-                );
-            }
+            setResumes((prev) => [
+                uploadedResume,
+                ...prev.filter(
+                    (item) => item._id !== uploadedResume._id
+                ),
+            ]);
 
-            const newResume = data?.data;
+            setResumePagination((prev) => ({
+                ...prev,
+                totalResumes: prev.totalResumes + 1,
+            }));
 
-            setResumes((prev) => [newResume, ...prev]);
+            setResume(uploadedResume);
 
-            if (newResume?.isDefault) {
-                setResume(newResume);
-            }
-
-            return newResume;
+            return {
+                success: true,
+                data: uploadedResume,
+                message: result.message || "Resume uploaded successfully",
+            };
         } catch (error) {
             console.error("Upload Resume Error:", error);
             setError(error.message);
-            throw error;
+
+            return {
+                success: false,
+                data: null,
+                message: error.message || "Failed to upload resume",
+            };
         } finally {
             setLoading(false);
         }
@@ -79,31 +88,26 @@ const ResumeProvider = ({ children }) => {
             setError(null);
 
             const response = await fetch(
-                `${API_URL}/resume/userResumes?page=${page}&limit=${limit}`,
+                `${BASE_URL}/userResumes?page=${page}&limit=${limit}`,
                 {
                     method: "GET",
                     credentials: "include",
                 }
             );
 
-            const data = await response.json();
+            const result = await parseResponse(response);
+            const resumeData = result.data;
 
-            if (!response.ok) {
-                throw new Error(
-                    data?.message || "Failed to fetch resumes"
-                );
-            }
-
-            const resumeData = data?.data;
-
-            setResumes(resumeData?.Resumes || []);
+            setResumes(resumeData?.resumes ?? []);
 
             setResumePagination(
-                resumeData?.pagination || {
+                resumeData?.pagination ?? {
                     currentPage: page,
                     totalPages: 0,
                     totalResumes: 0,
                     limit,
+                    hasNextPage: false,
+                    hasPreviousPage: false,
                 }
             );
 
@@ -127,22 +131,15 @@ const ResumeProvider = ({ children }) => {
             setError(null);
 
             const response = await fetch(
-                `${API_URL}/resume/${resumeId}`,
+                `${BASE_URL}/${resumeId}`,
                 {
                     method: "GET",
                     credentials: "include",
                 }
             );
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    data?.message || "Failed to fetch resume"
-                );
-            }
-
-            const fetchedResume = data?.data;
+            const result = await parseResponse(response);
+            const fetchedResume = result.data;
 
             setResume(fetchedResume);
 
@@ -159,13 +156,23 @@ const ResumeProvider = ({ children }) => {
     const handleUpdateResumeDetails = async ({
         resumeId,
         title,
+        subtitle,
+        target,
+        skills,
     }) => {
         if (!resumeId) {
             throw new Error("Resume ID is required");
         }
 
-        if (!title?.trim()) {
-            throw new Error("Resume title is required");
+        const updates = {};
+
+        if (title !== undefined) updates.title = title;
+        if (subtitle !== undefined) updates.subtitle = subtitle;
+        if (target !== undefined) updates.target = target;
+        if (skills !== undefined) updates.skills = skills;
+
+        if (Object.keys(updates).length === 0) {
+            throw new Error("At least one field is required to update");
         }
 
         try {
@@ -173,49 +180,37 @@ const ResumeProvider = ({ children }) => {
             setError(null);
 
             const response = await fetch(
-                `${API_URL}/resume/${resumeId}`,
+                `${BASE_URL}/${resumeId}`,
                 {
                     method: "PATCH",
                     credentials: "include",
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({
-                        title: title.trim(),
-                    }),
+                    body: JSON.stringify(updates),
                 }
             );
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    data?.message || "Failed to update resume"
-                );
-            }
-
-            const updatedResume = data?.data;
+            const result = await parseResponse(response);
+            const updatedResume = result.data;
 
             setResumes((prev) =>
                 prev.map((item) =>
-                    item._id === resumeId
+                    item._id === updatedResume._id
                         ? updatedResume
                         : item
                 )
             );
 
             setResume((prev) =>
-                prev?._id === resumeId
+                prev?._id === updatedResume._id
                     ? updatedResume
                     : prev
             );
 
             return updatedResume;
         } catch (error) {
-            console.error(
-                "Update Resume Details Error:",
-                error
-            );
+            console.error("Update Resume Details Error:", error);
             setError(error.message);
             throw error;
         } finally {
@@ -224,27 +219,26 @@ const ResumeProvider = ({ children }) => {
     };
 
     const handleUpdateResumeFile = async ({
-        resumeLocalFilePath,
         resumeId,
+        file,
     }) => {
         if (!resumeId) {
             throw new Error("Resume ID is required");
         }
 
-        if (!resumeLocalFilePath) {
-            throw new Error("Resume file is required");
+        if (!(file instanceof File)) {
+            throw new Error("A valid resume file is required");
         }
+
+        const formData = new FormData();
+        formData.append("resume", file);
 
         try {
             setLoading(true);
             setError(null);
 
-            const formData = new FormData();
-
-            formData.append("resume", resumeLocalFilePath);
-
             const response = await fetch(
-                `${API_URL}/resume/update/${resumeId}`,
+                `${BASE_URL}/update/${resumeId}`,
                 {
                     method: "PATCH",
                     credentials: "include",
@@ -252,36 +246,26 @@ const ResumeProvider = ({ children }) => {
                 }
             );
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    data?.message || "Failed to update resume file"
-                );
-            }
-
-            const updatedResume = data?.data;
+            const result = await parseResponse(response);
+            const updatedResume = result.data;
 
             setResumes((prev) =>
                 prev.map((item) =>
-                    item._id === resumeId
+                    item._id === updatedResume._id
                         ? updatedResume
                         : item
                 )
             );
 
             setResume((prev) =>
-                prev?._id === resumeId
+                prev?._id === updatedResume._id
                     ? updatedResume
                     : prev
             );
 
             return updatedResume;
         } catch (error) {
-            console.error(
-                "Update Resume File Error:",
-                error
-            );
+            console.error("Update Resume File Error:", error);
             setError(error.message);
             throw error;
         } finally {
@@ -299,38 +283,35 @@ const ResumeProvider = ({ children }) => {
             setError(null);
 
             const response = await fetch(
-                `${API_URL}/resume/ChangeStatus/${resumeId}`,
+                `${BASE_URL}/ChangeStatus/${resumeId}`,
                 {
                     method: "PATCH",
                     credentials: "include",
                 }
             );
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    data?.message || "Failed to set default resume"
-                );
-            }
-
-            const defaultResume = data?.data;
+            const result = await parseResponse(response);
+            const defaultResume = result.data;
 
             setResumes((prev) =>
                 prev.map((item) => ({
                     ...item,
-                    isDefault: item._id === resumeId,
+                    isDefault: item._id === defaultResume._id,
                 }))
             );
 
-            setResume(defaultResume);
+            setResume((prev) =>
+                prev
+                    ? {
+                          ...prev,
+                          isDefault: prev._id === defaultResume._id,
+                      }
+                    : prev
+            );
 
             return defaultResume;
         } catch (error) {
-            console.error(
-                "Set Default Resume Error:",
-                error
-            );
+            console.error("Set Default Resume Error:", error);
             setError(error.message);
             throw error;
         } finally {
@@ -348,34 +329,29 @@ const ResumeProvider = ({ children }) => {
             setError(null);
 
             const response = await fetch(
-                `${API_URL}/resume/delete/${resumeId}`,
+                `${BASE_URL}/delete/${resumeId}`,
                 {
                     method: "PATCH",
                     credentials: "include",
                 }
             );
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    data?.message || "Failed to delete resume"
-                );
-            }
-
-            const deletedResume = data?.data;
+            const result = await parseResponse(response);
 
             setResumes((prev) =>
-                prev.filter(
-                    (item) => item._id !== resumeId
-                )
+                prev.filter((item) => item._id !== resumeId)
             );
+
+            setResumePagination((prev) => ({
+                ...prev,
+                totalResumes: Math.max(0, prev.totalResumes - 1),
+            }));
 
             setResume((prev) =>
                 prev?._id === resumeId ? null : prev
             );
 
-            return deletedResume;
+            return result.data;
         } catch (error) {
             console.error("Delete Resume Error:", error);
             setError(error.message);
@@ -395,27 +371,27 @@ const ResumeProvider = ({ children }) => {
             setError(null);
 
             const response = await fetch(
-                `${API_URL}/resume/restore/${resumeId}`,
+                `${BASE_URL}/restore/${resumeId}`,
                 {
                     method: "PATCH",
                     credentials: "include",
                 }
             );
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    data?.message || "Failed to restore resume"
-                );
-            }
-
-            const restoredResume = data?.data;
+            const result = await parseResponse(response);
+            const restoredResume = result.data;
 
             setResumes((prev) => [
                 restoredResume,
-                ...prev,
+                ...prev.filter(
+                    (item) => item._id !== restoredResume._id
+                ),
             ]);
+
+            setResumePagination((prev) => ({
+                ...prev,
+                totalResumes: prev.totalResumes + 1,
+            }));
 
             return restoredResume;
         } catch (error) {
@@ -427,9 +403,7 @@ const ResumeProvider = ({ children }) => {
         }
     };
 
-    const handlePermanentlyDeleteResume = async ({
-        resumeId,
-    }) => {
+    const handlePermanentlyDeleteResume = async ({ resumeId }) => {
         if (!resumeId) {
             throw new Error("Resume ID is required");
         }
@@ -439,38 +413,26 @@ const ResumeProvider = ({ children }) => {
             setError(null);
 
             const response = await fetch(
-                `${API_URL}/resume/delete/Recycle/${resumeId}`,
+                `${BASE_URL}/delete/Recycle/${resumeId}`,
                 {
                     method: "DELETE",
                     credentials: "include",
                 }
             );
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    data?.message ||
-                        "Failed to permanently delete resume"
-                );
-            }
+            const result = await parseResponse(response);
 
             setResumes((prev) =>
-                prev.filter(
-                    (item) => item._id !== resumeId
-                )
+                prev.filter((item) => item._id !== resumeId)
             );
 
             setResume((prev) =>
                 prev?._id === resumeId ? null : prev
             );
 
-            return data?.data;
+            return result.data;
         } catch (error) {
-            console.error(
-                "Permanently Delete Resume Error:",
-                error
-            );
+            console.error("Permanently Delete Resume Error:", error);
             setError(error.message);
             throw error;
         } finally {
@@ -478,46 +440,20 @@ const ResumeProvider = ({ children }) => {
         }
     };
 
-    const handleDownloadResume = async ({ resumeId }) => {
+    const handleDownloadResume = ({ resumeId }) => {
         if (!resumeId) {
             throw new Error("Resume ID is required");
         }
 
-        try {
-            setLoading(true);
-            setError(null);
+        const downloadUrl = `${BASE_URL}/${resumeId}/download`;
 
-            const response = await fetch(
-                `${API_URL}/resume/${resumeId}/download`,
-                {
-                    method: "GET",
-                    credentials: "include",
-                }
-            );
+        window.open(
+            downloadUrl,
+            "_blank",
+            "noopener,noreferrer"
+        );
 
-            if (!response.ok) {
-                const data = await response.json();
-
-                throw new Error(
-                    data?.message || "Failed to download resume"
-                );
-            }
-
-            const downloadUrl = response.url;
-
-            window.open(downloadUrl, "_blank");
-
-            return downloadUrl;
-        } catch (error) {
-            console.error(
-                "Download Resume Error:",
-                error
-            );
-            setError(error.message);
-            throw error;
-        } finally {
-            setLoading(false);
-        }
+        return downloadUrl;
     };
 
     const clearResume = () => {

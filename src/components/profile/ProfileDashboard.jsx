@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+
 import {
   ArrowUpRight,
   Briefcase,
@@ -11,6 +12,7 @@ import {
   ExternalLink,
   FileText,
   GraduationCap,
+  Image as ImageIcon,
   Link as LinkIcon,
   Mail,
   MapPin,
@@ -19,8 +21,10 @@ import {
   Rocket,
   Sparkles,
   Target,
+  Upload,
   UserRound,
   X,
+  Eye,
 } from "lucide-react";
 
 import { useAuth, useProfile } from "../../hooks/Hook";
@@ -31,6 +35,26 @@ import UpdateProfileModal from "../../routes/updateProfileModal";
 function ProfileDashboard() {
   const [createProfileModal, setCreateProfileModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [imageMenu, setImageMenu] = useState(null);
+// "avatar" | "cover" | null
+
+const [imagePreview, setImagePreview] = useState(null);
+// {
+//   type: "avatar" | "cover",
+//   url: "..."
+// }
+
+const [selectedImage, setSelectedImage] = useState(null);
+// {
+//   type: "avatar" | "cover",
+//   file: File,
+//   preview: "..."
+// }
+
+const [imageUploading, setImageUploading] = useState(false);
+
+const avatarInputRef = useRef(null);
+const coverInputRef = useRef(null);
   
   const [detailsModal, setDetailsModal] = useState({
     open: false,
@@ -122,6 +146,119 @@ const updateAddItemForm = (field, value) => {
     ...prev,
     [field]: value,
   }));
+};
+
+const openImageMenu = (type) => {
+  setImageMenu((prev) => (prev === type ? null : type));
+};
+
+const closeImageMenu = () => {
+  if (imageUploading) return;
+  setImageMenu(null);
+};
+
+const openImagePreview = (type) => {
+  const url =
+    type === "avatar"
+      ? user?.avatar?.url
+      : user?.coverImage?.url;
+
+  if (!url) return;
+
+  setImageMenu(null);
+
+  setImagePreview({
+    type,
+    url,
+  });
+};
+
+const closeImagePreview = () => {
+  if (imageUploading) return;
+
+  setImagePreview(null);
+};
+
+const openFilePicker = (type) => {
+  setImageMenu(null);
+
+  if (type === "avatar") {
+    avatarInputRef.current?.click();
+  }
+
+  if (type === "cover") {
+    coverInputRef.current?.click();
+  }
+};
+
+const handleImageSelected = (event, type) => {
+  const file = event.target.files?.[0];
+
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    alert("Please select a valid image.");
+    event.target.value = "";
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert("Image size must be less than 5MB.");
+    event.target.value = "";
+    return;
+  }
+
+  const previewUrl = URL.createObjectURL(file);
+
+  setSelectedImage({
+    type,
+    file,
+    preview: previewUrl,
+  });
+
+  setImagePreview({
+    type,
+    url: previewUrl,
+  });
+
+  event.target.value = "";
+};
+
+const handleImageUpload = async () => {
+    if (!selectedImage?.file || imageUploading) return;
+
+    try {
+        setImageUploading(true);
+
+        const formData = new FormData();
+
+        if (selectedImage.type === "avatar") {
+            formData.append("avatar", selectedImage.file);
+
+            await handleUpdateAvatar(formData);
+        }
+
+        if (selectedImage.type === "cover") {
+            formData.append("coverImage", selectedImage.file);
+
+            await handleUpdateCoverImage(formData);
+        }
+
+        setSelectedImage(null);
+        setImagePreview(null);
+
+        await handleGetMyProfile();
+    } catch (error) {
+        console.error("Image upload failed:", error);
+
+        alert(
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to update image."
+        );
+    } finally {
+        setImageUploading(false);
+    }
 };
 
 const handleAddItem = async (e) => {
@@ -242,7 +379,7 @@ const handleAddItem = async (e) => {
   }
 };
 
-  const { user } = useAuth();
+  const { user, handleUpdateAvatar, handleUpdateCoverImage } = useAuth();
 
   useEffect(() => {
     let mounted = true;
@@ -526,23 +663,81 @@ const handleAddItem = async (e) => {
         <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
 
           {/* Cover */}
-          <div className="relative h-52 overflow-hidden bg-gradient-to-r from-violet-700 via-purple-700 to-indigo-700 md:h-60">
-            {user?.coverImage?.url && (
-              <img
-                src={user.coverImage.url}
-                alt="Profile cover"
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            )}
+          {/* COVER */}
+<div
+  className="group relative h-52 overflow-hidden bg-gradient-to-r from-violet-700 via-purple-700 to-indigo-700 md:h-60"
+  onClick={() => openImageMenu("cover")}
+>
+  {user?.coverImage?.url ? (
+    <img
+      src={user.coverImage.url}
+      alt="Profile cover"
+      className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.02]"
+    />
+  ) : (
+    <div className="absolute inset-0 bg-gradient-to-r from-violet-700 via-purple-700 to-indigo-700" />
+  )}
 
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+  {/* Dark overlay */}
+  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-black/10" />
 
-            <div className="absolute right-5 top-5">
-              <div className="rounded-xl border border-white/20 bg-black/20 px-3 py-2 text-xs font-medium text-white backdrop-blur-md">
-                Peer.Hiring Profile
-              </div>
-            </div>
-          </div>
+  {/* Hover interaction */}
+  <div
+    className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
+      imageMenu === "cover"
+        ? "bg-black/30 opacity-100"
+        : "bg-black/20 opacity-0 group-hover:opacity-100"
+    }`}
+  >
+    <div className="flex translate-y-2 items-center gap-2 rounded-2xl border border-white/20 bg-black/40 p-2 shadow-2xl backdrop-blur-xl transition-all duration-300 group-hover:translate-y-0">
+      
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          openImagePreview("cover");
+        }}
+        disabled={!user?.coverImage?.url}
+        className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <Eye className="h-4 w-4" />
+        Preview
+      </button>
+
+      <div className="h-6 w-px bg-white/20" />
+
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          openFilePicker("cover");
+        }}
+        className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-violet-50"
+      >
+        <Upload className="h-4 w-4" />
+        Change
+      </button>
+    </div>
+  </div>
+
+  {/* Existing badge */}
+  <div className="absolute right-5 top-5">
+    <div className="rounded-xl border border-white/20 bg-black/20 px-3 py-2 text-xs font-medium text-white backdrop-blur-md">
+      Peer.Hiring Profile
+    </div>
+  </div>
+
+  {/* Hidden input */}
+  <input
+    ref={coverInputRef}
+    type="file"
+    accept="image/png,image/jpeg,image/webp"
+    className="hidden"
+    onChange={(event) =>
+      handleImageSelected(event, "cover")
+    }
+  />
+</div>
 
           {/* Hero Content */}
           <div className="relative px-5 pb-6 md:px-8">
@@ -551,17 +746,76 @@ const handleAddItem = async (e) => {
               <div className="flex flex-col gap-4 md:flex-row md:items-end">
 
                 {/* Avatar */}
-                <div className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-3xl border-4 border-white bg-violet-100 text-4xl font-bold text-violet-700 shadow-lg">
-                  {user?.avatar?.url ? (
-                    <img
-                      src={user.avatar.url}
-                      alt={user?.name || "Profile"}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    getInitial()
-                  )}
-                </div>
+               {/* AVATAR */}
+<div
+  className="group relative h-32 w-32 shrink-0 cursor-pointer"
+  onClick={() => openImageMenu("avatar")}
+>
+  <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-3xl border-4 border-white bg-violet-100 text-4xl font-bold text-violet-700 shadow-lg">
+    {user?.avatar?.url ? (
+      <img
+        src={user.avatar.url}
+        alt={user?.name || "Profile"}
+        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+      />
+    ) : (
+      getInitial()
+    )}
+
+    {/* Avatar hover overlay */}
+    <div
+      className={`absolute inset-0 flex items-center justify-center rounded-2xl bg-black/45 transition-all duration-300 ${
+        imageMenu === "avatar"
+          ? "opacity-100"
+          : "opacity-0 group-hover:opacity-100"
+      }`}
+    >
+      <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-black/30 text-white backdrop-blur-md transition duration-300 group-hover:scale-100">
+        <Sparkles className="h-5 w-5" />
+      </div>
+    </div>
+  </div>
+
+  {/* Avatar action menu */}
+  {imageMenu === "avatar" && (
+    <div
+      onClick={(event) => event.stopPropagation()}
+      className="absolute left-1/2 top-[calc(100%+12px)] z-40 w-44 -translate-x-1/2 animate-in fade-in zoom-in-95 duration-200"
+    >
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl">
+        
+        <button
+          type="button"
+          onClick={() => openImagePreview("avatar")}
+          disabled={!user?.avatar?.url}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-violet-50 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Eye className="h-4 w-4" />
+          Preview
+        </button>
+
+        <button
+          type="button"
+          onClick={() => openFilePicker("avatar")}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-violet-50 hover:text-violet-700"
+        >
+          <Upload className="h-4 w-4" />
+          Change photo
+        </button>
+      </div>
+    </div>
+  )}
+
+  <input
+    ref={avatarInputRef}
+    type="file"
+    accept="image/png,image/jpeg,image/webp"
+    className="hidden"
+    onChange={(event) =>
+      handleImageSelected(event, "avatar")
+    }
+  />
+</div>
 
                 <div className="pb-1">
 
@@ -2266,6 +2520,76 @@ const handleAddItem = async (e) => {
         </div>
 
       </form>
+    </div>
+  </div>
+)}
+
+{/* IMAGE PREVIEW */}
+{imagePreview && (
+  <div
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 p-4 backdrop-blur-md"
+    onMouseDown={(event) => {
+      if (event.target === event.currentTarget) {
+        closeImagePreview();
+      }
+    }}
+  >
+    <button
+      type="button"
+      onClick={closeImagePreview}
+      className="absolute right-5 top-5 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white backdrop-blur-xl transition hover:bg-white/20"
+    >
+      <X className="h-5 w-5" />
+    </button>
+
+    <div className="relative flex max-h-[90vh] max-w-[95vw] flex-col items-center">
+      
+      {/* Image */}
+      <div className="overflow-hidden rounded-3xl border border-white/10 bg-black/20 shadow-2xl">
+        <img
+          src={imagePreview.url}
+          alt={
+            imagePreview.type === "avatar"
+              ? "Profile avatar preview"
+              : "Profile cover preview"
+          }
+          className={
+            imagePreview.type === "avatar"
+              ? "max-h-[70vh] max-w-[80vw] object-contain"
+              : "max-h-[75vh] w-auto max-w-[90vw] object-contain"
+          }
+        />
+      </div>
+
+      {/* Bottom controls */}
+      <div className="mt-5 flex items-center gap-3">
+        <div className="rounded-xl border border-white/10 bg-white/10 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-xl">
+          {imagePreview.type === "avatar"
+            ? "Profile photo"
+            : "Cover image"}
+        </div>
+
+        {selectedImage?.type === imagePreview.type && (
+          <button
+            type="button"
+            onClick={handleImageUpload}
+            disabled={imageUploading}
+            className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-violet-700 shadow-lg transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {imageUploading ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-700" />
+                Updating...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                Update
+              </>
+            )}
+          </button>
+        )}
+      </div>
     </div>
   </div>
 )}

@@ -527,54 +527,61 @@ const handleGoogleAuth = async ({ credential, role = null }) => {
         }
     }
 
-    const handleUpdateAvatar = async({avatar}) => {
-
-        const formData = new FormData();
-        formData.append("avatar", avatar);
-        try {
-            const response  = await fetch("http://localhost:9000/api/v1/auth/update-avatar", {
+const handleUpdateAvatar = async (formData) => {
+    try {
+        const response = await fetch(
+            "http://localhost:9000/api/v1/auth/update-avatar",
+            {
                 method: "PATCH",
                 credentials: "include",
-                body: formData
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "AvatarUpdating Failed");
+                body: formData,
             }
-    
-            console.log("Avatar Updated Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message)
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data?.message || "Avatar Updating Failed"
+            );
         }
-    } 
 
-    const handleUpdateCoverImage = async({coverImage}) => {
+        console.log("Avatar Updated Successfully");
 
-        const formData = new FormData();
-        formData.append("coverImage", coverImage);
-
-        try {
-            const response = await fetch("http://localhost:9000/api/v1/auth/update-coverImage", {
-                method:"PATCH",
-                credentials:"include",
-                body: formData
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "CoverImage Updating Failed");
-            }
-    
-            console.log("CoverIamge Updated Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message)
-        }
+        return data;
+    } catch (error) {
+        console.error("Avatar update failed:", error);
+        throw error;
     }
+};
+
+const handleUpdateCoverImage = async (formData) => {
+    try {
+        const response = await fetch(
+            "http://localhost:9000/api/v1/auth/update-coverImage",
+            {
+                method: "PATCH",
+                credentials: "include",
+                body: formData,
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data?.message || "Cover Image Updating Failed"
+            );
+        }
+
+        console.log("Cover Image Updated Successfully");
+
+        return data;
+    } catch (error) {
+        console.error("Cover image update failed:", error);
+        throw error;
+    }
+};  
 
    const handleEnable2FA = async () => {
     try {
