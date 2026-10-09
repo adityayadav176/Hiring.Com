@@ -4,6 +4,7 @@ import {
     CalendarDays,
     CircleHelp,
     FileText,
+    FileUser,
     LayoutGrid,
     Menu,
     MessagesSquare,
@@ -444,6 +445,30 @@ function Sidebar() {
 
                             {isSidebarOpen && (
                                 <span>My Profile</span>
+                            )}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setActivePage("resume");
+                                setTitle("Resume");
+                            }}
+                            className={`w-full flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm font-medium ${
+                                activePage === "resume"
+                                    ? "bg-[#EEF0FF] text-[#5950E6]"
+                                    : "text-gray-500"
+                            }`}
+                        >
+                            <FileUser
+                                className={`w-5 h-5 ${
+                                    activePage === "resume"
+                                        ? "text-[#5950E6]"
+                                        : "text-gray-500"
+                                }`}
+                            />
+
+                            {isSidebarOpen && (
+                                <span>Resume</span>
                             )}
                         </button>
 

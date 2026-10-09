@@ -9,6 +9,7 @@ import { useHome } from '../../hooks/Hook'
 import Overview from './../pubic/Overview';
 import ADashboard from './../admin/ADashboard';
 import InterviewPage from './InterviewPage'
+import ResumePage from './ResumePage';
 
 function Dashboard() {
     const {activePage, setActivePage} = useHome();
@@ -43,6 +44,8 @@ function Dashboard() {
                     {activePage === "admin/dashboard" && <ADashboard/>}
 
                     {activePage === "interviews" && <InterviewPage/>}
+
+                    {activePage === "resume" && <ResumePage/>}
 
                 </main>
 

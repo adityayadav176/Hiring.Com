@@ -359,8 +359,8 @@ const CreateResumeModal = ({onClose}) => {
     const [dragging, setDragging] = useState(false);
 
     return (
-        <div className='fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm'>
-            <div className='w-full max-w-[520px] overflow-hidden rounded-[12px] border border-black/[0.08] bg-white shadow-[0_30px_100px_rgba(0,0,0,0.18)]'>
+        <div className='fixed inset-0 z-[200] flex overflow-y-auto items-center justify-center bg-black/30 backdrop-blur-sm'>
+            <div className='w-full overflow-y-auto mt-10 max-w-[520px] overflow-hidden rounded-[12px] border border-black/[0.08] bg-white shadow-[0_30px_100px_rgba(0,0,0,0.18)]'>
                 <div className='flex items-start justify-between border-b border-black/[0.06] px-6 py-5'>
                     <div>
                         <p className='text-[9px] font-semibold uppercase tracking-[0.12em] text-[#A0A3A8]'>Resume workspace</p>
@@ -372,8 +372,8 @@ const CreateResumeModal = ({onClose}) => {
                     </button>
                 </div>
                 <div className='space-y-5 px-6 py-6'>
-                    <div>
-                        <label className="mb-2 block text-[10px] font-medium text-[#60646A]">Resume Title</label>
+                    <div className='flex flex-col gap-2'>
+                        <label className="mb-1 block text-[10px] font-medium text-[#60646A]">Resume Title</label>
                         
 <input
   type="text"
@@ -382,7 +382,7 @@ const CreateResumeModal = ({onClose}) => {
   onChange={(e) => setTitle(e.target.value)}
   className="h-10 w-full rounded-[7px] border border-black/[0.09] bg-[#FAFAFB] px-3 text-[11px] outline-none"
 />
-
+<label className="mb-1 block text-[10px] font-medium text-[#60646A]">Resume Target</label>
 <input
   type="text"
   placeholder="Target role"
@@ -390,7 +390,7 @@ const CreateResumeModal = ({onClose}) => {
   onChange={(e) => setTarget(e.target.value)}
   className="h-10 w-full rounded-[7px] border border-black/[0.09] bg-[#FAFAFB] px-3 text-[11px] outline-none"
 />
-
+<label className="mb-1 block text-[10px] font-medium text-[#60646A]">Resume SubTitle</label>
 <input
   type="text"
   placeholder="Short description"
