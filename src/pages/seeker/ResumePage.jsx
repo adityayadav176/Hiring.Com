@@ -838,7 +838,7 @@ const ResumeDrawer = ({resume, onClose, onPreview}) => {
                         </div>
                         <div>
                             <p className='text-[12px] font-semibold'>{resume.title}</p>
-                            <p>Resume details</p>
+                            <p className="font-semibold text-gray-400 text-sm">Resume details</p>
                         </div>
                     </div>
                     <button className='flex h-8 w-8 text-[#858990] justify-center items-center rounded-[6px] hover:bg-[#F1F2F4] hover:text-[#171717]' onClick={onClose}>
