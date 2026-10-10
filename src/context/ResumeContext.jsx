@@ -276,7 +276,7 @@ const handleGetAllResumes = useCallback(
         }
     };
 
-    const handleSetIsDefault = async ({ resumeId }) => {
+    const handleSetIsDefault = async (resumeId) => {
         if (!resumeId) {
             throw new Error("Resume ID is required");
         }
@@ -322,7 +322,7 @@ const handleGetAllResumes = useCallback(
         }
     };
 
-    const handleDeleteResume = async ({ resumeId }) => {
+    const handleDeleteResume = async (resumeId) => {
         if (!resumeId) {
             throw new Error("Resume ID is required");
         }
@@ -443,7 +443,7 @@ const handleGetAllResumes = useCallback(
         }
     };
 
-    const handleDownloadResume = ({ resumeId }) => {
+    const handleDownloadResume = ( resumeId ) => {
         if (!resumeId) {
             throw new Error("Resume ID is required");
         }

@@ -21,6 +21,9 @@ import {
   X,
   Zap,
   LoaderCircle,
+  Sparkles,
+  AlignLeft,
+  Code2,
 } from "lucide-react";
 
   const formatFileSize = (bytes) => {
@@ -71,13 +74,8 @@ const formatDate = (date) => {
       link.remove();
     }
   };
-
-import {
-  useApplication,
-  useResume,
-  useInterview,
-} from "../../hooks/Hook";
-
+import { createPortal } from 'react-dom';
+import { useApplication, useInterview, useResume } from "../../hooks/Hook";
 
 const HeaderMetric = ({label, value}) => {
     return (
@@ -109,9 +107,11 @@ const MenuAction = ({
     icon: Icon,
     label,
     danger,
+    onClick,
+    disabled,
 }) => {
     return (
-        <button
+        <button onClick={onClick} disabled={disabled}
             className={`flex h-8 w-full items-center gap-2.5 rounded-[5px] px-3 text-left text-[10px] ${
                 danger
                     ? "text-[#B23A3A] hover:bg-[#FFF2F2]"
@@ -124,7 +124,463 @@ const MenuAction = ({
     );
 };
 
+
+const EditResumeDetailsModal = ({
+    resume,
+    onClose,
+    onUpdated,
+}) => {
+    const { handleUpdateResumeDetails } = useResume();
+
+    const [title, setTitle] = useState("");
+    const [target, setTarget] = useState("");
+    const [subtitle, setSubtitle] = useState("");
+    const [skills, setSkills] = useState([]);
+    const [skillInput, setSkillInput] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        if (!resume) return;
+
+        setTitle(resume.title || "");
+        setTarget(resume.target || "");
+        setSubtitle(resume.subtitle || "");
+        setSkills(
+            Array.isArray(resume.skills) ? resume.skills : []
+        );
+        setSkillInput("");
+        setError("");
+    }, [resume]);
+
+    // Close modal with Escape key.
+    useEffect(() => {
+        if (!resume) return;
+
+        const handleEscape = (event) => {
+            if (event.key === "Escape" && !loading) {
+                onClose?.();
+            }
+        };
+
+        window.addEventListener("keydown", handleEscape);
+
+        return () => {
+            window.removeEventListener("keydown", handleEscape);
+        };
+    }, [resume, loading, onClose]);
+
+    const addSkill = () => {
+        const value = skillInput.trim();
+
+        if (!value) return;
+
+        const alreadyExists = skills.some(
+            (skill) =>
+                skill.toLowerCase() === value.toLowerCase()
+        );
+
+        if (alreadyExists) {
+            setSkillInput("");
+            return;
+        }
+
+        if (skills.length >= 50) {
+            setError("You can add up to 50 skills.");
+            return;
+        }
+
+        setSkills((prev) => [...prev, value]);
+        setSkillInput("");
+        setError("");
+    };
+
+    const removeSkill = (skillToRemove) => {
+        setSkills((prev) =>
+            prev.filter((skill) => skill !== skillToRemove)
+        );
+        setError("");
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setError("");
+
+        if (!resume?._id) {
+            setError(
+                "Resume ID is missing. Please close and reopen the modal."
+            );
+            return;
+        }
+
+        if (!title.trim()) {
+            setError("Please enter a resume title.");
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const updatedResume =
+                await handleUpdateResumeDetails({
+                    resumeId: resume._id,
+                    title: title.trim(),
+                    target: target.trim(),
+                    subtitle: subtitle.trim(),
+                    skills,
+                });
+
+            // Update the parent only after a successful API response.
+            onUpdated?.(updatedResume);
+            onClose?.();
+        } catch (err) {
+            setError(
+                err?.message ||
+                    "Unable to update resume details. Please try again."
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!resume || typeof document === "undefined") {
+        return null;
+    }
+
+    const inputClass =
+        "w-full rounded-xl border border-gray-200 bg-gray-50/70 px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-gray-300 focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:opacity-60";
+
+    const labelClass =
+        "mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700";
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center bg-gray-950/50 p-4 backdrop-blur-sm"
+            onMouseDown={(event) => {
+                if (
+                    event.target === event.currentTarget &&
+                    !loading
+                ) {
+                    onClose?.();
+                }
+            }}
+        >
+            <section
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="edit-resume-title"
+                className="flex max-h-[88vh] w-full max-w-[720px] flex-col overflow-hidden rounded-[24px] border border-white/70 bg-white shadow-[0_28px_100px_-25px_rgba(15,23,42,0.4)]"
+                onMouseDown={(event) => event.stopPropagation()}
+            >
+                {/* Header */}
+                <header className="flex shrink-0 items-start justify-between border-b border-gray-100 px-6 py-5 sm:px-8 sm:py-6">
+                    <div>
+                        <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-violet-600">
+                            <Sparkles size={14} />
+                            Resume workspace
+                        </div>
+
+                        <h2
+                            id="edit-resume-title"
+                            className="text-2xl font-semibold tracking-tight text-gray-950"
+                        >
+                            Edit resume details
+                        </h2>
+
+                        <p className="mt-1.5 text-sm leading-5 text-gray-500">
+                            Update your resume title, target role,
+                            description, and skills.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        disabled={loading}
+                        aria-label="Close modal"
+                        className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-800 disabled:opacity-50"
+                    >
+                        <X size={21} />
+                    </button>
+                </header>
+
+                {/* Scrollable form */}
+                <form
+                    id="edit-resume-form"
+                    onSubmit={handleSubmit}
+                    className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+                >
+                    <div className="space-y-6 px-6 py-6 sm:px-8">
+                        {/* Resume title */}
+                        <div>
+                            <label
+                                htmlFor="edit-resume-name"
+                                className={labelClass}
+                            >
+                                <FileText
+                                    size={15}
+                                    className="text-violet-600"
+                                />
+                                Resume title
+                                <span className="text-red-500">*</span>
+                            </label>
+
+                            <input
+                                id="edit-resume-name"
+                                type="text"
+                                value={title}
+                                onChange={(event) =>
+                                    setTitle(
+                                        event.target.value.slice(0, 120)
+                                    )
+                                }
+                                maxLength={120}
+                                placeholder="e.g. Software Engineer — Main Resume"
+                                className={inputClass}
+                                autoComplete="off"
+                                required
+                                disabled={loading}
+                            />
+
+                            <div className="mt-1.5 text-right text-xs text-gray-400">
+                                {title.length}/120
+                            </div>
+                        </div>
+
+                        {/* Target role */}
+                        <div>
+                            <label
+                                htmlFor="edit-resume-target"
+                                className={labelClass}
+                            >
+                                <BriefcaseBusiness
+                                    size={15}
+                                    className="text-violet-600"
+                                />
+                                Target role
+                            </label>
+
+                            <input
+                                id="edit-resume-target"
+                                type="text"
+                                value={target}
+                                onChange={(event) =>
+                                    setTarget(
+                                        event.target.value.slice(0, 120)
+                                    )
+                                }
+                                maxLength={120}
+                                placeholder="e.g. Frontend Developer, Backend Engineer"
+                                className={inputClass}
+                                disabled={loading}
+                            />
+                        </div>
+
+                        {/* Subtitle */}
+                        <div>
+                            <label
+                                htmlFor="edit-resume-subtitle"
+                                className={labelClass}
+                            >
+                                <AlignLeft
+                                    size={15}
+                                    className="text-violet-600"
+                                />
+                                Short description
+                            </label>
+
+                            <textarea
+                                id="edit-resume-subtitle"
+                                value={subtitle}
+                                onChange={(event) =>
+                                    setSubtitle(
+                                        event.target.value.slice(0, 180)
+                                    )
+                                }
+                                maxLength={180}
+                                rows={3}
+                                placeholder="Briefly describe what this resume highlights..."
+                                className={`${inputClass} resize-y`}
+                                disabled={loading}
+                            />
+
+                            <div className="mt-1.5 text-right text-xs text-gray-400">
+                                {subtitle.length}/180
+                            </div>
+                        </div>
+
+                        {/* Skills */}
+                        <div>
+                            <label
+                                htmlFor="edit-resume-skill-input"
+                                className={labelClass}
+                            >
+                                <Code2
+                                    size={15}
+                                    className="text-violet-600"
+                                />
+                                Skills
+                                <span className="font-normal text-gray-400">
+                                    ({skills.length}/50)
+                                </span>
+                            </label>
+
+                            <div className="flex gap-2">
+                                <input
+                                    id="edit-resume-skill-input"
+                                    type="text"
+                                    value={skillInput}
+                                    onChange={(event) =>
+                                        setSkillInput(event.target.value)
+                                    }
+                                    onKeyDown={(event) => {
+                                        if (event.key === "Enter") {
+                                            event.preventDefault();
+                                            addSkill();
+                                        }
+                                    }}
+                                    placeholder="e.g. React.js"
+                                    className={`${inputClass} min-w-0 flex-1`}
+                                    disabled={
+                                        loading || skills.length >= 50
+                                    }
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={addSkill}
+                                    disabled={
+                                        loading ||
+                                        !skillInput.trim() ||
+                                        skills.length >= 50
+                                    }
+                                    className="flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 px-4 text-sm font-semibold text-gray-700 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    <Plus size={16} />
+                                    Add
+                                </button>
+                            </div>
+
+                            <p className="mt-2 text-xs text-gray-400">
+                                Press Enter or click Add to include a skill.
+                            </p>
+
+                            {skills.length > 0 && (
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                    {skills.map((skill) => (
+                                        <span
+                                            key={skill}
+                                            className="inline-flex items-center gap-2 rounded-lg border border-violet-100 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-800"
+                                        >
+                                            <span>{skill}</span>
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    removeSkill(skill)
+                                                }
+                                                disabled={loading}
+                                                aria-label={`Remove ${skill}`}
+                                                className="rounded p-0.5 text-violet-400 transition hover:bg-violet-100 hover:text-red-600 disabled:opacity-40"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
+                            {skills.length === 0 && (
+                                <p className="mt-3 rounded-lg border border-dashed border-gray-200 px-4 py-3 text-xs text-gray-400">
+                                    No skills added yet. Add skills relevant
+                                    to this resume, or leave this empty.
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Existing PDF information */}
+                        <div className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-violet-600 shadow-sm">
+                                <FileText size={19} />
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold text-gray-800">
+                                    PDF file remains unchanged
+                                </p>
+
+                                <p className="mt-1 break-words text-xs leading-5 text-gray-500">
+                                    {resume.resume?.originalName ||
+                                        "Your existing resume document"}
+                                </p>
+                            </div>
+
+                            <Check
+                                size={17}
+                                className="mt-1 shrink-0 text-emerald-600"
+                            />
+                        </div>
+
+                        {/* Error */}
+                        {error && (
+                            <div
+                                role="alert"
+                                className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm leading-5 text-red-700"
+                            >
+                                {error}
+                            </div>
+                        )}
+                    </div>
+                </form>
+
+                {/* Footer */}
+                <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-gray-100 bg-white px-6 py-4 sm:px-8 sm:py-5">
+                    <p className="hidden text-xs text-gray-400 sm:block">
+                        Only the details you edit will be saved.
+                    </p>
+
+                    <div className="ml-auto flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            disabled={loading}
+                            className="rounded-xl px-4 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-100 disabled:opacity-50"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="submit"
+                            form="edit-resume-form"
+                            disabled={loading || !title.trim()}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-violet-600/20 transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {loading ? (
+                                <>
+                                    <LoaderCircle
+                                        size={16}
+                                        className="animate-spin"
+                                    />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Check size={16} />
+                                    Save changes
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </footer>
+            </section>
+        </div>,
+        document.body
+    );
+};
+
 const ResumeApplicationCard = ({resume, index, active, onSelect, onMenu, showMenu}) => {
+    const {handleSetIsDefault, handleDeleteResume, handleDownloadResume, handleUpdateResumeDetails} = useResume();
+    const [renameModal, setRenameModal] = useState(false);
     return (
         <div className={`group relative border-b border-black/[0.06] px-5 py-5 transition-all last:border-b-0 ${active ? "bg-[#FBFAFF]" : "hover:bg-[#FAFAFB]"}`}>
             <div className='flex gap-4'>    
@@ -165,14 +621,15 @@ const ResumeApplicationCard = ({resume, index, active, onSelect, onMenu, showMen
                     </button>
                     {showMenu && (
                         <div className='absolute right-0 top-9 z-20 w-44 rounded-[8px] border border-black/[0.08] bg-white p-1 shadow-[0_15px_40px_rgba(0,0,0,0.1)]' >
-                            <MenuAction icon={Pencil} label="Rename"/>
-                            <MenuAction icon={ExternalLink} label="Open document"/>
-                            <MenuAction icon={Download} label="Download"/>
+                            <MenuAction icon={Pencil} onClick={() => setRenameModal(true)} label="Rename"/>
+                                {renameModal && <EditResumeDetailsModal resume={resume} onClose={() => setRenameModal(false)}/>}
+                            <MenuAction icon={ExternalLink} onClick={() => alert("Open")} label="Open document"/>
+                            <MenuAction onClick={() => handleDownloadResume(resume._id)} icon={Download} label="Download"/>
                             {!resume.isDefault && (
-                                <MenuAction icon={Star} label="Set as default"/>
+                                <MenuAction onClick={() => handleSetIsDefault(resume._id)} icon={Star} label="Set as default"/>
                             )}
                             <div className="my-1 border-t border-black/[0.06]" />
-                            <MenuAction icon={Trash2} label="Move to recycle bin" danger/>
+                            <MenuAction onClick={() => handleDeleteResume(resume._id)} icon={Trash2} label="Move to recycle bin" danger/>
                         </div>
                     )}
                 </div>
@@ -1039,11 +1496,6 @@ function ResumePage() {
   const handleOpenResume = (resume) => {
     setActiveResume(resume?._id || null);
   };
-
-
-
-
-
   return (
     <div className="min-h-screen bg-[#F7F8FA] text-[#171717]">
       <header className="sticky top-0 z-50 border-b border-black/[0.07] bg-[#F7F8FA]/95 backdrop-blur-xl">
