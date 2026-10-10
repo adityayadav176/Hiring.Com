@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useCallback, useState } from "react";
 
 export const ApplicationContext = createContext();
 
@@ -32,28 +32,43 @@ const ApplicationProvider = ({children}) => {
         }
     }
 
-    const handleGetMyApplications = async() => {
-        try {
-            const response = await fetch(`${API_URL}/application`, {
-                credentials: "include",
-                method: "GET"
-            })
+  
 
-            const data = await response.json();
+const handleGetMyApplications = useCallback(async () => {
+  try {
+    const response = await fetch(`${API_URL}/application`, {
+      method: "GET",
+      credentials: "include",
+    });
 
-            if(!response.ok) {
-                throw new Error(data.message || "Failed to GetApplications");
-            }
+    const data = await response.json();
 
-            setApplications(data.data.applications);
-            setMyApplicationPagination(data.data.pagination);
-
-            console.log("Application Fetched Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
+    if (!response.ok) {
+      throw new Error(
+        data?.message || "Failed to get applications"
+      );
     }
+
+    const applications = data?.data?.applications ?? [];
+
+    setApplications(applications);
+    setMyApplicationPagination(
+      data?.data?.pagination ?? null
+    );
+
+    console.log("Applications fetched successfully");
+
+    return applications;
+  } catch (error) {
+    console.error("Get My Applications Error:", error);
+
+    setApplications([]);
+    setMyApplicationPagination(null);
+
+    return [];
+  }
+}, [API_URL]);
+
 
     const handleGetDeletedApplications = async() => {
         try {

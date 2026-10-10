@@ -1,11 +1,11 @@
-import { createContext, useState } from "react";
+import { createContext, useCallback, useState } from "react";
 
 export const ResumeContext = createContext();
 
 const ResumeProvider = ({ children }) => {
     const API_URL = import.meta.env.VITE_API_URL;
 
-    const BASE_URL = `${API_URL}/api/v1/resumes`;
+    const BASE_URL = `${API_URL}/resume`;
 
     const [resume, setResume] = useState(null);
     const [resumes, setResumes] = useState([]);
@@ -79,47 +79,50 @@ const ResumeProvider = ({ children }) => {
         }
     };
 
-    const handleGetAllResumes = async ({
-        page = 1,
-        limit = 10,
-    } = {}) => {
-        try {
-            setLoading(true);
-            setError(null);
 
-            const response = await fetch(
-                `${BASE_URL}/userResumes?page=${page}&limit=${limit}`,
-                {
-                    method: "GET",
-                    credentials: "include",
-                }
-            );
+const handleGetAllResumes = useCallback(
+  async ({ page = 1, limit = 10 } = {}) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-            const result = await parseResponse(response);
-            const resumeData = result.data;
+      const url = `${BASE_URL}/userResumes?page=${page}&limit=${limit}`;
 
-            setResumes(resumeData?.resumes ?? []);
+      console.log("Fetching all resumes:", url);
 
-            setResumePagination(
-                resumeData?.pagination ?? {
-                    currentPage: page,
-                    totalPages: 0,
-                    totalResumes: 0,
-                    limit,
-                    hasNextPage: false,
-                    hasPreviousPage: false,
-                }
-            );
+      const response = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+      });
 
-            return resumeData;
-        } catch (error) {
-            console.error("Get All Resumes Error:", error);
-            setError(error.message);
-            throw error;
-        } finally {
-            setLoading(false);
+      const result = await parseResponse(response);
+      const resumeData = result?.data;
+
+      setResumes(resumeData?.resumes ?? []);
+
+      setResumePagination(
+        resumeData?.pagination ?? {
+          currentPage: page,
+          totalPages: 0,
+          totalResumes: 0,
+          limit,
+          hasNextPage: false,
+          hasPreviousPage: false,
         }
-    };
+      );
+
+      return resumeData;
+    } catch (error) {
+      console.error("Get All Resumes Error:", error);
+      setError(error?.message || "Failed to fetch resumes.");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [BASE_URL, parseResponse]
+);
+
 
     const handleGetResumeById = async ({ resumeId }) => {
         if (!resumeId) {

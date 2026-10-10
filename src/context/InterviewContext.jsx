@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useCallback, useState } from "react";
 
 export const InterviewContext = createContext();
 
@@ -59,27 +59,42 @@ const InterviewProvider = ({children}) => {
             alert(error.message);
         }
     }
-    const handleGetMyInterviews = async() => {
-        try {
-            const response = await fetch(`${API_URL}/interview/me`, {
-                credentials: "include",
-                method: "GET",
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error("Failed To Get Interviews");
-            }
-    
-            setInterviews(data.data.interviews);
-            setInterviewPagination(data.data.pagination);
-            console.log("Interviews Fetched Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
+   
+
+const handleGetMyInterviews = useCallback(async () => {
+  try {
+    const response = await fetch(`${API_URL}/interview/me`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data?.message || "Failed to get interviews"
+      );
     }
+
+    const interviews = data?.data?.interviews ?? [];
+    const pagination = data?.data?.pagination ?? null;
+
+    setInterviews(interviews);
+    setInterviewPagination(pagination);
+
+    console.log("Interviews fetched successfully");
+
+    return interviews;
+  } catch (error) {
+    console.error("Get My Interviews Error:", error);
+
+    setInterviews([]);
+    setInterviewPagination(null);
+
+    return [];
+  }
+}, [API_URL]);
+
     const handleGetUpcomingInterviews = async() => {
         try {
             const response = await fetch(`${API_URL}/interview/upcoming`, {
