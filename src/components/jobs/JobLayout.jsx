@@ -9,6 +9,7 @@ function JobLayout() {
   useEffect(() => {
     handleGetAllJobs();
   }, [])
+
   console.log(jobs);
   return (
     <div className='bg-[#F4F4F8] px-6 py-6 min-h-full'>
@@ -247,6 +248,7 @@ function JobLayout() {
     {/* JOB ITEMS */}
     <div className="space-y-4">
       {jobs.map((item) => <JobItem key={item._id} job={item}/>)}
+      
     </div>
 
     {selectedJobs && (<JobDetails job={selectedJobs} onClose={() => setSelectedJobs(null)}/>)}
@@ -254,7 +256,9 @@ function JobLayout() {
   </main>
 
 </div>
+
     </div>
+    
   )
 }
 

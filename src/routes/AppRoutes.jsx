@@ -23,6 +23,8 @@ import GoogleButton from "../components/auth/GoogleButton";
 // import ResumePage from "../pages/seeker/Resume";
 import Resume from "../pages/seeker/Resume";
 import ResumePage from "../pages/seeker/ResumePage";
+import ApplyForJob from "../components/applications/ApplyForJob";
+import ApplyJob from './../components/applications/ApplyJob';
 const AppRoutes = () => {
     return (
         <Routes>
@@ -33,10 +35,11 @@ const AppRoutes = () => {
             <Route path="/admin/users" element={<AdminUsers/>}/>
             <Route path="/users" element={<Userss/>}/>
             <Route path="/companies" element={<Companies/>}/>
-            <Route path="/settings" element={<Settings/>}/>
             <Route path="/interview" element={<InterviewDashboard/>}/>
             <Route path="/resume" element={<Resume/>}/>
             <Route path="/cv" element={<ResumePage/>}/>
+            <Route path="/apply" element={<ApplyForJob/>}/>
+            <Route path="/apply2" element={<ApplyJob/>}/>
 
             <Route path="/recruiter" element={<RecruiterLayout/>}/>
             <Route path="/recruiter/jobs" element={<RecruiterJobs />}/>
