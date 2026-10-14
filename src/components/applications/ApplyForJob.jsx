@@ -746,7 +746,7 @@ const ApplyForJob = ({
                           </h3>
 
                           <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-slate-500">
-                            Create or upload a resume in your Peer.Hiring resume section, then return here to apply.
+                            Create or upload a resume in your Peer.Hiring resume section, then   here to apply.
                           </p>
                         </div>
                       ) : (

@@ -11,9 +11,10 @@ import {
   Users,
   X,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useHome, useJob, useResume, useTitle } from "../../hooks/Hook";
-import ApplyForJob from "./../applications/ApplyForJob";
+import ApplyJob from "../applications/ApplyJob";
+import ApplyForJob from "../applications/ApplyForJob";
 
 function JobDetails({ job }) {
   const {
@@ -30,7 +31,11 @@ function JobDetails({ job }) {
 
   const { setTitle } = useTitle();
   const { setActivePage } = useHome();
-  const { resumes } = useResume();
+  const { resumes, handleGetAllResumes } = useResume();
+
+   useEffect(() => {
+      handleGetAllResumes();
+    }, [])
 
   const location = FormatLocation
     ? FormatLocation(job?.location)
@@ -386,7 +391,7 @@ onClick={() => {setShowApplyModal(true)}}
       </aside>
                
 {showApplyModal && (
-  <ApplyForJob
+  <ApplyJob
     job={job}
     onClose={() => setShowApplyModal(false)}
     onSuccess={() => {

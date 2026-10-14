@@ -11,28 +11,50 @@ const ApplicationProvider = ({children}) => {
     const [jobApplications, setJobApplications] = useState([]);
     const [jobApplicationPagination, setJobApplicationPagination] = useState({});
 
-    const handleApplyForAJob = async({jobId}) => {
-        try {
-            const response = await fetch(`${API_URL}/application/${jobId}`, {
-                credentials: "include",
-                method: "POST"
-            });
     
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Failed To Apply For A Job");
-            }
-            
-            setApplications((prev) => [data.data, ...prev]);
-            console.log("Apply for Job Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
+const handleApplyForAJob = async ({
+  jobId,
+  resumeId,
+  MessageToRecruiter = "",
+}) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/application/${jobId}`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          resumeId,
+          MessageToRecruiter,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data?.message || "Failed to apply for this job"
+      );
     }
 
-  
+    setApplications((prev) => [
+      data.data,
+      ...prev,
+    ]);
+
+    console.log("Applied for job successfully");
+
+    return data.data;
+  } catch (error) {
+    console.error("Apply for job error:", error);
+    alert(error.message || "Something went wrong");
+    throw error;
+  }
+};
 
 const handleGetMyApplications = useCallback(async () => {
   try {
