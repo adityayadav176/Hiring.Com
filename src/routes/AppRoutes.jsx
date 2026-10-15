@@ -23,8 +23,8 @@ import GoogleButton from "../components/auth/GoogleButton";
 // import ResumePage from "../pages/seeker/Resume";
 import Resume from "../pages/seeker/Resume";
 import ResumePage from "../pages/seeker/ResumePage";
-import ApplyForJob from "../components/applications/ApplyForJob";
 import ApplyJob from './../components/applications/ApplyJob';
+import ApplicationDetails from "../pages/seeker/ApplicationDetails";
 const AppRoutes = () => {
     return (
         <Routes>
@@ -38,8 +38,8 @@ const AppRoutes = () => {
             <Route path="/interview" element={<InterviewDashboard/>}/>
             <Route path="/resume" element={<Resume/>}/>
             <Route path="/cv" element={<ResumePage/>}/>
-            <Route path="/apply" element={<ApplyForJob/>}/>
             <Route path="/apply2" element={<ApplyJob/>}/>
+            <Route path="/detail" element={<ApplicationDetails/>}/>
 
             <Route path="/recruiter" element={<RecruiterLayout/>}/>
             <Route path="/recruiter/jobs" element={<RecruiterJobs />}/>
@@ -49,7 +49,6 @@ const AppRoutes = () => {
             <Route element={<ProtectedRoutes allowedType="admin" />}>
             <Route path="/admin" element={<ADashboard/>}/>
             <Route path="/admins" element={<AdminDashboardS/>}/>
-            
             </Route>
 
             <Route element={<ProtectedRoutes allowedType="recruiter"/>}>

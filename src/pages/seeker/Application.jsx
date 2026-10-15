@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Search,
   ChevronDown,
@@ -6,144 +6,17 @@ import {
 } from "lucide-react";
 
 import ApplicationCard from "./ApplicationCard";
-
+import {useApplication} from "../../hooks/Hook"
 const Applications = () => {
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
 
-  const applications = [
-    {
-      id: 1,
-      company: "Google",
-      jobTitle: "Frontend Engineer",
-      location: "Mountain View, CA",
-      type: "Full-time",
-      status: "Interview",
-      appliedAt: "Sep 04",
-      resume: "Aditya_Resume.pdf",
-      steps: [
-        {
-          label: "Applied",
-          date: "Sep 04",
-          completed: true,
-        },
-        {
-          label: "Review",
-          date: "Sep 06",
-          completed: true,
-        },
-        {
-          label: "Shortlisted",
-          date: "Sep 09",
-          completed: true,
-        },
-        {
-          label: "Interview",
-          date: "Sep 14",
-          completed: true,
-        },
-      ],
-    },
+  const {applications, handleGetMyApplications} = useApplication();
+  console.log(applications);
 
-    {
-      id: 2,
-      company: "Microsoft",
-      jobTitle: "Software Engineer",
-      location: "Bangalore, India",
-      type: "Full-time",
-      status: "Reviewing",
-      appliedAt: "Sep 10",
-      resume: "Aditya_Resume.pdf",
-      steps: [
-        {
-          label: "Applied",
-          date: "Sep 10",
-          completed: true,
-        },
-        {
-          label: "Review",
-          date: "Sep 12",
-          completed: true,
-        },
-        {
-          label: "Shortlisted",
-          date: "",
-          completed: false,
-        },
-        {
-          label: "Interview",
-          date: "",
-          completed: false,
-        },
-      ],
-    },
-
-    {
-      id: 3,
-      company: "Amazon",
-      jobTitle: "SDE I",
-      location: "Hyderabad, India",
-      type: "Full-time",
-      status: "Pending",
-      appliedAt: "Sep 12",
-      resume: "Aditya_Resume.pdf",
-      steps: [
-        {
-          label: "Applied",
-          date: "Sep 12",
-          completed: true,
-        },
-        {
-          label: "Review",
-          date: "",
-          completed: false,
-        },
-        {
-          label: "Shortlisted",
-          date: "",
-          completed: false,
-        },
-        {
-          label: "Interview",
-          date: "",
-          completed: false,
-        },
-      ],
-    },
-
-    {
-      id: 4,
-      company: "Meta",
-      jobTitle: "React Developer",
-      location: "Remote",
-      type: "Full-time",
-      status: "Rejected",
-      appliedAt: "Sep 05",
-      resume: "Aditya_Resume.pdf",
-      steps: [
-        {
-          label: "Applied",
-          date: "Sep 05",
-          completed: true,
-        },
-        {
-          label: "Review",
-          date: "Sep 06",
-          completed: true,
-        },
-        {
-          label: "Shortlisted",
-          date: "",
-          completed: false,
-        },
-        {
-          label: "Closed",
-          date: "Sep 09",
-          completed: true,
-        },
-      ],
-    },
-  ];
+  useEffect(() => {
+    handleGetMyApplications();
+  }, [handleGetMyApplications])
 
   const tabs = [
     "All",
@@ -156,9 +29,9 @@ const Applications = () => {
   const filteredApplications = useMemo(() => {
     return applications.filter((application) => {
       const text = `
-        ${application.company}
-        ${application.jobTitle}
-        ${application.location}
+        ${application.companyId}
+        ${application.jobId.jobTitle}
+        ${application.jobId.location}
       `.toLowerCase();
 
       const matchesSearch = text.includes(
@@ -217,7 +90,6 @@ const Applications = () => {
     <div className="min-h-full bg-[#f8f9fc] px-6 py-7">
       <div className="mx-auto max-w-[1160px]">
 
-        {/* ================= HEADER ================= */}
 
         <div className="flex items-end justify-between">
 
@@ -270,8 +142,7 @@ const Applications = () => {
         </div>
 
 
-        {/* ================= SEARCH / SORT ================= */}
-
+        
         <div className="mt-7 flex items-center justify-between">
 
           <div className="relative w-[360px]">
@@ -304,14 +175,11 @@ const Applications = () => {
 
         </div>
 
-
-        {/* ================= TABS ================= */}
-
         <div className="mt-6 flex items-center gap-7 border-b border-slate-200">
 
-          {tabs.map((tab) => (
+          {tabs.map((tab, index) => (
             <button
-              key={tab}
+              key={index}
               type="button"
               onClick={() =>
                 setActiveTab(tab)
@@ -332,16 +200,13 @@ const Applications = () => {
 
         </div>
 
-
-        {/* ================= APPLICATIONS ================= */}
-
         <div className="mt-5 space-y-3">
 
           {filteredApplications.length > 0 ? (
             filteredApplications.map(
               (application) => (
                 <ApplicationCard
-                  key={application.id}
+                  key={application._id}
                   application={application}
                   statusStyle={getStatusStyle}
                 />

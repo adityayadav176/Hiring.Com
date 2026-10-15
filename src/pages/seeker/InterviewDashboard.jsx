@@ -451,7 +451,7 @@ function DetailModal({ interview, onClose }) {
                   </div>
 
                   <div className="mt-3 space-y-2">
-                    {interview.preparation.map((item, index) => (
+                    {interview?.preparation?.map((item, index) => (
                       <div
                         key={index}
                         className="flex items-start gap-3 rounded-xl bg-[#FAFAFD] p-3"
@@ -505,7 +505,7 @@ function DetailModal({ interview, onClose }) {
                 </div>
               </div>
 
-              {interview.status === "Scheduled" && (
+              {interview?.status === "Scheduled" && (
                 <>
                   <button className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6D28D9] px-4 py-3 text-xs font-bold text-white shadow-[0_8px_20px_rgba(109,40,217,0.18)] transition hover:bg-[#5B21B6]">
                     <Video size={15} />

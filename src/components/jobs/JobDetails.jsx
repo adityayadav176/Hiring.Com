@@ -14,7 +14,6 @@ import {
 import React, { useEffect, useState } from "react";
 import { useHome, useJob, useResume, useTitle } from "../../hooks/Hook";
 import ApplyJob from "../applications/ApplyJob";
-import ApplyForJob from "../applications/ApplyForJob";
 
 function JobDetails({ job }) {
   const {
