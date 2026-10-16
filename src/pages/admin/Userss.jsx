@@ -853,7 +853,7 @@ function Userss() {
                     label="Last updated"
                     value={formatDate(selectedUser?.updatedAt)}
                   />
-                  <DetailCard
+                  {selectedUser?.lockUntil && (<DetailCard
                     label="Blocked until"
                     value={
                       selectedUser?.lockUntil &&
@@ -862,7 +862,7 @@ function Userss() {
                         ? formatDate(selectedUser.lockUntil)
                         : "-"
                     }
-                  />
+                  />)}
                 </div>
 
                 <div className="mt-3 rounded-xl bg-slate-50 p-4">
