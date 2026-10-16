@@ -17,80 +17,31 @@ import {
 } from "lucide-react";
 
 import React, { useEffect, useMemo, useState } from "react";
+import {useAdmin} from "../../hooks/Hook"
 
 function Companies() {
-
-    // Replace these with your actual context handlers
+    
     const {
         handleGetAllCompanies,
         handleGetCompanyById,
         handleVerifyCompany,
         handleRejectCompany,
-        handleBlockCompany
-    } = {}; // use your Company/Admin context here
-
-
-    const [companies, setCompanies] = useState([
-        {
-            _id: "6aa5b97b8d69b5c78a66b4db",
-            name: "aditya&CCO",
-            slug: "adityaandcco-1",
-            description: "sadfasdfhasdkfhljasdhfjashjfhsekjh",
-            industry: "IT",
-            companySize: "1-10",
-            foundedYear: 2023,
-            recruiters: [
-                {
-                    recruiterId: {
-                        _id: "6a9fd08d457e425d037112f9",
-                        name: "shardha khapra",
-                        email: "aditya12345@gmail.com",
-                        phoneNo: "9923928112"
-                    },
-                    joinedAt: "2026-09-12T20:43:39.623Z"
-                }
-            ],
-            isVerified: false,
-            deletedAt: null,
-            isDeleted: false,
-            createdAt: "2026-09-12T20:43:39.630Z",
-            updatedAt: "2026-09-12T20:43:39.630Z"
-        },
-        {
-            _id: "6a9bdfa828d845370d29f53f",
-            name: "aditya&CCO",
-            slug: "adityaandcco",
-            description: "sadfasdfhasdkfhljasdhfjashjfhsekjh",
-            industry: "IT",
-            companySize: "1-10",
-            foundedYear: 2023,
-            recruiters: [
-                {
-                    recruiterId: null,
-                    joinedAt: "2026-09-05T09:23:52.679Z"
-                }
-            ],
-            isVerified: false,
-            deletedAt: "2026-09-05T09:56:23.254Z",
-            isDeleted: true,
-            createdAt: "2026-09-05T09:23:52.688Z",
-            updatedAt: "2026-09-05T09:56:23.254Z"
-        }
-    ]);
+        handleBlockCompany,
+        companies,
+        setCompanies,
+        setSelectedCompany,
+        selectedCompany,
+        companiesPagination,
+        setCompaniesPagination
+    } = useAdmin();
 
 
     const [showMenu, setShowMenu] = useState(null);
-    const [selectedCompany, setSelectedCompany] = useState(null);
 
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
 
     const [loading, setLoading] = useState(false);
-
-
-    // --------------------------------------------------
-    // GET ALL COMPANIES
-    // --------------------------------------------------
 
     useEffect(() => {
 
@@ -126,10 +77,6 @@ function Companies() {
 
     }, []);
 
-
-    // --------------------------------------------------
-    // STATUS
-    // --------------------------------------------------
 
     const getStatus = (company) => {
 
@@ -168,11 +115,6 @@ function Companies() {
 
     };
 
-
-    // --------------------------------------------------
-    // FILTER
-    // --------------------------------------------------
-
     const filteredCompanies = useMemo(() => {
 
         return companies.filter((company) => {
@@ -197,11 +139,6 @@ function Companies() {
 
     }, [companies, search, statusFilter]);
 
-
-    // --------------------------------------------------
-    // STATS
-    // --------------------------------------------------
-
     const totalCompanies = companies.length;
 
     const verifiedCompanies =
@@ -214,10 +151,6 @@ function Companies() {
         companies.filter(company => company.isDeleted).length;
 
 
-    // --------------------------------------------------
-    // DATE
-    // --------------------------------------------------
-
     const formatDate = (date) => {
 
         if (!date) return "-";
@@ -229,11 +162,6 @@ function Companies() {
         });
 
     };
-
-
-    // --------------------------------------------------
-    // VIEW COMPANY
-    // --------------------------------------------------
 
     const handleViewCompany = async (companyId) => {
 
@@ -270,10 +198,6 @@ function Companies() {
     };
 
 
-    // --------------------------------------------------
-    // VERIFY
-    // --------------------------------------------------
-
     const handleVerify = async (companyId) => {
 
         try {
@@ -304,10 +228,6 @@ function Companies() {
     };
 
 
-    // --------------------------------------------------
-    // REJECT
-    // --------------------------------------------------
-
     const handleReject = async (companyId) => {
 
         try {
@@ -325,11 +245,6 @@ function Companies() {
         }
 
     };
-
-
-    // --------------------------------------------------
-    // BLOCK
-    // --------------------------------------------------
 
     const handleBlock = async (companyId) => {
 
@@ -354,9 +269,6 @@ function Companies() {
 
         <div className="w-full min-h-full bg-[#F7F8FC] p-6">
 
-            {/* =========================================
-                HEADER
-            ========================================== */}
 
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
@@ -381,11 +293,6 @@ function Companies() {
                 </div>
 
             </div>
-
-
-            {/* =========================================
-                STATS
-            ========================================== */}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
 
@@ -521,12 +428,7 @@ function Companies() {
 
                 </div>
 
-            </div>
-
-
-            {/* =========================================
-                SEARCH / FILTER
-            ========================================== */}
+            </div> 
 
             <div className="bg-white border border-slate-200 rounded-2xl mt-6 p-4">
 
@@ -574,11 +476,6 @@ function Companies() {
                 </div>
 
             </div>
-
-
-            {/* =========================================
-                COMPANY TABLE
-            ========================================== */}
 
             <div className="bg-white border border-slate-200 rounded-2xl mt-4 overflow-hidden">
 
@@ -781,7 +678,7 @@ function Companies() {
                                                 </button>
 
 
-                                                {showMenu === company._id && (
+                                                {showMenu === company._id && (  
 
                                                     <div className="absolute right-0 top-10 z-30 w-52 bg-white border border-slate-200 rounded-xl shadow-xl p-1.5">
 
@@ -925,11 +822,6 @@ function Companies() {
 
                 </div>
 
-
-                {/* =========================================
-                    PAGINATION
-                ========================================== */}
-
                 <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
 
                     <p className="text-xs text-slate-400">
@@ -976,11 +868,6 @@ function Companies() {
                 </div>
 
             </div>
-
-
-            {/* =========================================
-                COMPANY DETAILS MODAL
-            ========================================== */}
 
             {selectedCompany && (
 

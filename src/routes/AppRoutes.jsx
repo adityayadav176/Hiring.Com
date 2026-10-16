@@ -21,9 +21,8 @@ const AppRoutes = () => {
             <Route path="/forgetPassword" element={<ForgetPassword/>}/>
             <Route path="/login" element={<Login/>}/>
             <Route path="/signup" element={<Signup/>}/>
-            <Route path="/admin/users" element={<AdminUsers/>}/>
-            <Route path="/users" element={<Userss/>}/>
             <Route path="/companies" element={<Companies/>}/>
+            <Route path="/users" element={<Userss/>}/>
 
             <Route path="/recruiter" element={<RecruiterLayout/>}/>
             <Route path="/recruiter/jobs" element={<RecruiterJobs />}/>
@@ -33,6 +32,7 @@ const AppRoutes = () => {
             <Route element={<ProtectedRoutes allowedType="admin" />}>
             <Route path="/admin" element={<ADashboard/>}/>
             <Route path="/admins" element={<AdminDashboardS/>}/>
+            
             </Route>
 
             <Route element={<ProtectedRoutes allowedType="recruiter"/>}>

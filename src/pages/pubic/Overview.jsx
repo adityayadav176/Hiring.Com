@@ -23,6 +23,7 @@ import {
   useInterview,
   useHome,
   useAuth,
+  useResume,
 } from "../../hooks/Hook";
 
 const formatDate = (date) => {
@@ -64,6 +65,7 @@ function Overview() {
   const { jobs, handleGetAllJobs } = useJob();
   const { profileCompletion, handleProfileCompletion, profile, handleGetMyProfile } = useProfile();
   const { applications, handleGetMyApplications } = useApplication();
+  const {handleGetAllResumes, resumes} = useResume();
   const {user, getUser} = useAuth();
 
   const { setActivePage } = useHome();
@@ -83,6 +85,7 @@ function Overview() {
     handleGetTodayInterviews();
     handleGetMyProfile();
     getUser();
+    handleGetAllResumes();
   }, []);
 
   const applicationList = Array.isArray(applications)
@@ -155,7 +158,7 @@ function Overview() {
     },
     {
       title: "Add your resume",
-      done: Boolean(profile?.resumeId),
+      done: Boolean(profile?.resumeId || resumes?.length > 0),
     },
   ];
 
