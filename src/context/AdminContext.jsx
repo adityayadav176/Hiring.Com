@@ -406,59 +406,56 @@ const AdminProvider = ({ children }) => {
   // =========================
 
   const handleGetAllCompanies = useCallback(
-    async ({
-      page = 1,
-      limit = 10,
-      search = "",
-      status = "",
-    } = {}) => {
-      try {
-        setLoading(true);
+  async ({
+    page = 1,
+    limit = 10,
+    search = "",
+    status = "",
+  } = {}) => {
+    try {
+      setLoading(true);
 
-        const query = buildQuery({
-          page,
-          limit,
-          search: search.trim(),
-          status,
-        });
+      const query = buildQuery({
+        page,
+        limit,
+        search: search.trim(),
+        status,
+      });
 
-        const response = await fetch(
-          `${API_URL}/admin/companies?${query}`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
-
-        const result = await handleResponse(
-          response,
-          "Failed to fetch companies"
-        );
-
-        // Backend response:
-        // result.data.companies
-        // result.data.pagination
-        const companiesList = result?.data?.companies;
-        const pagination = result?.data?.pagination;
-
-        if (!Array.isArray(companiesList)) {
-          console.error("Unexpected companies API response:", result);
-          throw new Error("The companies API returned an invalid response.");
+      const response = await fetch(
+        `${API_URL}/admin/companies?${query}`,
+        {
+          method: "GET",
+          credentials: "include",
         }
+      );
 
-        setCompanies(companiesList);
-        setCompaniesPagination(pagination ?? null);
+      console.log(response);
 
-        return companiesList;
-      } catch (error) {
-        console.error("Get Companies Error:", error);
-        throw error;
-      } finally {
-        setLoading(false);
+      const result = await handleResponse(
+        response,
+        "Failed to fetch companies"
+      );
+
+      console.log(result);
+      const data = result?.data?.data ?? result?.data;
+      const companiesList = data?.companies;
+      const pagination = data?.pagination;
+
+      if (!Array.isArray(companiesList)) {
+        throw new Error("The companies API returned an invalid response.");
       }
-    },
-    [API_URL, buildQuery, handleResponse]
-  );
+
+      setCompanies(companiesList);
+      setCompaniesPagination(pagination ?? null);
+
+      return companiesList;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [API_URL, buildQuery, handleResponse]
+);
 
   // =========================
   // GET COMPANY BY ID
