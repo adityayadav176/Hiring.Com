@@ -44,40 +44,87 @@ const JobProvider = ({ children }) => {
     };
 
     // Get All Jobs
-    const handleGetAllJobs = async () => {
-    try {
-        const url = `${API_URL}/job`;
+  
+const handleGetAllJobs = async (params = {}) => {
+  const {
+    append = false,
+    page = 1,
+    limit = 20,
+    search = "",
+    location = "",
+    employmentType = [],
+    workSpaceType = [],
+    experienceLevel = [],
+    skills = [],
+    minSalary = "",
+    maxSalary = "",
+    postedWithin = "",
+    sortBy = "relevance",
+  } = params;
 
-        console.log("API URL:", API_URL);
-        console.log("Fetching:", url);
+  try {
+    const query = new URLSearchParams();
 
-        const response = await fetch(url, {
-            credentials: "include",
-            method: "GET",
-        });
+    query.set("page", String(page));
+    query.set("limit", String(limit));
 
-        console.log("Status:", response.status);
-        console.log("Response URL:", response.url);
-        console.log("Content-Type:", response.headers.get("content-type"));
+    if (search.trim()) query.set("search", search.trim());
+    if (location.trim()) query.set("location", location.trim());
 
-        const text = await response.text();
+    const addFilter = (key, value) => {
+      if (Array.isArray(value)) {
+        value.forEach((item) => query.append(key, item));
+      } else if (value !== "" && value != null) {
+        query.set(key, String(value));
+      }
+    };
 
-        console.log("Raw response:", text);
+    addFilter("employmentType", employmentType);
+    addFilter("workSpaceType", workSpaceType);
+    addFilter("experienceLevel", experienceLevel);
+    addFilter("skills", skills);
+    addFilter("minSalary", minSalary);
+    addFilter("maxSalary", maxSalary);
+    addFilter("postedWithin", postedWithin);
+    addFilter("sortBy", sortBy);
 
-        if (!response.ok) {
-            throw new Error(`Request failed: ${response.status}`);
-        }
+    const url = `${API_URL}/job?${query.toString()}`;
 
-        const data = JSON.parse(text);
+    const response = await fetch(url, {
+      method: "GET",
+      credentials: "include",
+    });
 
-        setJobs(data?.data?.jobs || []);
-        setJobPagination(data?.data?.pagination || {});
+    const data = await response.json();
 
-        console.log("Jobs Fetched Successfully:", data);
-    } catch (error) {
-        console.log("Get All Jobs Error:", error);
+    if (!response.ok) {
+      throw new Error(data?.message || `Request failed: ${response.status}`);
     }
+
+    const incomingJobs = data?.data?.jobs || [];
+
+    setJobs((previousJobs) => {
+      if (!append) return incomingJobs;
+      
+      const existingIds = new Set(
+        previousJobs.map((job) => job._id)
+      );
+
+      return [
+        ...previousJobs,
+        ...incomingJobs.filter((job) => !existingIds.has(job._id)),
+      ];
+    });
+
+    setJobPagination(data?.data?.pagination || {});
+
+    return data;
+  } catch (error) {
+    console.error("Get All Jobs Error:", error);
+    throw error;
+  }
 };
+
 
     // Get Recruiter Jobs
     const handleGetRecruiterJobs = async ({ query = "" } = {}) => {

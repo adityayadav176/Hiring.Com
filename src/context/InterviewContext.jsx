@@ -6,6 +6,10 @@ const InterviewProvider = ({children}) => {
     const [Interview, setInterview] = useState(null);
     const [Interviews, setInterviews] = useState([]);
     const [InterviewPagination, setInterviewPagination] = useState({});
+    const [upcomingInterview, setUpcomingInterview] = useState([]); 
+    const [upcomingInterviewPagination, setUpcomingInterviewPagination] = useState({})
+    const [todayInterviews, setTodayInterviews] = useState([]);
+    const [todayInterviewsPagination, setTodayInterviewsPagination] = useState({});
 
     const API_URL = import.meta.env.VITE_API_URL;
 
@@ -108,8 +112,8 @@ const handleGetMyInterviews = useCallback(async () => {
                 throw new Error("Failed To Get Upcoming Interviews");
             }
     
-            setInterviews(data.data.interviews);
-            setInterviewPagination(data.data.pagination);
+            setUpcomingInterview(data.data.interviews);
+            setUpcomingInterviewPagination(data.data.pagination);
             console.log("Upcoming Interviews Fetched Successfully");
         } catch (error) {
             console.log(error);
@@ -129,8 +133,8 @@ const handleGetMyInterviews = useCallback(async () => {
                 throw new Error("Failed To Get Interview");
             }
     
-            setInterviews(data.data.interviews);
-            setInterviewPagination(data.data.pagination);
+            setTodayInterviews(data.data.interviews);
+            setTodayInterviewsPagination(data.data.pagination);
             console.log("Interview Fetched Successfully");
         } catch (error) {
             console.log(error);
@@ -251,7 +255,7 @@ const handleGetMyInterviews = useCallback(async () => {
     }
     
     return (
-        <InterviewContext.Provider value={{handleGetInterviewById, handleGetInterviewsByApplication, handleGetInterviewsByJob, handleGetMyInterviews, handleGetTodayInterviews, handleGetUpcomingInterviews, handleRescheduleInterview, handleScheduleInterview, handleChangeInterviewStatus, Interview, Interviews, InterviewPagination}}>
+        <InterviewContext.Provider value={{handleGetInterviewById, handleGetInterviewsByApplication, handleGetInterviewsByJob, handleGetMyInterviews, handleGetTodayInterviews, handleGetUpcomingInterviews, handleRescheduleInterview, handleScheduleInterview, handleChangeInterviewStatus, Interview, Interviews, InterviewPagination, setUpcomingInterview, setUpcomingInterviewPagination, upcomingInterviewPagination, upcomingInterview, todayInterviews, setTodayInterviews, todayInterviewsPagination, setTodayInterviewsPagination}}>
             {children}
         </InterviewContext.Provider>
     )

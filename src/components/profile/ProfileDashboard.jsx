@@ -36,20 +36,10 @@ function ProfileDashboard() {
   const [createProfileModal, setCreateProfileModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [imageMenu, setImageMenu] = useState(null);
-// "avatar" | "cover" | null
 
 const [imagePreview, setImagePreview] = useState(null);
-// {
-//   type: "avatar" | "cover",
-//   url: "..."
-// }
 
 const [selectedImage, setSelectedImage] = useState(null);
-// {
-//   type: "avatar" | "cover",
-//   file: File,
-//   preview: "..."
-// }
 
 const [imageUploading, setImageUploading] = useState(false);
 
@@ -492,17 +482,31 @@ const handleAddItem = async (e) => {
     return `${endYear}`;
   };
 
-  const capitalize = (value) => {
-    if (!value) return "";
+const capitalize = (value) => {
+  if (value == null || value === "") return "";
 
-    return value
-      .split("-")
-      .map(
-        (word) =>
-          word.charAt(0).toUpperCase() + word.slice(1)
-      )
-      .join(" ");
-  };
+  if (Array.isArray(value)) {
+    return value.map((item) => capitalize(item)).filter(Boolean).join(", ");
+  }
+
+  if (typeof value !== "string") {
+    if (typeof value === "object") {
+      return capitalize(
+        value.label ?? value.name ?? value.value ?? value.title ?? ""
+      );
+    }
+
+    value = String(value);
+  }
+
+  return value
+    .split("-")
+    .filter(Boolean)
+    .map(
+      (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    )
+    .join(" ");
+};
 
   const normalizeUrl = (url) => {
     if (!url) return "";

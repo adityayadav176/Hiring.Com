@@ -11,20 +11,9 @@ import ProtectedRoutes from "./ProtectedRoutes";
 import AdminUsers from "../pages/admin/AdminUsers";
 import Userss from "../pages/admin/Userss";
 import Companies from "../pages/admin/Companies";
-import Settings from "../pages/seeker/Settings";
 import RecruiterLayout from "../recruiter/components/RecruiterLayout";
 import RecruiterJobs from "../recruiter/pages/RecruiterJobs";
 import RecruiterJobsLayout from "../recruiter/pages/RecruiterJobsLayout";
-import InterviewDashboard from "../pages/seeker/InterviewDashboard";
-import InterviewPage from "../pages/seeker/InterviewPage";
-// import TwoFactorModal from "../pages/seeker/2FA";
-import TwoFactorModal from './../pages/seeker/TwoFactorModal';
-import GoogleButton from "../components/auth/GoogleButton";
-// import ResumePage from "../pages/seeker/Resume";
-import Resume from "../pages/seeker/Resume";
-import ResumePage from "../pages/seeker/ResumePage";
-import ApplyJob from './../components/applications/ApplyJob';
-import ApplicationDetails from "../pages/seeker/ApplicationDetails";
 const AppRoutes = () => {
     return (
         <Routes>
@@ -35,11 +24,6 @@ const AppRoutes = () => {
             <Route path="/admin/users" element={<AdminUsers/>}/>
             <Route path="/users" element={<Userss/>}/>
             <Route path="/companies" element={<Companies/>}/>
-            <Route path="/interview" element={<InterviewDashboard/>}/>
-            <Route path="/resume" element={<Resume/>}/>
-            <Route path="/cv" element={<ResumePage/>}/>
-            <Route path="/apply2" element={<ApplyJob/>}/>
-            <Route path="/detail" element={<ApplicationDetails/>}/>
 
             <Route path="/recruiter" element={<RecruiterLayout/>}/>
             <Route path="/recruiter/jobs" element={<RecruiterJobs />}/>

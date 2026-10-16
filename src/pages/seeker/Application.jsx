@@ -16,7 +16,7 @@ const Applications = () => {
 
   useEffect(() => {
     handleGetMyApplications();
-  }, [handleGetMyApplications])
+  }, []);
 
   const tabs = [
     "All",
