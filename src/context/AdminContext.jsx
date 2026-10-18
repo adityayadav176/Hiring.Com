@@ -243,11 +243,6 @@ const handleBlockUser = useCallback(
   ]
 );
 
-// =========================
-// UNBLOCK USER
-// PATCH /admin/users/:userId/unblock
-// =========================
-
 const handleUnblockUser = useCallback(
   async (userId) => {
     if (!userId) {
@@ -294,11 +289,6 @@ const handleUnblockUser = useCallback(
 );
 
 
-  // =========================
-  // DELETE USER
-  // DELETE /admin/users/:userId/delete
-  // =========================
-
   const handleDeleteUser = useCallback(
     async (userId) => {
       try {
@@ -341,11 +331,6 @@ const handleUnblockUser = useCallback(
     },
     [API_URL, handleResponse, handleGetAllUsers, selectedUser]
   );
-
-  // =========================
-  // UPDATE USER STATUS
-  // PATCH /admin/users/:userId/status
-  // =========================
 
   const handleUpdateUserStatus = useCallback(
     async ({ userId, status }) => {
@@ -400,17 +385,418 @@ const handleUnblockUser = useCallback(
     ]
   );
 
-  // =========================
-  // GET ALL COMPANIES
-  // GET /admin/companies
-  // =========================
 
-  const handleGetAllCompanies = useCallback(
+
+const handleGetAllAdminCompanies = useCallback(
+  async ({
+    page = 1,
+    limit = 10,
+    search = "",
+    status = "all",
+    verificationStatus = "all",
+    blocked = "all",
+    deleted = "all",
+    industry = "",
+    companySize = "",
+    country = "",
+    state = "",
+    city = "",
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = {}) => {
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+      search: String(search).trim(),
+      status,
+      blocked,
+      deleted: status === "deleted" ? "true" : deleted,
+      sortBy,
+      sortOrder,
+    });
+
+    if (verificationStatus && verificationStatus !== "all") {
+      params.set("verificationStatus", verificationStatus);
+    }
+
+    const optionalFilters = {
+      industry,
+      companySize,
+      country,
+      state,
+      city,
+    };
+
+    Object.entries(optionalFilters).forEach(([key, value]) => {
+      const normalizedValue = String(value ?? "").trim();
+
+      if (normalizedValue) {
+        params.set(key, normalizedValue);
+      }
+    });
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/admin/companies?${params.toString()}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      console.log("Companies HTTP status:", response.status);
+
+      const result = await handleResponse(
+        response,
+        "Failed to fetch companies"
+      );
+
+      console.log("Companies API result:", result);
+
+      const data =
+        result?.data?.data ??
+        result?.data ??
+        result;
+
+      if (!Array.isArray(data?.companies)) {
+        console.error("Unexpected companies response structure:", data);
+        throw new Error("Invalid companies response.");
+      }
+
+      setCompanies(data.companies);
+
+      return {
+        companies: data.companies,
+        pagination: data.pagination ?? null,
+        filters: data.filters ?? null,
+      };
+    } catch (error) {
+      console.error("Get All Admin Companies Error:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [API_URL, handleResponse]
+);
+
+
+const handleGetCompanyById = useCallback(
+  async (companyId) => {
+    if (!companyId) {
+      throw new Error("Company ID is required.");
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/admin/companies/${companyId}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      const result = await handleResponse(
+        response,
+        "Failed to fetch company"
+      );
+
+      const company = getResponseData(result);
+
+      if (!company || typeof company !== "object" || !company._id) {
+        throw new Error("Invalid company response.");
+      }
+
+      setSelectedCompany(company);
+
+      return company;
+    } catch (error) {
+      console.error("Get Company Error:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [API_URL, handleResponse]
+);
+
+
+const handleVerifyCompany = useCallback(
+  async (companyId) => {
+    if (!companyId) {
+      throw new Error("Company ID is required.");
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/admin/companies/${companyId}/verify`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        }
+      );
+
+      const result = await handleResponse(
+        response,
+        "Failed to verify company"
+      );
+
+      const updatedCompany = getResponseData(result);
+
+      if (!updatedCompany?._id) {
+        throw new Error("Invalid company response.");
+      }
+
+      setCompanies((previous) =>
+        previous.map((company) =>
+          String(company._id) === String(companyId)
+            ? { ...company, ...updatedCompany }
+            : company
+        )
+      );
+
+      setSelectedCompany((previous) =>
+        String(previous?._id) === String(companyId)
+          ? { ...previous, ...updatedCompany }
+          : previous
+      );
+
+      return updatedCompany;
+    } catch (error) {
+      console.error("Verify Company Error:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [API_URL, handleResponse]
+);
+
+const handleRejectCompany = useCallback(
+  async (companyId) => {
+    if (!companyId) {
+      throw new Error("Company ID is required.");
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/admin/companies/${companyId}/reject`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        }
+      );
+
+      const result = await handleResponse(
+        response,
+        "Failed to reject company"
+      );
+
+      const updatedCompany = getResponseData(result);
+
+      if (!updatedCompany?._id) {
+        throw new Error("Invalid company response.");
+      }
+
+      setCompanies((previous) =>
+        previous.map((company) =>
+          String(company._id) === String(companyId)
+            ? { ...company, ...updatedCompany }
+            : company
+        )
+      );
+
+      setSelectedCompany((previous) =>
+        String(previous?._id) === String(companyId)
+          ? { ...previous, ...updatedCompany }
+          : previous
+      );
+
+      return updatedCompany;
+    } catch (error) {
+      console.error("Reject Company Error:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [API_URL, handleResponse]
+);
+
+const handleBlockCompany = useCallback(
+  async (companyId) => {
+    if (!companyId) {
+      throw new Error("Company ID is required.");
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/admin/companies/${companyId}/block`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        }
+      );
+
+      const result = await handleResponse(
+        response,
+        "Failed to block company"
+      );
+
+      const updatedCompany = getResponseData(result);
+
+      if (!updatedCompany?._id) {
+        throw new Error("Invalid company response.");
+      }
+
+      setCompanies((previous) =>
+        previous.map((company) =>
+          String(company._id) === String(companyId)
+            ? { ...company, ...updatedCompany }
+            : company
+        )
+      );
+
+      setSelectedCompany((previous) =>
+        String(previous?._id) === String(companyId)
+          ? { ...previous, ...updatedCompany }
+          : previous
+      );
+
+      return updatedCompany;
+    } catch (error) {
+      console.error("Block Company Error:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [API_URL, handleResponse]
+);
+
+const handleUnblockCompany = useCallback(
+  async (companyId) => {
+    if (!companyId) {
+      throw new Error("Company ID is required.");
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/admin/companies/${companyId}/unblock`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        }
+      );
+
+      const result = await handleResponse(
+        response,
+        "Failed to unblock company"
+      );
+
+      const updatedCompany = getResponseData(result);
+
+      if (!updatedCompany?._id) {
+        throw new Error("Invalid company response.");
+      }
+
+      setCompanies((previous) =>
+        previous.map((company) =>
+          String(company._id) === String(companyId)
+            ? { ...company, ...updatedCompany }
+            : company
+        )
+      );
+
+      setSelectedCompany((previous) =>
+        String(previous?._id) === String(companyId)
+          ? { ...previous, ...updatedCompany }
+          : previous
+      );
+
+      return updatedCompany;
+    } catch (error) {
+      console.error("Unblock Company Error:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [API_URL, handleResponse]
+);
+
+const handleSoftDeleteCompany = useCallback(
+  async (companyId) => {
+    if (!companyId) {
+      throw new Error("Company ID is required.");
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/admin/companies/${companyId}/delete`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        }
+      );
+
+      const result = await handleResponse(
+        response,
+        "Failed to delete company"
+      );
+
+      const deletedCompany = getResponseData(result);
+
+      if (!deletedCompany?._id) {
+        throw new Error("Invalid company response.");
+      }
+
+      // Remove the deleted company from the current list.
+      setCompanies((previous) =>
+        previous.filter(
+          (company) =>
+            String(company._id) !== String(companyId)
+        )
+      );
+
+      setSelectedCompany((previous) =>
+        String(previous?._id) === String(companyId)
+          ? null
+          : previous
+      );
+
+      return deletedCompany;
+    } catch (error) {
+      console.error("Soft Delete Company Error:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [API_URL, handleResponse]
+);
+
+const handleGetJobs = useCallback(
   async ({
     page = 1,
     limit = 10,
     search = "",
     status = "",
+    isBlocked,
   } = {}) => {
     try {
       setLoading(true);
@@ -420,36 +806,40 @@ const handleUnblockUser = useCallback(
         limit,
         search: search.trim(),
         status,
+        isBlocked,
       });
 
       const response = await fetch(
-        `${API_URL}/admin/companies?${query}`,
+        `${API_URL}/admin/jobs?${query}`,
         {
           method: "GET",
           credentials: "include",
         }
       );
 
-      console.log(response);
-
       const result = await handleResponse(
         response,
-        "Failed to fetch companies"
+        "Failed to fetch jobs"
       );
 
-      console.log(result);
       const data = result?.data?.data ?? result?.data;
-      const companiesList = data?.companies;
+      const jobsList = data?.jobs;
       const pagination = data?.pagination;
 
-      if (!Array.isArray(companiesList)) {
-        throw new Error("The companies API returned an invalid response.");
+      if (!Array.isArray(jobsList)) {
+        console.error("Unexpected jobs API response:", result);
+        throw new Error(
+          "The jobs API returned an invalid response."
+        );
       }
 
-      setCompanies(companiesList);
-      setCompaniesPagination(pagination ?? null);
+      setJobs(jobsList);
+      setJobsPagination(pagination ?? null);
 
-      return companiesList;
+      return jobsList;
+    } catch (error) {
+      console.error("Get Jobs Error:", error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -457,434 +847,207 @@ const handleUnblockUser = useCallback(
   [API_URL, buildQuery, handleResponse]
 );
 
-  // =========================
-  // GET COMPANY BY ID
-  // GET /admin/companies/:companyId
-  // =========================
-
-  const handleGetCompanyById = useCallback(
-    async (companyId) => {
-      try {
-        if (!companyId) {
-          throw new Error("Company ID is required");
-        }
-
-        setLoading(true);
-
-        const response = await fetch(
-          `${API_URL}/admin/companies/${companyId}`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
-
-        const result = await handleResponse(
-          response,
-          "Failed to fetch company"
-        );
-
-        const companyData = result?.data;
-
-        if (!companyData || typeof companyData !== "object") {
-          throw new Error("Invalid company response");
-        }
-
-        setSelectedCompany(companyData);
-
-        return companyData;
-      } catch (error) {
-        console.error("Get Company Error:", error);
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [API_URL, handleResponse]
-  );
-
-  // =========================
-  // VERIFY COMPANY
-  // PATCH /admin/companies/:companyId/verify
-  // =========================
-
-  const handleVerifyCompany = useCallback(
-    async (companyId) => {
-      try {
-        if (!companyId) {
-          throw new Error("Company ID is required");
-        }
-
-        setLoading(true);
-
-        const response = await fetch(
-          `${API_URL}/admin/companies/${companyId}/verify`,
-          {
-            method: "PATCH",
-            credentials: "include",
-          }
-        );
-
-        const result = await handleResponse(
-          response,
-          "Failed to verify company"
-        );
-
-        await handleGetAllCompanies();
-
-        if (selectedCompany?._id === companyId) {
-          setSelectedCompany(result?.data ?? selectedCompany);
-        }
-
-        return result.data;
-      } catch (error) {
-        console.error("Verify Company Error:", error);
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [
-      API_URL,
-      handleResponse,
-      handleGetAllCompanies,
-      selectedCompany,
-    ]
-  );
-
-  // =========================
-  // REJECT COMPANY VERIFICATION
-  // PATCH /admin/companies/:companyId/reject
-  // =========================
-
-  const handleRejectCompany = useCallback(
-    async (companyId) => {
-      try {
-        if (!companyId) {
-          throw new Error("Company ID is required");
-        }
-
-        setLoading(true);
-
-        const response = await fetch(
-          `${API_URL}/admin/companies/${companyId}/reject`,
-          {
-            method: "PATCH",
-            credentials: "include",
-          }
-        );
-
-        const result = await handleResponse(
-          response,
-          "Failed to reject company"
-        );
-
-        await handleGetAllCompanies();
-
-        if (selectedCompany?._id === companyId) {
-          setSelectedCompany(result?.data ?? selectedCompany);
-        }
-
-        return result.data;
-      } catch (error) {
-        console.error("Reject Company Error:", error);
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [
-      API_URL,
-      handleResponse,
-      handleGetAllCompanies,
-      selectedCompany,
-    ]
-  );
-
-  // =========================
-  // BLOCK COMPANY
-  // PATCH /admin/companies/:companyId/block
-  // =========================
-
-  const handleBlockCompany = useCallback(
-    async (companyId) => {
-      try {
-        if (!companyId) {
-          throw new Error("Company ID is required");
-        }
-
-        setLoading(true);
-
-        const response = await fetch(
-          `${API_URL}/admin/companies/${companyId}/block`,
-          {
-            method: "PATCH",
-            credentials: "include",
-          }
-        );
-
-        const result = await handleResponse(
-          response,
-          "Failed to block company"
-        );
-
-        setCompanies((previousCompanies) =>
-          previousCompanies.filter((item) => item._id !== companyId)
-        );
-
-        if (selectedCompany?._id === companyId) {
-          setSelectedCompany(null);
-        }
-
-        await handleGetAllCompanies();
-
-        return result.data;
-      } catch (error) {
-        console.error("Block Company Error:", error);
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [
-      API_URL,
-      handleResponse,
-      handleGetAllCompanies,
-      selectedCompany,
-    ]
-  );
-  
-  const handleGetJobs = useCallback(
-    async ({
-      page = 1,
-      limit = 10,
-      search = "",
-      status = "",
-      isBlocked,
-    } = {}) => {
-      try {
-        setLoading(true);
-
-        const query = buildQuery({
-          page,
-          limit,
-          search: search.trim(),
-          status,
-          isBlocked,
-        });
-
-        const response = await fetch(
-          `${API_URL}/admin/jobs?${query}`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
-
-        const result = await handleResponse(
-          response,
-          "Failed to fetch jobs"
-        );
-
-        const jobsList = result?.data?.jobs;
-        const pagination = result?.data?.pagination;
-
-        if (!Array.isArray(jobsList)) {
-          console.error("Unexpected jobs API response:", result);
-          throw new Error("The jobs API returned an invalid response.");
-        }
-
-        setJobs(jobsList);
-        setJobsPagination(pagination ?? null);
-
-        return jobsList;
-      } catch (error) {
-        console.error("Get Jobs Error:", error);
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [API_URL, buildQuery, handleResponse]
-  );
-
   const handleGetJobById = useCallback(
-    async (jobId) => {
-      try {
-        if (!jobId) {
-          throw new Error("Job ID is required");
-        }
-
-        setLoading(true);
-
-        const response = await fetch(
-          `${API_URL}/admin/jobs/${jobId}`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
-
-        const result = await handleResponse(
-          response,
-          "Failed to fetch job"
-        );
-
-        // Controller returns { data: { job } }.
-        const jobData = result?.data?.job;
-
-        if (!jobData || typeof jobData !== "object") {
-          throw new Error("Invalid job response");
-        }
-
-        setJob(jobData);
-
-        return jobData;
-      } catch (error) {
-        console.error("Get Job Error:", error);
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [API_URL, handleResponse]
-  );
-
-  const handleBlockJob = useCallback(
-    async (jobId) => {
-      try {
-        if (!jobId) {
-          throw new Error("Job ID is required");
-        }
-
-        setLoading(true);
-
-        const response = await fetch(
-          `${API_URL}/admin/jobs/${jobId}/block`,
-          {
-            method: "PATCH",
-            credentials: "include",
-          }
-        );
-
-        const result = await handleResponse(
-          response,
-          "Failed to block job"
-        );
-
-        await handleGetJobs();
-
-        if (job?._id === jobId) {
-          await handleGetJobById(jobId);
-        }
-
-        return result.data;
-      } catch (error) {
-        console.error("Block Job Error:", error);
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [
-      API_URL,
-      handleResponse,
-      handleGetJobs,
-      handleGetJobById,
-      job,
-    ]
-  );
-
-  const handleDeleteJob = useCallback(
-    async (jobId) => {
-      try {
-        if (!jobId) {
-          throw new Error("Job ID is required");
-        }
-
-        setLoading(true);
-
-        const response = await fetch(
-          `${API_URL}/admin/jobs/${jobId}`,
-          {
-            method: "DELETE",
-            credentials: "include",
-          }
-        );
-
-        const result = await handleResponse(
-          response,
-          "Failed to delete job"
-        );
-
-        setJobs((previousJobs) =>
-          previousJobs.filter((item) => item._id !== jobId)
-        );
-
-        if (job?._id === jobId) {
-          setJob(null);
-        }
-
-        await handleGetJobs();
-
-        return result.data;
-      } catch (error) {
-        console.error("Delete Job Error:", error);
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [API_URL, handleResponse, handleGetJobs, job]
-  );
-
-  const handleUnlockJob = useCallback(
   async (jobId) => {
     if (!jobId) {
       throw new Error("Job ID is required");
     }
 
     try {
+      setLoading(true);
+
       const response = await fetch(
-        `${API_URL}/admin/jobs/${jobId}/unlock`,
+        `${API_URL}/admin/jobs/${jobId}`,
         {
-          method: "PATCH",
+          method: "GET",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
         }
       );
 
-      const result = await response.json();
+      const result = await handleResponse(
+        response,
+        "Failed to fetch job"
+      );
 
-      await handleResponse(response, result);
-      const unlockedJob = result?.data;
-      console.log(result);
-      console.log(unlockedJob);
+      const jobData =
+        result?.data?.job ?? result?.data;
 
-      if (unlockedJob?._id) {
-        setJobs((previousJobs) =>
-          previousJobs.map((job) =>
-            job._id === unlockedJob._id ? unlockedJob : job
-          )
-        );
-
-        setJob((previousJob) =>
-          previousJob?._id === unlockedJob._id
-            ? unlockedJob
-            : previousJob
-        );
+      if (
+        !jobData ||
+        typeof jobData !== "object" ||
+        !jobData._id
+      ) {
+        console.error("Unexpected job response:", result);
+        throw new Error("Invalid job response");
       }
 
-      return unlockedJob;
+      setJob(jobData);
+
+      return jobData;
     } catch (error) {
-      console.error("Unlock job error:", error);
+      console.error("Get Job Error:", error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   },
-  [API_URL, handleResponse, setJobs, setJob]
+  [API_URL, handleResponse]
 );
+
+  const handleBlockJob = useCallback(
+  async (jobId) => {
+    if (!jobId) {
+      throw new Error("Job ID is required");
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/admin/jobs/${jobId}/block`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        }
+      );
+
+      const result = await handleResponse(
+        response,
+        "Failed to block job"
+      );
+
+      const blockedJob = result?.data;
+
+      if (!blockedJob?.jobId) {
+        throw new Error("Invalid block job response");
+      }
+
+      setJobs((previousJobs) =>
+        previousJobs.map((item) =>
+          String(item._id) === String(blockedJob.jobId)
+            ? { ...item, isBlocked: blockedJob.isBlocked }
+            : item
+        )
+      );
+
+      setJob((previousJob) =>
+        previousJob &&
+        String(previousJob._id) === String(blockedJob.jobId)
+          ? {
+              ...previousJob,
+              isBlocked: blockedJob.isBlocked,
+            }
+          : previousJob
+      );
+
+      return blockedJob;
+    } catch (error) {
+      console.error("Block Job Error:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [API_URL, handleResponse]
+);
+
+const handleDeleteJob = useCallback(
+  async (jobId) => {
+    if (!jobId) {
+      throw new Error("Job ID is required.");
+    }
+
+    const response = await fetch(
+      `${API_URL}/admin/jobs/${jobId}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      }
+    );
+
+    let result;
+
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error("Invalid response received from server.");
+    }
+
+    if (!response.ok || result?.success === false) {
+      throw new Error(
+        result?.message || "Failed to delete job."
+      );
+    }
+
+    // Your backend returns: { jobId: deletedJob._id }
+    const deletedJobId =
+      result?.data?.jobId ||
+      result?.data?.data?.jobId ||
+      jobId;
+
+    // Remove the deleted job immediately from AdminContext.
+    setJobs((previousJobs) =>
+      previousJobs.filter(
+        (job) => String(job._id) !== String(deletedJobId)
+      )
+    );
+
+    return result.data;
+  },
+  []
+);
+
+const handleUnlockJob = useCallback(async (jobId) => {
+  if (!jobId) {
+    throw new Error("Job ID is required to unlock a job.");
+  }
+
+  const response = await fetch(
+    `${API_URL}/admin/jobs/${jobId}/unlock`,
+    {
+      method: "PATCH",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  let result;
+
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error("Invalid response received from server.");
+  }
+
+  if (!response.ok || result?.success === false) {
+    throw new Error(
+      result?.message || "Failed to unlock job."
+    );
+  }
+
+  // Your backend returns the job directly inside ApiResponse.data.
+  const updatedJob =
+    result?.data?.job ||
+    result?.data?.data ||
+    result?.data;
+
+  if (!updatedJob || typeof updatedJob !== "object") {
+    throw new Error("Updated job was not returned by the server.");
+  }
+
+  // Update the jobs list immediately.
+  setJobs((prevJobs) =>
+    prevJobs.map((job) =>
+      String(job._id) === String(jobId)
+        ? { ...job, ...updatedJob, isBlocked: false }
+        : job
+    )
+  );
+
+  return updatedJob;
+}, []);
 
   const value = useMemo(
     () => ({
@@ -920,7 +1083,6 @@ const handleUnblockUser = useCallback(
       handleDeleteUser,
       handleUpdateUserStatus,
 
-      handleGetAllCompanies,
       handleGetCompanyById,
       handleVerifyCompany,
       handleRejectCompany,
@@ -930,6 +1092,11 @@ const handleUnblockUser = useCallback(
       handleGetJobById,
       handleBlockJob,
       handleDeleteJob,
+      handleUnlockJob,
+      handleUnblockCompany,
+      handleBlockCompany,
+      handleSoftDeleteCompany,
+      handleGetAllAdminCompanies
     }),
     [
       dashboard,
@@ -950,7 +1117,6 @@ const handleUnblockUser = useCallback(
       handleUnblockUser,
       handleDeleteUser,
       handleUpdateUserStatus,
-      handleGetAllCompanies,
       handleGetCompanyById,
       handleVerifyCompany,
       handleRejectCompany,
@@ -960,6 +1126,10 @@ const handleUnblockUser = useCallback(
       handleBlockJob,
       handleDeleteJob,
       handleUnlockJob,
+      handleUnblockCompany,
+      handleBlockCompany,
+      handleSoftDeleteCompany,
+      handleGetAllAdminCompanies
     ]
   );
 
