@@ -35,7 +35,6 @@ const AppRoutes = () => {
             <Route element={<ProtectedRoutes allowedType="admin" />}>
             <Route path="/admin" element={<ADashboard/>}/>
             <Route path="/admins" element={<AdminDashboardS/>}/>
-            
             </Route>
 
             <Route element={<ProtectedRoutes allowedType="recruiter"/>}>

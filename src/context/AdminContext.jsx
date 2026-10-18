@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { Navigate } from "react-router-dom";
 
 export const AdminContext = createContext(null);
 
@@ -25,6 +26,11 @@ const AdminProvider = ({ children }) => {
   const [jobs, setJobs] = useState([]);
   const [job, setJob] = useState(null);
   const [jobsPagination, setJobsPagination] = useState(null);
+
+  const [adminProfile, setAdminProfile] = useState(null);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const [error, setError] = useState("");
+   
 
   const [loading, setLoading] = useState(false);
 
@@ -1049,10 +1055,122 @@ const handleUnlockJob = useCallback(async (jobId) => {
   return updatedJob;
 }, []);
 
+ const fetchAdminProfile = useCallback(async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/admin/profile`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.message || "Failed to fetch admin profile"
+        );
+      }
+
+      const admin = result.data?.admin;
+
+      setAdminProfile(admin || null);
+
+      return admin;
+    } catch (error) {
+      setError(error.message || "Something went wrong");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateAdminAvatar = useCallback(
+    async (file) => {
+      if (!file) {
+        throw new Error("Please select a profile picture");
+      }
+
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      setAvatarLoading(true);
+      setError("");
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/admin/profile/avatar`,
+          {
+            method: "PATCH",
+            credentials: "include",
+            body: formData,
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            result.message || "Failed to update admin avatar"
+          );
+        }
+
+        const updatedAvatar = result.data?.avatar;
+
+        if (updatedAvatar) {
+          setAdminProfile((previous) =>
+            previous
+              ? { ...previous, avatar: updatedAvatar }
+              : previous
+          );
+        }
+
+        return result;
+      } catch (error) {
+        setError(error.message || "Something went wrong");
+        throw error;
+      } finally {
+        setAvatarLoading(false);
+      }
+    },
+    []
+  );
+
+  const adminLogout = async () => {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/admin/logout`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Admin logout failed");
+    }
+    setAdminProfile(null);
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
   const value = useMemo(
     () => ({
       dashboard,
       setDashboard,
+      adminLogout,
 
       users,
       setUsers,
@@ -1096,9 +1214,20 @@ const handleUnlockJob = useCallback(async (jobId) => {
       handleUnblockCompany,
       handleBlockCompany,
       handleSoftDeleteCompany,
-      handleGetAllAdminCompanies
+      handleGetAllAdminCompanies,
+      adminProfile,
+      updateAdminAvatar,
+      fetchAdminProfile,
+      setAdminProfile,
+      avatarLoading
     }),
     [
+      setAdminProfile,
+      adminProfile,
+      adminLogout,
+      avatarLoading,
+      fetchAdminProfile,
+      updateAdminAvatar,
       dashboard,
       users,
       selectedUser,

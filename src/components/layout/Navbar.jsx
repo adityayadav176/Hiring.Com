@@ -11,7 +11,7 @@ import { useAuth, useHome, useTitle } from '../../hooks/Hook'
 function Navbar() {
   const { user, admin, recruiter } = useAuth()
   const { title, setTitle } = useTitle()
-  const { setActivePage } = useHome()
+  const { setActivePage, setAdminActivePage } = useHome()
   const currentAccount = admin || admin || recruiter
 
   return (
@@ -60,64 +60,59 @@ function Navbar() {
 
 
         {/* Profile */}
-        <button
-          type="button"
-          onClick={() => {
-            setActivePage("profile")
-            setTitle("My Profile")
-          }}
-          className="
-            hidden md:flex
-            w-[12rem]
-            items-center
-            gap-3
-            rounded-xl
-            p-2.5
-            text-left
-            cursor-pointer
-            transition-all
-            duration-200
-            hover:bg-slate-50
-          "
-        >
+<button
+  type="button"
+  onClick={() => {
+    if (currentAccount?.type === "admin") {
+      setAdminActivePage("admin/profile");
+      setTitle("Admin Profile");
+    } else {
+      setActivePage("profile");
+      setTitle("My Profile");
+    }
+  }}
+  className="
+    hidden md:flex
+    w-[12rem]
+    items-center gap-3
+    rounded-xl p-2.5
+    text-left cursor-pointer
+    transition-all duration-200
+    hover:bg-slate-50
+  "
+>
+  {/* Avatar */}
+  <div className="
+    flex h-9 w-9 shrink-0
+    items-center justify-center
+    overflow-hidden rounded-full
+    bg-violet-100 text-sm
+    font-semibold text-violet-700
+  ">
+    {currentAccount?.avatar?.url ? (
+      <img
+        src={currentAccount.avatar.url}
+        alt={currentAccount?.name || "User"}
+        className="h-full w-full object-cover"
+      />
+    ) : (
+      currentAccount?.name?.charAt(0)?.toUpperCase()
+    )}
+  </div>
 
-          {/* Avatar */}
-          <div className="
-            flex h-9 w-9 shrink-0
-            items-center justify-center
-            overflow-hidden rounded-full
-            bg-violet-100
-            text-sm font-semibold
-            text-violet-700
-          ">
-            {user?.avatar?.url ? (
-              <img
-                src={user.avatar.url}
-                alt={user?.name || "User"}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              currentAccount?.name?.charAt(0)?.toUpperCase()
-            )}
-          </div>
+  {/* User Info */}
+  <div className="min-w-0 flex-1">
+    <p className="truncate text-xs font-semibold text-slate-900">
+      {currentAccount?.name}
+    </p>
 
+    <p className="mt-1 text-[10px] text-slate-500">
+      {currentAccount?.role || currentAccount?.type}
+    </p>
+  </div>
 
-          {/* User Info */}
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold text-slate-900">
-              {currentAccount?.name}
-            </p>
-
-            <p className="mt-1 text-[10px] text-slate-500">
-              {currentAccount?.role || currentAccount?.type}
-            </p>
-          </div>
-
-
-          {/* Dropdown */}
-          <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
-
-        </button>
+  <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+</button>
 
       </div>
 

@@ -21,7 +21,7 @@ function Sidebar() {
 
     const { setTitle } = useContext(TitleContext);
 
-    const { setActivePage, activePage } = useHome();
+    const { setActivePage, activePage, adminActivePage, setAdminActivePage } = useHome();
 
     const { admin, recruiter, user } = useAuth();
 
@@ -100,18 +100,18 @@ function Sidebar() {
                         <button
                             type="button"
                             onClick={() => {
-                                setActivePage("admin/dashboard");
+                                setAdminActivePage("admin/dashboard");
                                 setTitle("Dashboard");
                             }}
                             className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                activePage === "admin/dashboard"
+                                adminActivePage === "admin/dashboard"
                                     ? "bg-[#EEF0FF] text-[#5950E6]"
                                     : "text-gray-500 hover:bg-gray-100"
                             }`}
                         >
                             <LayoutGrid
                                 className={`w-5 h-5 ${
-                                    activePage === "admin/dashboard"
+                                    adminActivePage === "admin/dashboard"
                                         ? "text-[#5950E6]"
                                         : "text-gray-500"
                                 }`}
@@ -127,18 +127,18 @@ function Sidebar() {
                         <button
                             type="button"
                             onClick={() => {
-                                setActivePage("users");
+                                setAdminActivePage("users");
                                 setTitle("Users");
                             }}
                             className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                activePage === "users"
+                                adminActivePage === "users"
                                     ? "bg-[#EEF0FF] text-[#5950E6]"
                                     : "text-gray-500 hover:bg-gray-100"
                             }`}
                         >
                             <User
                                 className={`w-5 h-5 ${
-                                    activePage === "users"
+                                    adminActivePage === "users"
                                         ? "text-[#5950E6]"
                                         : "text-gray-500"
                                 }`}
@@ -154,18 +154,18 @@ function Sidebar() {
                         <button
                             type="button"
                             onClick={() => {
-                                setActivePage("companies");
+                                setAdminActivePage("companies");
                                 setTitle("Companies");
                             }}
                             className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                activePage === "companies"
+                                adminActivePage === "companies"
                                     ? "bg-[#EEF0FF] text-[#5950E6]"
                                     : "text-gray-500 hover:bg-gray-100"
                             }`}
                         >
                             <Building2
                                 className={`w-5 h-5 ${
-                                    activePage === "companies"
+                                    adminActivePage === "companies"
                                         ? "text-[#5950E6]"
                                         : "text-gray-500"
                                 }`}
@@ -181,18 +181,18 @@ function Sidebar() {
                         <button
                             type="button"
                             onClick={() => {
-                                setActivePage("jobs");
+                                setAdminActivePage("admin/jobs");
                                 setTitle("Jobs");
                             }}
                             className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                activePage === "jobs"
+                                adminActivePage === "admin/jobs"
                                     ? "bg-[#EEF0FF] text-[#5950E6]"
                                     : "text-gray-500 hover:bg-gray-100"
                             }`}
                         >
                             <FileText
                                 className={`w-5 h-5 ${
-                                    activePage === "jobs"
+                                    adminActivePage === "admin/jobs"
                                         ? "text-[#5950E6]"
                                         : "text-gray-500"
                                 }`}
@@ -208,18 +208,18 @@ function Sidebar() {
                         <button
                             type="button"
                             onClick={() => {
-                                setActivePage("reports");
+                                setAdminActivePage("reports");
                                 setTitle("Reports");
                             }}
                             className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                activePage === "reports"
+                                adminActivePage === "reports"
                                     ? "bg-[#EEF0FF] text-[#5950E6]"
                                     : "text-gray-500 hover:bg-gray-100"
                             }`}
                         >
                             <CircleHelp
                                 className={`w-5 h-5 ${
-                                    activePage === "reports"
+                                    adminActivePage === "reports"
                                         ? "text-[#5950E6]"
                                         : "text-gray-500"
                                 }`}
@@ -243,18 +243,18 @@ function Sidebar() {
                         <button
                             type="button"
                             onClick={() => {
-                                setActivePage("settings");
+                                setAdminActivePage("admin/settings");
                                 setTitle("Settings");
                             }}
                             className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                activePage === "settings"
+                                adminActivePage === "admin/settings"
                                     ? "bg-[#EEF0FF] text-[#5950E6]"
                                     : "text-gray-500 hover:bg-gray-100"
                             }`}
                         >
                             <Settings
                                 className={`w-5 h-5 ${
-                                    activePage === "settings"
+                                    adminActivePage === "admin/settings"
                                         ? "text-[#5950E6]"
                                         : "text-gray-500"
                                 }`}
