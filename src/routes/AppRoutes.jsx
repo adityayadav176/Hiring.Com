@@ -8,12 +8,13 @@ import JobLayout from "../components/jobs/JobLayout";
 import AdminDashboardS from "../components/Admin/AdminDashboardS";
 import ADashboard from "../pages/admin/ADashboard";
 import ProtectedRoutes from "./ProtectedRoutes";
-import AdminUsers from "../pages/admin/AdminUsers";
-import Userss from "../pages/admin/Userss";
-import Companies from "../pages/admin/Companies";
 import RecruiterLayout from "../recruiter/components/RecruiterLayout";
 import RecruiterJobs from "../recruiter/pages/RecruiterJobs";
 import RecruiterJobsLayout from "../recruiter/pages/RecruiterJobsLayout";
+import AdminJobs from "../pages/admin/AdminJobs";
+import AdminReports from "../pages/admin/AdminReports";
+import AdminUsers from "../pages/admin/AdminUsers";
+import AdminCompanies from "../pages/admin/AdminCompanies";
 const AppRoutes = () => {
     return (
         <Routes>
@@ -21,8 +22,10 @@ const AppRoutes = () => {
             <Route path="/forgetPassword" element={<ForgetPassword/>}/>
             <Route path="/login" element={<Login/>}/>
             <Route path="/signup" element={<Signup/>}/>
-            <Route path="/companies" element={<Companies/>}/>
-            <Route path="/users" element={<Userss/>}/>
+            <Route path="/companies" element={<AdminCompanies/>}/>
+            <Route path="/users" element={<AdminUsers/>}/>
+            <Route path="/reports" element={<AdminReports/>}/>
+            <Route path="/ajobs" element={<AdminJobs/>}/>
 
             <Route path="/recruiter" element={<RecruiterLayout/>}/>
             <Route path="/recruiter/jobs" element={<RecruiterJobs />}/>

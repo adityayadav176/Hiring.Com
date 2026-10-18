@@ -5,7 +5,7 @@ export const ReportContext = createContext();
 const ReportProvider = ({children}) => {
     const API_URL = import.meta.env.VITE_API_URL;
     const [reports, setReports] = useState([]);
-    const [report, setReport] = useState(null);
+    const [selected, setSelected] = useState(null);
     const [reportsPagination, setReportsPagination] = useState({});
 
     const handleGetReports = async() => {
@@ -47,7 +47,7 @@ const ReportProvider = ({children}) => {
                 throw new Error(data.message || "Failed To Fetch Report");
             }
             
-            setReport(data.data);
+            setSelected(data.data);
             console.log("Report Fetched Successfully");
         } catch (error) {
             console.log(error);
@@ -123,7 +123,7 @@ const ReportProvider = ({children}) => {
             }
             setReports((prev) => [data.data, ...prev]);
             setReportsPagination((prev) => ({...prev, totalReports: prev.totalReports + 1}));
-            setReport(data.data);
+            setSelected(data.data);
             console.log("Report Reject Successfully");
         } catch (error) {
             console.log(error);
@@ -131,7 +131,7 @@ const ReportProvider = ({children}) => {
         }
     }
     return (
-        <ReportContext.Provider value={{handleGetReports, handleGetReportById, handleResolveReport, handleRejectReport, handleCreateReport, report, reports, reportsPagination}}>
+        <ReportContext.Provider value={{handleGetReports, handleGetReportById, handleResolveReport, handleRejectReport, handleCreateReport, selected,setSelected,reports,setReports, setReportsPagination, reportsPagination}}>
             {children}
         </ReportContext.Provider>
     )

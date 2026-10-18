@@ -12,10 +12,6 @@ export const AdminContext = createContext(null);
 const AdminProvider = ({ children }) => {
   const API_URL = import.meta.env.VITE_API_URL;
 
-  // =========================
-  // STATES
-  // =========================
-
   const [dashboard, setDashboard] = useState(null);
 
   const [users, setUsers] = useState([]);
@@ -31,10 +27,6 @@ const AdminProvider = ({ children }) => {
   const [jobsPagination, setJobsPagination] = useState(null);
 
   const [loading, setLoading] = useState(false);
-
-  // =========================
-  // COMMON API HELPERS
-  // =========================
 
   const handleResponse = useCallback(
     async (response, defaultMessage = "Request failed") => {
@@ -60,11 +52,6 @@ const AdminProvider = ({ children }) => {
 
     return params.toString();
   }, []);
-
-  // =========================
-  // DASHBOARD
-  // GET /admin/dashboard
-  // =========================
 
   const handleGetAdminDashboard = useCallback(async () => {
     try {
@@ -92,58 +79,69 @@ const AdminProvider = ({ children }) => {
   }, [API_URL, handleResponse]);
 
   const handleGetAllUsers = useCallback(
-    async ({
-      page = 1,
-      limit = 10,
-      search = "",
-      role = "",
-      accountStatus = "",
-    } = {}) => {
-      try {
-        setLoading(true);
+  async ({
+    page = 1,
+    limit = 10,
+    search = "",
+    role = "",
+    accountStatus = "",
+  } = {}) => {
+    try {
+      setLoading(true);
 
-        const query = buildQuery({
-          page,
-          limit,
-          search: search.trim(),
-          role,
-          accountStatus,
-        });
+      // Match the exact enum values in your User schema.
+      const normalizedRole =
+        role.toLowerCase() === "user"
+          ? "User"
+          : role.toLowerCase() === "recruiter"
+            ? "recruiter"
+            : "";
 
-        const response = await fetch(
-          `${API_URL}/admin/getUsers?${query}`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
+      const query = buildQuery({
+        page,
+        limit,
+        search: search.trim(),
+        role: normalizedRole,
+        accountStatus,
+      });
 
-        const result = await handleResponse(
-          response,
-          "Failed to fetch users"
-        );
-
-        const usersList = result?.data?.data?.users;
-        const pagination = result?.data?.data?.pagination;
-
-        if (!Array.isArray(usersList)) {
-          console.error("Unexpected users API response:", result);
-          throw new Error("The users API returned an invalid response.");
+      const response = await fetch(
+        `${API_URL}/admin/getUsers?${query}`,
+        {
+          method: "GET",
+          credentials: "include",
         }
+      );
 
-        setUsers(usersList);
-        setUsersPagination(pagination ?? null);
+      const result = await handleResponse(
+        response,
+        "Failed to fetch users"
+      );
 
-        return usersList;
-      } catch (error) {
-        console.error("Get Users Error:", error);
-        throw error;
-      } finally {
-        setLoading(false);
+      const data = result?.data?.data ?? result?.data;
+      const usersList = data?.users;
+      const pagination = data?.pagination;
+
+      if (!Array.isArray(usersList)) {
+        console.error("Unexpected users API response:", result);
+        throw new Error(
+          "The users API returned an invalid response."
+        );
       }
-    },
-    [API_URL, buildQuery, handleResponse]
-  );
+
+      setUsers(usersList);
+      setUsersPagination(pagination ?? null);
+
+      return usersList;
+    } catch (error) {
+      console.error("Get Users Error:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [API_URL, buildQuery, handleResponse]
+);
 
   const handleGetUserById = useCallback(
     async (userId) => {
@@ -187,112 +185,114 @@ const AdminProvider = ({ children }) => {
     [API_URL, handleResponse]
   );
 
-  const handleBlockUser = useCallback(
-    async ({ userId, duration }) => {
-      try {
-        if (!userId) {
-          throw new Error("User ID is required");
+
+const handleBlockUser = useCallback(
+  async ({ userId, duration }) => {
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+
+    const minutes = Number(duration);
+
+    if (!Number.isInteger(minutes) || minutes <= 0) {
+      throw new Error(
+        "Block duration must be a positive integer in minutes"
+      );
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/admin/users/${userId}/block`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ duration: minutes }),
         }
+      );
 
-        const minutes = Number(duration);
+      const result = await handleResponse(
+        response,
+        "Failed to block user"
+      );
 
-        if (!Number.isInteger(minutes) || minutes <= 0) {
-          throw new Error("Block duration must be a positive integer");
-        }
+      await handleGetAllUsers();
 
-        setLoading(true);
-
-        const response = await fetch(
-          `${API_URL}/admin/users/${userId}/block`,
-          {
-            method: "PATCH",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ duration: minutes }),
-          }
-        );
-
-        const result = await handleResponse(
-          response,
-          "Failed to block user"
-        );
-
-        console.log(result);
-
-        await handleGetAllUsers();
-
-        if (selectedUser?._id === userId) {
-          await handleGetUserById(userId);
-        }
-
-        return result.data;
-      } catch (error) {
-        console.error("Block User Error:", error);
-        throw error;
-      } finally {
-        setLoading(false);
+      if (String(selectedUser?._id) === String(userId)) {
+        await handleGetUserById(userId);
       }
-    },
-    [
-      API_URL,
-      handleResponse,
-      handleGetAllUsers,
-      handleGetUserById,
-      selectedUser,
-    ]
-  );
 
-  // =========================
-  // UNBLOCK USER
-  // PATCH /admin/users/:userId/unblock
-  // =========================
+      return result?.data ?? result;
+    } catch (error) {
+      console.error("Block User Error:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [
+    API_URL,
+    handleResponse,
+    handleGetAllUsers,
+    handleGetUserById,
+    selectedUser?._id,
+  ]
+);
 
-  const handleUnblockUser = useCallback(
-    async (userId) => {
-      try {
-        if (!userId) {
-          throw new Error("User ID is required");
+// =========================
+// UNBLOCK USER
+// PATCH /admin/users/:userId/unblock
+// =========================
+
+const handleUnblockUser = useCallback(
+  async (userId) => {
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/admin/users/${userId}/unblock`,
+        {
+          method: "PATCH",
+          credentials: "include",
         }
+      );
 
-        setLoading(true);
+      const result = await handleResponse(
+        response,
+        "Failed to unblock user"
+      );
 
-        const response = await fetch(
-          `${API_URL}/admin/users/${userId}/unblock`,
-          {
-            method: "PATCH",
-            credentials: "include",
-          }
-        );
+      await handleGetAllUsers();
 
-        const result = await handleResponse(
-          response,
-          "Failed to unblock user"
-        );
-
-        await handleGetAllUsers();
-
-        if (selectedUser?._id === userId) {
-          await handleGetUserById(userId);
-        }
-
-        return result.data;
-      } catch (error) {
-        console.error("Unblock User Error:", error);
-        throw error;
-      } finally {
-        setLoading(false);
+      if (String(selectedUser?._id) === String(userId)) {
+        await handleGetUserById(userId);
       }
-    },
-    [
-      API_URL,
-      handleResponse,
-      handleGetAllUsers,
-      handleGetUserById,
-      selectedUser,
-    ]
-  );
+
+      return result?.data ?? result;
+    } catch (error) {
+      console.error("Unblock User Error:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [
+    API_URL,
+    handleResponse,
+    handleGetAllUsers,
+    handleGetUserById,
+    selectedUser?._id,
+  ]
+);
+
 
   // =========================
   // DELETE USER
@@ -653,12 +653,7 @@ const AdminProvider = ({ children }) => {
       selectedCompany,
     ]
   );
-
-  // =========================
-  // GET ALL JOBS
-  // GET /admin/jobs
-  // =========================
-
+  
   const handleGetJobs = useCallback(
     async ({
       page = 1,
@@ -691,9 +686,6 @@ const AdminProvider = ({ children }) => {
           "Failed to fetch jobs"
         );
 
-        // Backend response:
-        // result.data.jobs
-        // result.data.pagination
         const jobsList = result?.data?.jobs;
         const pagination = result?.data?.pagination;
 
@@ -715,11 +707,6 @@ const AdminProvider = ({ children }) => {
     },
     [API_URL, buildQuery, handleResponse]
   );
-
-  // =========================
-  // GET JOB BY ID
-  // GET /admin/jobs/:jobId
-  // =========================
 
   const handleGetJobById = useCallback(
     async (jobId) => {
@@ -762,11 +749,6 @@ const AdminProvider = ({ children }) => {
     },
     [API_URL, handleResponse]
   );
-
-  // =========================
-  // BLOCK JOB
-  // PATCH /admin/jobs/:jobId/block
-  // =========================
 
   const handleBlockJob = useCallback(
     async (jobId) => {
@@ -813,11 +795,6 @@ const AdminProvider = ({ children }) => {
     ]
   );
 
-  // =========================
-  // DELETE JOB
-  // DELETE /admin/jobs/:jobId
-  // =========================
-
   const handleDeleteJob = useCallback(
     async (jobId) => {
       try {
@@ -861,9 +838,53 @@ const AdminProvider = ({ children }) => {
     [API_URL, handleResponse, handleGetJobs, job]
   );
 
-  // =========================
-  // CONTEXT VALUE
-  // =========================
+  const handleUnlockJob = useCallback(
+  async (jobId) => {
+    if (!jobId) {
+      throw new Error("Job ID is required");
+    }
+
+    try {
+      const response = await fetch(
+        `${API_URL}/admin/jobs/${jobId}/unlock`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      await handleResponse(response, result);
+      const unlockedJob = result?.data;
+      console.log(result);
+      console.log(unlockedJob);
+
+      if (unlockedJob?._id) {
+        setJobs((previousJobs) =>
+          previousJobs.map((job) =>
+            job._id === unlockedJob._id ? unlockedJob : job
+          )
+        );
+
+        setJob((previousJob) =>
+          previousJob?._id === unlockedJob._id
+            ? unlockedJob
+            : previousJob
+        );
+      }
+
+      return unlockedJob;
+    } catch (error) {
+      console.error("Unlock job error:", error);
+      throw error;
+    }
+  },
+  [API_URL, handleResponse, setJobs, setJob]
+);
 
   const value = useMemo(
     () => ({
@@ -938,6 +959,7 @@ const AdminProvider = ({ children }) => {
       handleGetJobById,
       handleBlockJob,
       handleDeleteJob,
+      handleUnlockJob,
     ]
   );
 
