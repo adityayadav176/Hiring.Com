@@ -1,7 +1,6 @@
 import React from 'react';
 import Navbar from './../../components/layout/Navbar';
 import Sidebar from '../../components/layout/Sidebar';
-import AdminDashboardS from '../../components/Admin/AdminDashboardS';
 import { useHome } from '../../hooks/Hook';
 import AdminUsers from './AdminUsers';
 import AdminCompanies from './AdminCompanies';
@@ -9,6 +8,7 @@ import AdminJobs from './AdminJobs';
 import AdminReports from './AdminReports';
 import AdminProfile from './AdminProfile';
 import AdminSettings from './AdminSettings';
+import AdminDashboardS from './AdminDashboardS';
 
 function ADashboard() {
     const {adminActivePage, setAdminActivePage} = useHome();

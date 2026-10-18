@@ -224,35 +224,38 @@ function AdminProfilePage() {
       <div className="mx-auto max-w-6xl space-y-6">
 
         {/* Page heading */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500">
-              <span>Admin</span>
-              <ChevronRight className="h-3.5 w-3.5" />
-              <span className="text-violet-700">My Profile</span>
-            </div>
+        
+{/* Page heading — matching AdminJobs */}
+<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  <div>
+    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-violet-600">
+      <ShieldCheck size={15} />
+      Administration
+    </div>
 
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              Admin Profile
-            </h1>
+    <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+      Admin Profile
+    </h1>
 
-            <p className="mt-1.5 text-sm text-slate-500">
-              Manage your owner account and profile information.
-            </p>
-          </div>
+    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+      Manage your owner account, profile photo, and administrator information.
+    </p>
+  </div>
 
-          <button
-            type="button"
-            onClick={loadProfile}
-            disabled={loading || avatarLoading}
-            className="inline-flex w-fit items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </button>
-        </div>
+  <button
+    type="button"
+    onClick={loadProfile}
+    disabled={loading || avatarLoading}
+    className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-violet-200 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-60 sm:self-center"
+  >
+    <RefreshCw
+      size={16}
+      className={loading ? "animate-spin" : ""}
+    />
+    {loading ? "Refreshing..." : "Refresh profile"}
+  </button>
+</div>
+
 
         {/* Global success / error messages */}
         {successMessage && (

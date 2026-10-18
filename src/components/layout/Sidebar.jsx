@@ -538,7 +538,7 @@ function Sidebar() {
                     onClick={() =>
                         setisSidebarOpen(!isSidebarOpen)
                     }
-                    className="flex gap-2 p-2.5 font-medium hover:bg-gray-100 rounded-xl text-gray-500 text-sm"
+                    className="flex gap-2 p-2.5 px-10 font-medium justify-start hover:bg-gray-100 rounded-xl text-gray-500 text-sm"
                 >
                     <Menu className="w-5 h-5 text-slate-400" />
 

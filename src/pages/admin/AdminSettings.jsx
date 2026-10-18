@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -14,6 +13,9 @@ import {
   ChevronRight,
   CheckCircle2,
   X,
+  Settings,
+  ChevronDown,
+  ListChecks,
 } from "lucide-react";
 import { useAdmin } from "../../hooks/Hook";
 
@@ -180,6 +182,8 @@ This document is an internal administrative guide. It is not a substitute for le
   },
 ];
 
+const cn = (...classes) => classes.filter(Boolean).join(" ");
+
 function AdminSettings() {
   const { adminLogout } = useAdmin();
   const navigate = useNavigate();
@@ -187,6 +191,8 @@ function AdminSettings() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
+  const [activeSection, setActiveSection] = useState("overview");
+  const [showContents, setShowContents] = useState(false);
 
   const confirmLogout = async () => {
     if (loggingOut) return;
@@ -207,6 +213,9 @@ function AdminSettings() {
   };
 
   const jumpToSection = (id) => {
+    setActiveSection(id);
+    setShowContents(false);
+
     document.getElementById(id)?.scrollIntoView({
       behavior: "smooth",
       block: "start",
@@ -214,24 +223,24 @@ function AdminSettings() {
   };
 
   return (
-    <div className="min-h-full bg-[#F8F9FC] px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div className="min-h-screen bg-[#F7F8FC] px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1600px] space-y-6">
+
+        {/* Page header — matches AdminJobs */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="mb-2 flex items-center gap-2 text-xs text-gray-500">
-              <span>Admin</span>
-              <ChevronRight size={13} />
-              <span className="text-violet-700">Settings</span>
+            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-violet-600">
+              <Settings size={15} />
+              Administration
             </div>
 
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-              Admin Settings & Guidelines
+            <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+              Admin settings
             </h1>
 
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
-              Review the rules, responsibilities, and standards for
-              managing the Peer.Hiring platform.
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+              Manage administrator guidelines, review platform policies,
+              and maintain responsible operating standards.
             </p>
           </div>
 
@@ -241,37 +250,136 @@ function AdminSettings() {
               setLogoutError("");
               setShowLogoutModal(true);
             }}
-            className="inline-flex items-center justify-center gap-2 self-start rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 shadow-sm transition hover:border-red-300 hover:bg-red-50"
+            className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 sm:self-center"
           >
-            <LogOut size={17} />
+            <LogOut size={16} />
             Logout
           </button>
         </div>
 
-        {/* Guidelines document */}
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[245px_minmax(0,1fr)]">
-          {/* Table of contents */}
-          <aside className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm lg:sticky lg:top-5">
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-400">
-              Contents
-            </h2>
+        {/* Document summary */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+              <BookOpen size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">
+                Documentation
+              </p>
+              <p className="mt-1 text-sm font-bold text-slate-900">
+                Admin handbook
+              </p>
+            </div>
+          </div>
 
-            <nav className="max-h-[65vh] space-y-1 overflow-y-auto">
+          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+              <ListChecks size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">
+                Guidelines
+              </p>
+              <p className="mt-1 text-sm font-bold text-slate-900">
+                {guidelines.length} policy sections
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+              <ShieldCheck size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">
+                Scope
+              </p>
+              <p className="mt-1 text-sm font-bold text-slate-900">
+                Internal administration
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Guidelines layout */}
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
+
+          {/* Table of contents */}
+          <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-bold text-slate-900">
+                  Guidelines
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Navigate the handbook
+                </p>
+              </div>
+
+              <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
+                {guidelines.length}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowContents((value) => !value)}
+              className="mb-3 flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 lg:hidden"
+            >
+              Select a section
+              <ChevronDown
+                size={16}
+                className={cn(
+                  "transition-transform",
+                  showContents && "rotate-180"
+                )}
+              />
+            </button>
+
+            <nav
+              className={cn(
+                "space-y-1",
+                !showContents && "hidden lg:block"
+              )}
+            >
               {guidelines.map((item) => {
                 const Icon = item.icon;
+                const active = activeSection === item.id;
 
                 return (
                   <button
                     key={item.id}
                     type="button"
                     onClick={() => jumpToSection(item.id)}
-                    className="flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-gray-600 transition hover:bg-violet-50 hover:text-violet-800"
+                    className={cn(
+                      "flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition",
+                      active
+                        ? "bg-violet-50 font-semibold text-violet-800"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    )}
                   >
-                    <Icon
-                      size={15}
-                      className="mt-0.5 shrink-0 text-violet-600"
-                    />
-                    <span className="leading-5">{item.title}</span>
+                    <span
+                      className={cn(
+                        "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+                        active
+                          ? "bg-white text-violet-700"
+                          : "bg-slate-50 text-slate-500"
+                      )}
+                    >
+                      <Icon size={15} />
+                    </span>
+
+                    <span className="min-w-0 flex-1 leading-5">
+                      {item.title}
+                    </span>
+
+                    {active && (
+                      <ChevronRight
+                        size={15}
+                        className="mt-1 shrink-0 text-violet-600"
+                      />
+                    )}
                   </button>
                 );
               })}
@@ -279,67 +387,86 @@ function AdminSettings() {
           </aside>
 
           {/* Main document */}
-          <article className="min-w-0 rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 px-5 py-6 sm:px-8">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-800">
-                <BookOpen size={14} />
-                ADMINISTRATION HANDBOOK
-              </div>
+          <article className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-              <h2 className="text-2xl font-bold leading-tight text-gray-900 sm:text-3xl">
-                Peer.Hiring: Rules and Regulations
-              </h2>
+            {/* Document heading */}
+            <div className="border-b border-slate-200 px-5 py-6 sm:px-8 sm:py-7">
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700">
+                  <ShieldCheck size={14} />
+                  Administration handbook
+                </span>
 
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-gray-600">
-                This handbook describes the expected standards of
-                conduct for administrators responsible for maintaining
-                a fair, secure, and reliable employment platform.
-                Administrators should use these guidelines when
-                reviewing content, managing accounts, and making
-                operational decisions.
-              </p>
-
-              <div className="mt-5 flex flex-wrap gap-2 text-xs text-gray-500">
-                <span className="rounded-md border border-gray-200 px-2.5 py-1.5">
+                <span className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-500">
                   Internal guidelines
                 </span>
-                <span className="rounded-md border border-gray-200 px-2.5 py-1.5">
+              </div>
+
+              <h2 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+                Peer.Hiring Rules and Regulations
+              </h2>
+
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500">
+                Standards for managing users, reviewing job listings,
+                moderating reports, protecting personal information,
+                and maintaining a fair and secure employment platform.
+              </p>
+
+              <div className="mt-5 flex flex-wrap gap-5 border-t border-slate-100 pt-4 text-xs text-slate-500">
+                <span className="inline-flex items-center gap-2">
+                  <FileText size={15} className="text-violet-600" />
                   {guidelines.length} sections
                 </span>
-                <span className="rounded-md border border-gray-200 px-2.5 py-1.5">
-                  Responsible administration
+
+                <span className="inline-flex items-center gap-2">
+                  <LockKeyhole size={15} className="text-violet-600" />
+                  Responsible data handling
+                </span>
+
+                <span className="inline-flex items-center gap-2">
+                  <Scale size={15} className="text-violet-600" />
+                  Fair enforcement
                 </span>
               </div>
             </div>
 
-            <div className="px-5 py-2 sm:px-8">
+            {/* Sections */}
+            <div className="px-5 sm:px-8">
               {guidelines.map((item) => {
                 const Icon = item.icon;
+                const active = activeSection === item.id;
 
                 return (
                   <section
                     key={item.id}
                     id={item.id}
-                    className="scroll-mt-6 border-b border-gray-100 py-7 last:border-b-0"
+                    onMouseEnter={() => setActiveSection(item.id)}
+                    className="scroll-mt-6 border-b border-slate-100 py-7 last:border-b-0 sm:py-8"
                   >
-                    <div className="mb-4 flex items-start gap-3">
-                      <span className="pt-0.5 text-sm font-bold tabular-nums text-violet-600">
-                        {item.number}
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <span
+                        className={cn(
+                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                          active
+                            ? "bg-violet-100 text-violet-700"
+                            : "bg-slate-100 text-slate-600"
+                        )}
+                      >
+                        <Icon size={19} />
                       </span>
 
-                      <div className="min-w-0">
-                        <h3 className="text-lg font-bold leading-7 text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 text-xs font-bold tracking-wider text-violet-600">
+                          SECTION {item.number}
+                        </div>
+
+                        <h3 className="text-base font-bold leading-6 text-slate-900 sm:text-lg">
                           {item.title}
                         </h3>
                       </div>
-
-                      <Icon
-                        size={19}
-                        className="ml-auto mt-1 shrink-0 text-gray-400"
-                      />
                     </div>
 
-                    <div className="space-y-4 pl-0 text-[15px] leading-7 text-gray-600 sm:pl-8">
+                    <div className="mt-5 space-y-4 pl-0 text-sm leading-7 text-slate-600 sm:pl-14">
                       {item.content.split("\n\n").map((paragraph, index) => (
                         <p key={`${item.id}-${index}`}>{paragraph}</p>
                       ))}
@@ -349,95 +476,115 @@ function AdminSettings() {
               })}
             </div>
 
-            <div className="border-t border-gray-200 bg-gray-50 px-5 py-5 sm:px-8">
-              <p className="text-xs leading-6 text-gray-500">
-                End of administrator guidelines. This document provides
-                general internal guidance and should be aligned with
-                Peer.Hiring's actual policies, implemented features,
-                and applicable legal obligations.
-              </p>
+            {/* Document footer */}
+            <div className="border-t border-slate-200 bg-slate-50 px-5 py-5 sm:px-8">
+              <div className="flex items-start gap-3">
+                <ShieldCheck
+                  size={18}
+                  className="mt-0.5 shrink-0 text-violet-600"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">
+                    End of administrator guidelines
+                  </p>
+                  <p className="mt-1 text-xs leading-6 text-slate-500">
+                    This handbook provides general internal guidance. It
+                    should remain consistent with Peer.Hiring's implemented
+                    features, formal policies, privacy disclosures, and
+                    applicable legal obligations.
+                  </p>
+                </div>
+              </div>
             </div>
           </article>
         </div>
+      </div>
 
-        {/* Logout confirmation */}
-        {showLogoutModal && (
+      {/* Logout confirmation modal */}
+      {showLogoutModal && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-4"
+          onMouseDown={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              !loggingOut
+            ) {
+              setShowLogoutModal(false);
+            }
+          }}
+        >
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/45 p-4"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget && !loggingOut) {
-                setShowLogoutModal(false);
-              }
-            }}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="logout-title"
+            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
           >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="logout-title"
-              className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl"
-            >
-              <div className="mb-5 flex items-start justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50">
-                  <LogOut size={22} className="text-red-600" />
-                </div>
-
-                <button
-                  type="button"
-                  aria-label="Close confirmation"
-                  disabled={loggingOut}
-                  onClick={() => setShowLogoutModal(false)}
-                  className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
-                >
-                  <X size={19} />
-                </button>
+            <div className="mb-5 flex items-start justify-between">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-red-600">
+                <LogOut size={21} />
               </div>
 
-              <h2
-                id="logout-title"
-                className="text-xl font-bold text-gray-900"
+              <button
+                type="button"
+                aria-label="Close logout confirmation"
+                disabled={loggingOut}
+                onClick={() => setShowLogoutModal(false)}
+                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
               >
-                Logout from Peer.Hiring?
-              </h2>
+                <X size={18} />
+              </button>
+            </div>
 
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                Are you sure you want to sign out of your administrator
-                account? You will need to log in again to access the
-                admin dashboard.
-              </p>
+            <h2
+              id="logout-title"
+              className="text-lg font-bold text-slate-900"
+            >
+              Logout from Peer.Hiring?
+            </h2>
 
-              {logoutError && (
-                <p
-                  role="alert"
-                  className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-                >
-                  {logoutError}
-                </p>
-              )}
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Are you sure you want to sign out of your administrator
+              account? You will need to log in again to access the
+              admin dashboard.
+            </p>
 
-              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  disabled={loggingOut}
-                  onClick={() => setShowLogoutModal(false)}
-                  className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  disabled={loggingOut}
-                  onClick={confirmLogout}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <LogOut size={16} />
-                  {loggingOut ? "Logging out..." : "Yes, logout"}
-                </button>
+            {logoutError && (
+              <div
+                role="alert"
+                className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+              >
+                {logoutError}
               </div>
+            )}
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                disabled={loggingOut}
+                onClick={() => setShowLogoutModal(false)}
+                className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={loggingOut}
+                onClick={confirmLogout}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loggingOut ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                ) : (
+                  <LogOut size={16} />
+                )}
+
+                {loggingOut ? "Logging out..." : "Yes, logout"}
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

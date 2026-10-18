@@ -1,20 +1,15 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import Login from "../pages/auth/Login";
 import Signup from "../pages/auth/Signup";
 import ForgetPassword from "../pages/auth/ForgetPassword";
 import SendPasswordResetOtp from "../pages/auth/SendPasswordResetOtp";
 import Dashboard from "../pages/seeker/Dashboard";
-import JobLayout from "../components/jobs/JobLayout";
-import AdminDashboardS from "../components/Admin/AdminDashboardS";
 import ADashboard from "../pages/admin/ADashboard";
 import ProtectedRoutes from "./ProtectedRoutes";
 import RecruiterLayout from "../recruiter/components/RecruiterLayout";
 import RecruiterJobs from "../recruiter/pages/RecruiterJobs";
 import RecruiterJobsLayout from "../recruiter/pages/RecruiterJobsLayout";
-import AdminJobs from "../pages/admin/AdminJobs";
-import AdminReports from "../pages/admin/AdminReports";
-import AdminUsers from "../pages/admin/AdminUsers";
-import AdminCompanies from "../pages/admin/AdminCompanies";
+import NotFound from "../pages/NotFound";
 const AppRoutes = () => {
     return (
         <Routes>
@@ -22,10 +17,6 @@ const AppRoutes = () => {
             <Route path="/forgetPassword" element={<ForgetPassword/>}/>
             <Route path="/login" element={<Login/>}/>
             <Route path="/signup" element={<Signup/>}/>
-            <Route path="/companies" element={<AdminCompanies/>}/>
-            <Route path="/users" element={<AdminUsers/>}/>
-            <Route path="/reports" element={<AdminReports/>}/>
-            <Route path="/ajobs" element={<AdminJobs/>}/>
 
             <Route path="/recruiter" element={<RecruiterLayout/>}/>
             <Route path="/recruiter/jobs" element={<RecruiterJobs />}/>
@@ -34,7 +25,6 @@ const AppRoutes = () => {
 
             <Route element={<ProtectedRoutes allowedType="admin" />}>
             <Route path="/admin" element={<ADashboard/>}/>
-            <Route path="/admins" element={<AdminDashboardS/>}/>
             </Route>
 
             <Route element={<ProtectedRoutes allowedType="recruiter"/>}>
@@ -42,11 +32,10 @@ const AppRoutes = () => {
             </Route>
 
             <Route element={<ProtectedRoutes allowedType="user"/>}>
-            <Route path="/jobLayout" element={<JobLayout/>}/>
             <Route path="/" element={<Dashboard/>}/>
             </Route>
 
-            <Route path="*" element={<h1 className="text-3xl text-white items-center justify-center flex">404 - Page Not Found</h1>}/>
+            <Route path="*" element={<NotFound/>}/>
         </Routes>
     );
 };
