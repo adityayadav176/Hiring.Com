@@ -385,6 +385,62 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
   const recruiters = getRecruiters(company);
   const companyId = getCompanyId(company);
 
+  const informationItems = [
+    {
+      icon: Building2,
+      label: "Company name",
+      value: getCompanyName(company),
+    },
+    {
+      icon: Hash,
+      label: "Company ID",
+      value: companyId,
+    },
+    {
+      icon: BriefcaseBusiness,
+      label: "Industry",
+      value: getCompanyIndustry(company),
+    },
+    {
+      icon: Users,
+      label: "Company size",
+      value: getCompanySize(company),
+    },
+    {
+      icon: CalendarDays,
+      label: "Founded year",
+      value: company.foundedYear,
+    },
+    {
+      icon: MapPin,
+      label: "Headquarters",
+      value: getCompanyLocation(company),
+    },
+    {
+      icon: Mail,
+      label: "Contact email",
+      value: getCompanyEmail(company),
+    },
+    {
+      icon: Phone,
+      label: "Contact phone",
+      value: getCompanyPhone(company),
+    },
+    {
+      icon: CalendarDays,
+      label: "Created on",
+      value: formatDateTime(company.createdAt),
+    },
+    {
+      icon: Clock,
+      label: "Last updated",
+      value: formatDateTime(company.updatedAt),
+    },
+  ];
+
+  const actionButtonClass =
+    "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50";
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6"
@@ -396,45 +452,22 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
         role="dialog"
         aria-modal="true"
         aria-labelledby="company-details-title"
-        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+        className="flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-[#F8FAFC] shadow-2xl"
       >
-        <div className="relative overflow-hidden bg-gradient-to-br from-violet-700 via-violet-700 to-indigo-800 px-5 py-6 text-white sm:px-8">
-          <div className="absolute -right-10 -top-20 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
+        <div className="relative shrink-0 overflow-hidden border-b border-slate-200 bg-white">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-600 via-indigo-500 to-violet-300" />
 
-          <div className="relative flex items-start justify-between gap-4">
-            <div className="flex min-w-0 items-start gap-4">
-              {logo ? (
-                <img
-                  src={logo}
-                  alt={getCompanyName(company)}
-                  className="h-16 w-16 shrink-0 rounded-2xl border border-white/20 bg-white object-contain p-1"
-                />
-              ) : (
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10">
-                  <Building2 size={30} />
-                </div>
-              )}
-
-              <div className="min-w-0">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold">
-                    Company details
-                  </span>
-                  <StatusBadge status={companyStatus} />
-                  <VerificationBadge status={verification} />
-                </div>
-
-                <h2
-                  id="company-details-title"
-                  className="break-words text-xl font-bold sm:text-2xl"
-                >
-                  {getCompanyName(company)}
-                </h2>
-
-                <p className="mt-1 break-words text-sm text-violet-100">
-                  {company.slug ? `/${company.slug}` : "Company profile"}
-                </p>
-              </div>
+          <div className="flex items-center justify-between gap-4 px-5 pb-4 pt-6 sm:px-8">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-600">
+                Peer.Hiring / Administration
+              </p>
+              <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+                Company profile
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Review company information and manage account access.
+              </p>
             </div>
 
             <button
@@ -442,108 +475,233 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
               onClick={onClose}
               disabled={busy}
               aria-label="Close company details"
-              className="shrink-0 rounded-xl p-2 text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-50"
             >
-              <X size={21} />
+              <X size={19} />
             </button>
-          </div>
-
-          <div className="relative mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-violet-100">
-            <span className="inline-flex items-center gap-1.5">
-              <BriefcaseBusiness size={15} />
-              {getCompanyIndustry(company)}
-            </span>
-
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin size={15} />
-              {getCompanyLocation(company)}
-            </span>
-
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarDays size={15} />
-              Created {formatDate(company.createdAt)}
-            </span>
           </div>
         </div>
 
-        <div className="flex-1 space-y-7 overflow-y-auto p-5 sm:p-8">
-          <section>
-            <h3 className="mb-3 text-sm font-bold text-slate-900">
-              Company information
-            </h3>
+        <div className="flex-1 space-y-5 overflow-y-auto p-4 sm:p-7">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="flex min-w-0 items-start gap-4">
+                {logo ? (
+                  <img
+                    src={logo}
+                    alt={getCompanyName(company)}
+                    className="h-16 w-16 shrink-0 rounded-2xl border border-slate-200 bg-white object-contain p-1.5 sm:h-20 sm:w-20"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-xl font-bold text-violet-700 sm:h-20 sm:w-20">
+                    {getCompanyInitials(getCompanyName(company))}
+                  </div>
+                )}
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <DetailItem icon={Building2} label="Company name" value={getCompanyName(company)} />
-              <DetailItem icon={Hash} label="Company ID" value={companyId} />
-              <DetailItem icon={BriefcaseBusiness} label="Industry" value={getCompanyIndustry(company)} />
-              <DetailItem icon={Users} label="Company size" value={getCompanySize(company)} />
-              <DetailItem icon={CalendarDays} label="Founded year" value={company.foundedYear} />
-              <DetailItem icon={MapPin} label="Headquarters" value={getCompanyLocation(company)} />
-              <DetailItem icon={Mail} label="Contact email" value={getCompanyEmail(company)} />
-              <DetailItem icon={Phone} label="Contact phone" value={getCompanyPhone(company)} />
-              <DetailItem icon={ShieldCheck} label="Verification status" value={formatLabel(verification)} />
-              <DetailItem icon={CalendarDays} label="Created at" value={formatDateTime(company.createdAt)} />
-              <DetailItem icon={Clock} label="Last updated" value={formatDateTime(company.updatedAt)} />
-              <DetailItem icon={Trash2} label="Deleted at" value={formatDateTime(company.deletedAt)} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge status={companyStatus} />
+                    <VerificationBadge status={verification} />
+                  </div>
+
+                  <h3
+                    id="company-details-title"
+                    className="mt-3 break-words text-xl font-bold tracking-tight text-slate-950 sm:text-2xl"
+                  >
+                    {getCompanyName(company)}
+                  </h3>
+
+                  <p className="mt-1 break-all text-sm text-slate-500">
+                    {company.slug ? `/${company.slug}` : companyId}
+                  </p>
+
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500">
+                    <span className="inline-flex items-center gap-1.5">
+                      <BriefcaseBusiness
+                        size={15}
+                        className="text-violet-600"
+                      />
+                      {getCompanyIndustry(company)}
+                    </span>
+
+                    <span className="inline-flex items-center gap-1.5">
+                      <MapPin size={15} className="text-violet-600" />
+                      {getCompanyLocation(company)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 lg:min-w-[250px]">
+                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                  <p className="text-xs font-medium text-slate-500">
+                    Recruiters
+                  </p>
+                  <p className="mt-1 text-xl font-bold text-slate-900">
+                    {recruiters.length}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                  <p className="text-xs font-medium text-slate-500">
+                    Founded
+                  </p>
+                  <p className="mt-1 text-xl font-bold text-slate-900">
+                    {company.foundedYear || "—"}
+                  </p>
+                </div>
+
+                <div className="col-span-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                  <p className="text-xs font-medium text-slate-500">
+                    Company created
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-800">
+                    {formatDate(company.createdAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                <Building2 size={19} />
+              </div>
+
+              <div>
+                <h3 className="font-bold text-slate-900">
+                  Company information
+                </h3>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Business details and contact information
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {informationItems.map(({ icon: Icon, label, value }) => (
+                <div
+                  key={label}
+                  className="flex min-w-0 gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 transition hover:border-violet-100 hover:bg-violet-50/30"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-violet-600 shadow-sm ring-1 ring-slate-100">
+                    <Icon size={17} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-slate-500">
+                      {label}
+                    </p>
+                    <p className="mt-1 break-words text-sm font-semibold text-slate-800">
+                      {value === null ||
+                      value === undefined ||
+                      value === ""
+                        ? "Not specified"
+                        : value}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
 
           {company.description && (
-            <section>
-              <h3 className="mb-3 text-sm font-bold text-slate-900">
-                About company
-              </h3>
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
+                  <BriefcaseBusiness size={19} />
+                </div>
 
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-                <p className="whitespace-pre-wrap text-sm leading-6 text-slate-600">
-                  {company.description}
-                </p>
+                <div>
+                  <h3 className="font-bold text-slate-900">
+                    About the company
+                  </h3>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Company overview and description
+                  </p>
+                </div>
               </div>
+
+              <p className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-600">
+                {company.description}
+              </p>
             </section>
           )}
 
-          <section>
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h3 className="text-sm font-bold text-slate-900">Recruiters</h3>
-              <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700">
-                {recruiters.length} {recruiters.length === 1 ? "recruiter" : "recruiters"}
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
+                  <Users size={19} />
+                </div>
+
+                <div>
+                  <h3 className="font-bold text-slate-900">
+                    Associated recruiters
+                  </h3>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Recruiters connected to this company
+                  </p>
+                </div>
+              </div>
+
+              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600">
+                {recruiters.length}{" "}
+                {recruiters.length === 1 ? "recruiter" : "recruiters"}
               </span>
             </div>
 
             {recruiters.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-center">
-                <Users className="mx-auto text-slate-400" size={24} />
-                <p className="mt-2 text-sm text-slate-500">
-                  No recruiters are associated with this company.
+              <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center">
+                <Users
+                  size={27}
+                  className="mx-auto text-slate-300"
+                />
+                <p className="mt-3 text-sm font-semibold text-slate-700">
+                  No recruiters found
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  There are no recruiters associated with this company.
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                 {recruiters.map((recruiter, index) => {
-                  const recruiterId = recruiter?._id || recruiter?.id || index;
+                  const recruiterId =
+                    recruiter?._id || recruiter?.id || index;
+
+                  const recruiterName =
+                    recruiter?.name || "Unnamed recruiter";
 
                   return (
                     <div
                       key={recruiterId}
-                      className="flex min-w-0 items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3"
+                      className="flex min-w-0 items-start gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-violet-200 hover:bg-violet-50/20"
                     >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-sm font-bold text-violet-700">
-                        {(recruiter?.name || "R").trim().charAt(0).toUpperCase()}
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-sm font-bold text-violet-700">
+                        {getCompanyInitials(recruiterName)}
                       </div>
 
-                      <div className="min-w-0">
-                        <p className="break-words text-sm font-semibold text-slate-800">
-                          {recruiter?.name || "Unnamed recruiter"}
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words text-sm font-bold text-slate-900">
+                          {recruiterName}
                         </p>
-                        <p className="mt-1 break-all text-xs text-slate-500">
+
+                        <p className="mt-1 break-all text-sm text-slate-500">
                           {recruiter?.email || "No email available"}
                         </p>
+
                         {recruiter?.phoneNo && (
                           <p className="mt-1 text-xs text-slate-500">
                             {recruiter.phoneNo}
                           </p>
                         )}
                       </div>
+
+                      <span className="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                        Recruiter
+                      </span>
                     </div>
                   );
                 })}
@@ -551,102 +709,138 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
             )}
           </section>
 
-          <section>
-            <h3 className="mb-3 text-sm font-bold text-slate-900">
-              Account status
-            </h3>
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                <ShieldCheck size={19} />
+              </div>
 
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+              <div>
+                <h3 className="font-bold text-slate-900">
+                  Account and verification
+                </h3>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Current company account status
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={companyStatus} />
                 <VerificationBadge status={verification} />
               </div>
 
-              <p className="mt-3 text-sm leading-6 text-slate-500">
+              <p className="mt-3 text-sm leading-6 text-slate-600">
                 {companyStatus === "deleted"
                   ? "This company has been soft-deleted."
                   : companyStatus === "blocked"
-                    ? "This company is currently blocked."
+                    ? "This company is currently blocked from normal access."
                     : verification === "verified"
-                      ? "This company has been verified."
+                      ? "This company's verification has been completed."
                       : verification === "rejected"
-                        ? "This company's verification was rejected."
-                        : "This company is awaiting verification."}
+                        ? "This company's verification request has been rejected."
+                        : "This company has not completed verification yet."}
               </p>
+
+              {company.deletedAt && (
+                <div className="mt-4 border-t border-slate-200 pt-3">
+                  <p className="text-xs font-medium text-slate-500">
+                    Deleted at
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-800">
+                    {formatDateTime(company.deletedAt)}
+                  </p>
+                </div>
+              )}
+
+              {company.updatedAt && (
+                <div className="mt-4 border-t border-slate-200 pt-3">
+                  <p className="text-xs font-medium text-slate-500">
+                    Last modified
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-800">
+                    {formatDateTime(company.updatedAt)}
+                  </p>
+                </div>
+              )}
             </div>
           </section>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:flex-wrap sm:justify-between sm:px-8">
-          <button
-            type="button"
-            onClick={() => onAction("delete", company)}
-            disabled={busy || companyStatus === "deleted"}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
-          >
-            <Trash2 size={16} />
-            Delete company
-          </button>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            {companyStatus !== "deleted" && (
-              <>
-                {verification !== "verified" && (
-                  <button
-                    type="button"
-                    onClick={() => onAction("verify", company)}
-                    disabled={busy || companyStatus === "blocked"}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                  >
-                    <BadgeCheck size={16} />
-                    Verify
-                  </button>
-                )}
-
-                {verification !== "rejected" && (
-                  <button
-                    type="button"
-                    onClick={() => onAction("reject", company)}
-                    disabled={busy || companyStatus === "blocked"}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-200 px-4 py-2.5 text-sm font-semibold text-amber-700 transition hover:bg-amber-50 disabled:opacity-50"
-                  >
-                    <ShieldAlert size={16} />
-                    Reject
-                  </button>
-                )}
-
-                {companyStatus === "blocked" ? (
-                  <button
-                    type="button"
-                    onClick={() => onAction("unblock", company)}
-                    disabled={busy}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                  >
-                    <CheckCircle size={16} />
-                    Unblock
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => onAction("block", company)}
-                    disabled={busy}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
-                  >
-                    <Ban size={16} />
-                    Block
-                  </button>
-                )}
-              </>
-            )}
-
+        <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-4 sm:px-7">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <button
               type="button"
-              onClick={onClose}
-              disabled={busy}
-              className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50"
+              onClick={() => onAction("delete", company)}
+              disabled={busy || companyStatus === "deleted"}
+              className={`${actionButtonClass} border-red-200 text-red-700 hover:bg-red-50 lg:mr-auto`}
             >
-              Close details
+              <Trash2 size={16} />
+              Delete company
             </button>
+
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+              {companyStatus !== "deleted" && (
+                <>
+                  {verification !== "verified" && (
+                    <button
+                      type="button"
+                      onClick={() => onAction("verify", company)}
+                      disabled={busy || companyStatus === "blocked"}
+                      className={`${actionButtonClass} border-emerald-200 text-emerald-700 hover:bg-emerald-50`}
+                    >
+                      <BadgeCheck size={16} />
+                      Verify
+                    </button>
+                  )}
+
+                  {verification !== "rejected" && (
+                    <button
+                      type="button"
+                      onClick={() => onAction("reject", company)}
+                      disabled={busy || companyStatus === "blocked"}
+                      className={`${actionButtonClass} border-amber-200 text-amber-700 hover:bg-amber-50`}
+                    >
+                      <ShieldAlert size={16} />
+                      Reject
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onAction(
+                        companyStatus === "blocked" ? "unblock" : "block",
+                        company
+                      )
+                    }
+                    disabled={busy}
+                    className={`${actionButtonClass} ${
+                      companyStatus === "blocked"
+                        ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                        : "border-red-200 text-red-700 hover:bg-red-50"
+                    }`}
+                  >
+                    {companyStatus === "blocked" ? (
+                      <CheckCircle size={16} />
+                    ) : (
+                      <Ban size={16} />
+                    )}
+                    {companyStatus === "blocked" ? "Unblock" : "Block"}
+                  </button>
+                </>
+              )}
+
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={busy}
+                className={`${actionButtonClass} border-transparent bg-violet-600 text-white hover:bg-violet-700`}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>

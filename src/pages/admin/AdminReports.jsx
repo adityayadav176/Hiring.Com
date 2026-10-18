@@ -1,3 +1,4 @@
+
 import React, {
   useCallback,
   useEffect,
@@ -33,8 +34,6 @@ import {
 import { useReport } from "../../hooks/Hook";
 
 const PAGE_SIZE = 8;
-
-/* ----------------------------- Helpers ----------------------------- */
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
@@ -92,10 +91,7 @@ const getId = (value) => {
 
 const getUserName = (user) => {
   if (!user) return "Unknown user";
-
-  if (typeof user === "string") {
-    return user;
-  }
+  if (typeof user === "string") return user;
 
   return (
     user.name ||
@@ -117,10 +113,7 @@ const getUserEmail = (user) => {
 
 const getJobTitle = (job) => {
   if (!job) return "Unknown job";
-
-  if (typeof job === "string") {
-    return `Job ID: ${job}`;
-  }
+  if (typeof job === "string") return `Job ID: ${job}`;
 
   return job.title || job.jobTitle || getId(job) || "Unknown job";
 };
@@ -164,11 +157,9 @@ const getTargetName = (report) => {
 const getReportStatus = (report) => {
   const status = String(report?.status || "pending").toLowerCase();
 
-  if (["pending", "resolved", "rejected"].includes(status)) {
-    return status;
-  }
-
-  return "pending";
+  return ["pending", "resolved", "rejected"].includes(status)
+    ? status
+    : "pending";
 };
 
 const STATUS_OPTIONS = [
@@ -182,7 +173,6 @@ const TARGET_OPTIONS = [
   { value: "all", label: "All report types" },
   { value: "user", label: "User reports" },
   { value: "job", label: "Job reports" },
-  { value: "unknown", label: "Unknown target" },
 ];
 
 const STATUS_STYLES = {
@@ -211,13 +201,10 @@ const StatusBadge = ({ status }) => (
   </span>
 );
 
-/* ----------------------------- UI pieces ----------------------------- */
-
 const IconButton = ({
   title,
   onClick,
   children,
-  danger = false,
   disabled = false,
 }) => (
   <button
@@ -228,32 +215,23 @@ const IconButton = ({
     onClick={onClick}
     className={cn(
       "inline-flex h-9 w-9 items-center justify-center rounded-xl",
-      "border transition disabled:cursor-not-allowed disabled:opacity-50",
-      danger
-        ? "border-red-100 text-red-600 hover:bg-red-50"
-        : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-violet-700"
+      "border border-slate-200 text-slate-600 transition",
+      "hover:bg-slate-50 hover:text-violet-700",
+      "disabled:cursor-not-allowed disabled:opacity-40"
     )}
   >
     {children}
   </button>
 );
 
-const StatCard = ({
-  title,
-  value,
-  description,
-  icon: Icon,
-  iconClass,
-}) => (
+const StatCard = ({ title, value, description, icon: Icon, iconClass }) => (
   <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
         <p className="text-sm font-medium text-slate-500">{title}</p>
-
         <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
           {value}
         </p>
-
         <p className="mt-1 text-xs text-slate-500">{description}</p>
       </div>
 
@@ -271,13 +249,10 @@ const StatCard = ({
 
 const DetailItem = ({ icon: Icon, label, value }) => (
   <div className="flex min-w-0 gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3">
-    <div className="mt-0.5 shrink-0 text-violet-600">
-      <Icon size={17} />
-    </div>
+    <Icon size={17} className="mt-0.5 shrink-0 text-violet-600" />
 
     <div className="min-w-0">
       <p className="text-xs font-medium text-slate-500">{label}</p>
-
       <p className="mt-1 break-words text-sm font-semibold text-slate-800">
         {value === null || value === undefined || value === ""
           ? "Not specified"
@@ -287,275 +262,286 @@ const DetailItem = ({ icon: Icon, label, value }) => (
   </div>
 );
 
-/* ----------------------------- Report details modal ----------------------------- */
-
 const ReportDetailsModal = ({
   report,
   onClose,
   onResolve,
   onReject,
-  busy,
+  busy = false,
 }) => {
   if (!report) return null;
 
   const status = getReportStatus(report);
-  const reporter = report.reporter;
   const targetType = getTargetType(report);
-  const targetUser = report.reportedUser;
-  const targetJob = report.reportedJob;
+  const isPending = status === "pending";
+
+  const reporter = report.reporter || {};
+  const reportedUser = report.reportedUser || null;
+  const reportedJob = report.reportedJob || null;
+
+  const reporterName = getUserName(reporter);
+  const reporterEmail = getUserEmail(reporter);
+  const reporterAvatar =
+    reporter.avatar ||
+    reporter.profilePicture ||
+    reporter.profileImage ||
+    "";
+
+  const targetName = getTargetName(report);
+  const targetId = getId(
+    targetType === "job" ? reportedJob : reportedUser
+  );
+
+  const company = reportedJob?.company || reportedJob?.postedBy || {};
+  const companyName =
+    getJobCompany(reportedJob) || getUserName(company) || "Unknown company";
+
+  const statusStyles = {
+    pending: "bg-amber-50 text-amber-700 ring-amber-200",
+    resolved: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    rejected: "bg-rose-50 text-rose-700 ring-rose-200",
+  };
+
+  const statusLabel = {
+    pending: "Pending",
+    resolved: "Resolved",
+    rejected: "Rejected",
+  };
+
+  const Section = ({ title, children }) => (
+    <section>
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+
+  const Detail = ({ label, value }) => (
+    <div className="min-w-0">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="mt-1 break-words text-sm font-medium text-slate-800">
+        {value || "—"}
+      </p>
+    </div>
+  );
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !busy) {
-          onClose();
-        }
+        if (event.target === event.currentTarget && !busy) onClose();
       }}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-details-title"
-        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+        className="flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-black/10"
       >
-        {/* Header matches the violet administration theme */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-violet-700 via-violet-700 to-indigo-800 px-5 py-6 text-white sm:px-8">
-          <div className="absolute -right-10 -top-20 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
+        {/* Header */}
+        <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2
+                id="report-details-title"
+                className="text-lg font-semibold tracking-tight text-slate-900"
+              >
+                Report details
+              </h2>
 
-          <div className="relative flex items-start justify-between gap-4">
-            <div className="flex min-w-0 items-start gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10">
-                <ShieldAlert size={26} />
-              </div>
-
-              <div className="min-w-0">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold">
-                    Report details
-                  </span>
-
-                  <StatusBadge status={status} />
-                </div>
-
-                <h2
-                  id="report-details-title"
-                  className="break-words text-xl font-bold sm:text-2xl"
-                >
-                  {formatLabel(report.reason)}
-                </h2>
-
-                <p className="mt-1 break-all text-sm text-violet-100">
-                  Report ID: {getId(report) || "Not specified"}
-                </p>
-              </div>
+              <span
+                className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset ${
+                  statusStyles[status] || statusStyles.pending
+                }`}
+              >
+                {statusLabel[status] || formatLabel(status)}
+              </span>
             </div>
 
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={busy}
-              aria-label="Close report details"
-              className="shrink-0 rounded-xl p-2 text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
-            >
-              <X size={21} />
-            </button>
-          </div>
-
-          <div className="relative mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-violet-100">
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarDays size={15} />
-              Submitted {formatDate(report.createdAt)}
-            </span>
-
-            <span className="inline-flex items-center gap-1.5">
-              {targetType === "job" ? (
-                <BriefcaseBusiness size={15} />
-              ) : (
-                <UserRound size={15} />
-              )}
-              {formatLabel(targetType)} report
-            </span>
-          </div>
-        </div>
-
-        <div className="flex-1 space-y-7 overflow-y-auto p-5 sm:p-8">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <DetailItem
-              icon={UserRound}
-              label="Reported by"
-              value={getUserName(reporter)}
-            />
-
-            <DetailItem
-              icon={MessageSquareText}
-              label="Reporter email"
-              value={getUserEmail(reporter)}
-            />
-
-            <DetailItem
-              icon={ShieldCheck}
-              label="Report status"
-              value={formatLabel(status)}
-            />
-
-            <DetailItem
-              icon={FileText}
-              label="Reason"
-              value={formatLabel(report.reason)}
-            />
-
-            <DetailItem
-              icon={CalendarDays}
-              label="Submitted on"
-              value={formatDateTime(report.createdAt)}
-            />
-
-            <DetailItem
-              icon={CalendarDays}
-              label="Last updated"
-              value={formatDateTime(report.updatedAt)}
-            />
-
-            {targetUser && (
-              <>
-                <DetailItem
-                  icon={UserRound}
-                  label="Reported user"
-                  value={getUserName(targetUser)}
-                />
-
-                <DetailItem
-                  icon={MessageSquareText}
-                  label="Reported user email"
-                  value={getUserEmail(targetUser)}
-                />
-
-                <DetailItem
-                  icon={FileText}
-                  label="Reported user ID"
-                  value={getId(targetUser)}
-                />
-              </>
-            )}
-
-            {targetJob && (
-              <>
-                <DetailItem
-                  icon={BriefcaseBusiness}
-                  label="Reported job"
-                  value={getJobTitle(targetJob)}
-                />
-
-                <DetailItem
-                  icon={BriefcaseBusiness}
-                  label="Company"
-                  value={getJobCompany(targetJob)}
-                />
-
-                <DetailItem
-                  icon={FileText}
-                  label="Reported job ID"
-                  value={getId(targetJob)}
-                />
-              </>
-            )}
-
-            <DetailItem
-              icon={UserCheck}
-              label="Resolved by"
-              value={report.resolvedBy}
-            />
-
-            <DetailItem
-              icon={CalendarDays}
-              label="Resolved at"
-              value={formatDateTime(report.resolvedAt)}
-            />
-
-            <DetailItem
-              icon={FileText}
-              label="Report ID"
-              value={getId(report)}
-            />
-          </div>
-
-          <section>
-            <h3 className="mb-3 text-sm font-bold text-slate-900">
-              Report description
-            </h3>
-
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-              <p className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-600">
-                {report.description?.trim() ||
-                  "No additional description was provided."}
-              </p>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="mb-3 text-sm font-bold text-slate-900">
-              Admin note
-            </h3>
-
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-              <p className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-600">
-                {report.adminNote?.trim() || "No admin note recorded."}
-              </p>
-            </div>
-          </section>
-        </div>
-
-        <div className="flex flex-col-reverse gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <div className="flex flex-col gap-2 sm:flex-row">
-            {status === "pending" && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => onReject(report)}
-                  disabled={busy}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
-                >
-                  <XCircle size={16} />
-                  Reject report
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => onResolve(report)}
-                  disabled={busy}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50"
-                >
-                  {busy ? (
-                    <LoaderCircle size={16} className="animate-spin" />
-                  ) : (
-                    <CheckCircle size={16} />
-                  )}
-                  Resolve report
-                </button>
-              </>
-            )}
+            <p className="mt-1 text-xs text-slate-500">
+              Report ID: {getId(report) || "—"}
+            </p>
           </div>
 
           <button
             type="button"
             onClick={onClose}
             disabled={busy}
-            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+            aria-label="Close modal"
+            className="ml-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
           >
-            Close details
+            <X size={18} />
           </button>
+        </div>
+
+        {/* Content */}
+        <div className="space-y-6 overflow-y-auto px-5 py-5 sm:px-6">
+          {/* Reason */}
+          <Section title="Reason for report">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-900">
+                {formatLabel(report.reason) || "No reason specified"}
+              </p>
+
+              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
+                {report.description?.trim() ||
+                  "No additional description provided."}
+              </p>
+            </div>
+          </Section>
+
+          {/* Reporter */}
+          <Section title="Reported by">
+            <div className="flex items-center gap-3">
+              {reporterAvatar ? (
+                <img
+                  src={reporterAvatar}
+                  alt={reporterName || "Reporter"}
+                  className="h-11 w-11 rounded-full border border-slate-200 object-cover"
+                />
+              ) : (
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-50 text-sm font-semibold text-violet-700">
+                  {reporterName?.charAt(0)?.toUpperCase() || "U"}
+                </div>
+              )}
+
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {reporterName || "Unknown user"}
+                </p>
+                <p className="break-all text-xs text-slate-500">
+                  {reporterEmail || "No email available"}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-4 rounded-xl border border-slate-100 p-3">
+              <Detail label="Reporter ID" value={getId(reporter)} />
+              <Detail
+                label="Submitted"
+                value={formatDateTime(report.createdAt)}
+              />
+            </div>
+          </Section>
+
+          {/* Reported target */}
+          <Section title="Reported target">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                  {targetType === "job" ? (
+                    <BriefcaseBusiness size={19} />
+                  ) : (
+                    <UserRound size={19} />
+                  )}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-900">
+                    {targetType === "job"
+                      ? getJobTitle(reportedJob) || targetName || "Untitled job"
+                      : targetName || "Unknown user"}
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-500">
+                    {targetType === "job"
+                      ? companyName
+                      : "User account"}
+                  </p>
+                </div>
+
+                <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-slate-600">
+                  {formatLabel(targetType)}
+                </span>
+              </div>
+
+              <div className="mt-4 border-t border-slate-100 pt-3">
+                <Detail label="Target ID" value={targetId} />
+              </div>
+            </div>
+          </Section>
+
+          {/* Resolution information */}
+          {(report.adminNote || report.resolvedAt || report.resolvedBy) && (
+            <Section title="Resolution details">
+              <div className="space-y-3 rounded-xl border border-slate-200 p-4">
+                {report.resolvedBy && (
+                  <Detail
+                    label="Reviewed by"
+                    value={
+                      typeof report.resolvedBy === "string"
+                        ? report.resolvedBy
+                        : getUserName(report.resolvedBy)
+                    }
+                  />
+                )}
+
+                {report.resolvedAt && (
+                  <Detail
+                    label="Review date"
+                    value={formatDateTime(report.resolvedAt)}
+                  />
+                )}
+
+                {report.adminNote && (
+                  <div>
+                    <p className="text-xs text-slate-500">Admin note</p>
+                    <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">
+                      {report.adminNote}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </Section>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+          >
+            Close
+          </button>
+
+          {isPending && (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => onReject(report)}
+                disabled={busy}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-rose-200 px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <XCircle size={15} />
+                Reject
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onResolve(report)}
+                disabled={busy}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <CheckCircle size={15} />
+                Resolve report
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-/* ----------------------------- Confirmation modal ----------------------------- */
-
 const ConfirmModal = ({
   action,
   report,
+  adminNote,
+  setAdminNote,
   onCancel,
   onConfirm,
   loading,
@@ -563,14 +549,6 @@ const ConfirmModal = ({
   if (!action || !report) return null;
 
   const isResolve = action === "resolve";
-
-  const title = isResolve
-    ? "Resolve this report?"
-    : "Reject this report?";
-
-  const description = isResolve
-    ? "Confirm that this report has been reviewed and should be marked as resolved."
-    : "Confirm that this report has been reviewed and should be marked as rejected.";
 
   return (
     <div
@@ -584,7 +562,7 @@ const ConfirmModal = ({
       <div
         role="alertdialog"
         aria-modal="true"
-        aria-labelledby="confirm-title"
+        aria-labelledby="confirm-report-title"
         className="w-full max-w-md rounded-3xl border border-slate-100 bg-white p-6 shadow-2xl"
       >
         <div
@@ -598,34 +576,59 @@ const ConfirmModal = ({
           {isResolve ? <CheckCircle size={23} /> : <XCircle size={23} />}
         </div>
 
-        <h3 id="confirm-title" className="text-lg font-bold text-slate-900">
-          {title}
+        <h3
+          id="confirm-report-title"
+          className="text-lg font-bold text-slate-900"
+        >
+          {isResolve ? "Resolve this report?" : "Reject this report?"}
         </h3>
 
         <p className="mt-2 text-sm leading-6 text-slate-500">
-          {description}
+          {isResolve
+            ? "Confirm that this report has been reviewed and should be marked as resolved."
+            : "Confirm that this report has been reviewed and should be marked as rejected."}
         </p>
 
         <div className="mt-4 rounded-xl bg-slate-50 p-3">
           <p className="break-words text-sm font-semibold text-slate-800">
             {formatLabel(report.reason)}
           </p>
-
           <p className="mt-1 break-all text-xs text-slate-500">
-            Report ID: {getId(report) || "Not specified"}
+            Report ID: {getId(report)}
           </p>
-
           <p className="mt-1 text-xs text-slate-500">
-            Reported target: {getTargetName(report)}
+            Target: {getTargetName(report)}
           </p>
         </div>
 
-        <div className="mt-6 flex gap-3">
+        <label
+          htmlFor="report-admin-note"
+          className="mt-5 block text-sm font-semibold text-slate-700"
+        >
+          Admin note <span className="font-normal text-slate-400">(optional)</span>
+        </label>
+
+        <textarea
+          id="report-admin-note"
+          value={adminNote}
+          onChange={(event) => setAdminNote(event.target.value)}
+          disabled={loading}
+          maxLength={2000}
+          rows={3}
+          placeholder="Add a reason for your decision..."
+          className="mt-2 w-full resize-y rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 disabled:bg-slate-50"
+        />
+
+        <p className="mt-1 text-right text-xs text-slate-400">
+          {adminNote.length}/2000
+        </p>
+
+        <div className="mt-5 flex gap-3">
           <button
             type="button"
             disabled={loading}
             onClick={onCancel}
-            className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+            className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -635,17 +638,13 @@ const ConfirmModal = ({
             disabled={loading}
             onClick={onConfirm}
             className={cn(
-              "inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5",
-              "text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60",
+              "inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60",
               isResolve
                 ? "bg-emerald-600 hover:bg-emerald-700"
                 : "bg-red-600 hover:bg-red-700"
             )}
           >
-            {loading && (
-              <LoaderCircle size={16} className="animate-spin" />
-            )}
-
+            {loading && <LoaderCircle size={16} className="animate-spin" />}
             {loading
               ? "Processing..."
               : isResolve
@@ -658,20 +657,21 @@ const ConfirmModal = ({
   );
 };
 
-/* ----------------------------- Main page ----------------------------- */
+/* -------------------- Main admin reports page -------------------- */
 
 export default function AdminReports() {
   const {
     reports: rawReports = [],
     selected: contextSelected,
     setSelected: setContextSelected,
-    reportsPagination,
+    reportsPagination = {},
     handleGetReports,
     handleGetReportById,
     handleResolveReport,
     handleRejectReport,
   } = useReport();
 
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [targetFilter, setTargetFilter] = useState("all");
@@ -684,12 +684,21 @@ export default function AdminReports() {
 
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-
   const [selected, setSelected] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [adminNote, setAdminNote] = useState("");
   const [menuReportId, setMenuReportId] = useState(null);
 
-  /* Fetch reports through your existing ReportContext handler. */
+  // Debounce search to avoid making a request on every keystroke.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   const fetchReports = useCallback(
     async (isRefresh = false) => {
       if (isRefresh) {
@@ -701,19 +710,32 @@ export default function AdminReports() {
       setError("");
 
       try {
-        await handleGetReports();
+        await handleGetReports({
+          page,
+          limit: PAGE_SIZE,
+          status: statusFilter === "all" ? "" : statusFilter,
+          search,
+          targetType: targetFilter === "all" ? "" : targetFilter,
+          sortBy: "createdAt",
+          sortOrder: "desc",
+        });
+
         return true;
       } catch (err) {
-        setError(
-          err?.message || "Unable to load reports. Please try again."
-        );
+        setError(err?.message || "Failed to load reports.");
         return false;
       } finally {
         setInitialLoading(false);
         setRefreshing(false);
       }
     },
-    [handleGetReports]
+    [
+      handleGetReports,
+      page,
+      search,
+      statusFilter,
+      targetFilter,
+    ]
   );
 
   useEffect(() => {
@@ -722,11 +744,9 @@ export default function AdminReports() {
 
   useEffect(() => {
     setPage(1);
-  }, [search, statusFilter, targetFilter]);
+  }, [statusFilter, targetFilter]);
 
   useEffect(() => {
-    if (!menuReportId) return;
-
     const closeMenu = (event) => {
       if (event.key === "Escape") {
         setMenuReportId(null);
@@ -734,81 +754,38 @@ export default function AdminReports() {
     };
 
     document.addEventListener("keydown", closeMenu);
-
     return () => document.removeEventListener("keydown", closeMenu);
-  }, [menuReportId]);
+  }, []);
 
   const reports = useMemo(
     () => (Array.isArray(rawReports) ? rawReports : []),
     [rawReports]
   );
 
-  const stats = useMemo(() => {
-    return {
-      total: reports.length,
+  const stats = useMemo(
+    () => ({
+      loaded: reports.length,
       pending: reports.filter(
-        (report) => getReportStatus(report) === "pending"
+        (item) => getReportStatus(item) === "pending"
       ).length,
       resolved: reports.filter(
-        (report) => getReportStatus(report) === "resolved"
+        (item) => getReportStatus(item) === "resolved"
       ).length,
       rejected: reports.filter(
-        (report) => getReportStatus(report) === "rejected"
+        (item) => getReportStatus(item) === "rejected"
       ).length,
-    };
-  }, [reports]);
-
-  const filteredReports = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return reports.filter((report) => {
-      const status = getReportStatus(report);
-      const targetType = getTargetType(report);
-
-      const matchesStatus =
-        statusFilter === "all" || status === statusFilter;
-
-      const matchesTarget =
-        targetFilter === "all" || targetType === targetFilter;
-
-      const searchable = [
-        getId(report),
-        report.reason,
-        report.description,
-        report.adminNote,
-        report.status,
-        getUserName(report.reporter),
-        getUserEmail(report.reporter),
-        getTargetName(report),
-        getId(report.reportedUser),
-        getId(report.reportedJob),
-        getJobCompany(report.reportedJob),
-        report.resolvedBy,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return (
-        matchesStatus &&
-        matchesTarget &&
-        (!query || searchable.includes(query))
-      );
-    });
-  }, [reports, search, statusFilter, targetFilter]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredReports.length / PAGE_SIZE)
+    }),
+    [reports]
   );
 
-  const safePage = Math.min(page, totalPages);
-
-  const visibleReports = useMemo(() => {
-    const start = (safePage - 1) * PAGE_SIZE;
-
-    return filteredReports.slice(start, start + PAGE_SIZE);
-  }, [filteredReports, safePage]);
+  const currentPage = Number(reportsPagination.currentPage || page);
+  const totalPages = Math.max(
+    1,
+    Number(reportsPagination.totalPages || 1)
+  );
+  const totalReports = Number(
+    reportsPagination.totalReports ?? reports.length
+  );
 
   const openReportDetails = useCallback(
     async (report) => {
@@ -818,16 +795,17 @@ export default function AdminReports() {
       setError("");
 
       try {
-        await handleGetReportById({ reportId: getId(report) });
+        const fullReport = await handleGetReportById({
+          reportId: getId(report),
+        });
 
-        /*
-         * Your context's handleGetReportById sets `selected` itself.
-         * Read the latest value on the next render below.
-         */
+        if (fullReport) {
+          setSelected(fullReport);
+        }
       } catch (err) {
         setError(
           err?.message ||
-            "Could not load complete report details. Showing available information."
+            "Could not load full report details. Showing available data."
         );
       } finally {
         setDetailsLoading(false);
@@ -836,81 +814,14 @@ export default function AdminReports() {
     [handleGetReportById]
   );
 
-  useEffect(() => {
-    if (
-      contextSelected &&
-      typeof contextSelected === "object" &&
-      getId(contextSelected)
-    ) {
-      setSelected(contextSelected);
-    }
-  }, [contextSelected]);
-
   const requestAction = useCallback((report, type) => {
     setMenuReportId(null);
 
     if (getReportStatus(report) !== "pending") return;
 
+    setAdminNote(report.adminNote || "");
     setConfirmAction({ type, report });
   }, []);
-
-  const runConfirmedAction = useCallback(async () => {
-    const report = confirmAction?.report;
-    const reportId = getId(report);
-
-    if (!reportId) return;
-
-    const { type } = confirmAction;
-
-    setActionLoading(true);
-    setError("");
-    setNotice("");
-
-    try {
-      if (type === "resolve") {
-        await handleResolveReport({ reportId });
-        setNotice("Report resolved successfully.");
-      } else if (type === "reject") {
-        await handleRejectReport({ reportId });
-        setNotice("Report rejected successfully.");
-      }
-
-      setConfirmAction(null);
-
-      /*
-       * Refresh the list so the latest server status is displayed.
-       * This also restores rejected reports if the current context removes
-       * them optimistically after rejection.
-       */
-      await fetchReports(true);
-
-      if (getId(selected) === reportId) {
-        try {
-          await handleGetReportById({ reportId });
-        } catch {
-          // The refreshed report list remains available.
-        }
-      }
-    } catch (err) {
-      setError(
-        err?.message || "The action failed. Please try again."
-      );
-    } finally {
-      setActionLoading(false);
-    }
-  }, [
-    confirmAction,
-    selected,
-    handleResolveReport,
-    handleRejectReport,
-    handleGetReportById,
-    fetchReports,
-  ]);
-
-  const handleRefresh = async () => {
-    setNotice("");
-    await fetchReports(true);
-  };
 
   const closeDetails = () => {
     if (actionLoading) return;
@@ -922,6 +833,70 @@ export default function AdminReports() {
     }
   };
 
+  const runConfirmedAction = async () => {
+    const report = confirmAction?.report;
+    const reportId = getId(report);
+
+    if (!reportId || actionLoading) return;
+
+    setActionLoading(true);
+    setError("");
+    setNotice("");
+
+    try {
+      const payload = { reportId, adminNote: adminNote.trim() };
+
+      const updatedReport =
+        confirmAction.type === "resolve"
+          ? await handleResolveReport(payload)
+          : await handleRejectReport(payload);
+
+      if (updatedReport) {
+        setSelected((current) =>
+          getId(current) === reportId ? updatedReport : current
+        );
+
+        if (typeof setContextSelected === "function") {
+          setContextSelected((current) =>
+            getId(current) === reportId ? updatedReport : current
+          );
+        }
+      }
+
+      setConfirmAction(null);
+      setNotice(
+        confirmAction.type === "resolve"
+          ? "Report resolved successfully."
+          : "Report rejected successfully."
+      );
+
+      // Reload the same server-side page with its active filters.
+      await fetchReports(true);
+
+      // Refresh the selected report so its modal displays current data.
+      if (getId(selected) === reportId) {
+        try {
+          const refreshedReport = await handleGetReportById({ reportId });
+
+          if (refreshedReport) {
+            setSelected(refreshedReport);
+          }
+        } catch {
+          // The status update itself has already succeeded.
+        }
+      }
+    } catch (err) {
+      setError(err?.message || "Could not update the report.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setNotice("");
+    await fetchReports(true);
+  };
+
   return (
     <div
       className="min-h-screen bg-[#F7F8FC] px-4 py-6 text-slate-900 sm:px-6 lg:px-8"
@@ -930,7 +905,7 @@ export default function AdminReports() {
       }}
     >
       <div className="mx-auto max-w-[1600px] space-y-6">
-        {/* Page heading: same size and placement as AdminJobs */}
+        {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-violet-600">
@@ -944,7 +919,7 @@ export default function AdminReports() {
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
               Review user and job reports, investigate reported content,
-              and manage report resolutions from one place.
+              and manage report resolutions.
             </p>
           </div>
 
@@ -952,30 +927,24 @@ export default function AdminReports() {
             type="button"
             onClick={handleRefresh}
             disabled={refreshing || initialLoading}
-            className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-violet-200 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-60 sm:self-center"
+            className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-violet-200 hover:text-violet-700 disabled:opacity-60 sm:self-center"
           >
             <RefreshCw
               size={16}
               className={refreshing ? "animate-spin" : ""}
             />
-
             {refreshing ? "Refreshing..." : "Refresh reports"}
           </button>
         </div>
 
-        {/* Feedback messages */}
+        {/* Error and success feedback */}
         {error && (
           <div
             role="alert"
             className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
           >
             <AlertCircle size={19} className="mt-0.5 shrink-0" />
-
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold">Something went wrong</p>
-              <p className="mt-1 break-words">{error}</p>
-            </div>
-
+            <p className="min-w-0 flex-1 break-words">{error}</p>
             <button
               type="button"
               onClick={() => setError("")}
@@ -993,13 +962,11 @@ export default function AdminReports() {
             className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
           >
             <CheckCircle size={19} className="mt-0.5 shrink-0" />
-
             <p className="flex-1">{notice}</p>
-
             <button
               type="button"
               onClick={() => setNotice("")}
-              aria-label="Dismiss message"
+              aria-label="Dismiss success message"
               className="rounded-lg p-1 hover:bg-emerald-100"
             >
               <X size={17} />
@@ -1007,42 +974,39 @@ export default function AdminReports() {
           </div>
         )}
 
-        {/* Statistics: same card dimensions as AdminJobs */}
+        {/* Summary cards describe the current API page, not global totals. */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             title="Loaded reports"
-            value={stats.total}
-            description="Reports returned by the current API request"
+            value={stats.loaded}
+            description="Reports on this page"
             icon={FileText}
             iconClass="bg-violet-50 text-violet-700"
           />
-
           <StatCard
-            title="Pending reports"
+            title="Pending on page"
             value={stats.pending}
-            description="Reports awaiting admin review"
+            description="Awaiting admin review"
             icon={Clock}
             iconClass="bg-amber-50 text-amber-700"
           />
-
           <StatCard
-            title="Resolved reports"
+            title="Resolved on page"
             value={stats.resolved}
-            description="Reports reviewed and resolved"
+            description="Reviewed and resolved"
             icon={CheckCircle}
             iconClass="bg-emerald-50 text-emerald-700"
           />
-
           <StatCard
-            title="Rejected reports"
+            title="Rejected on page"
             value={stats.rejected}
-            description="Reports reviewed and rejected"
+            description="Reviewed and rejected"
             icon={XCircle}
             iconClass="bg-red-50 text-red-700"
           />
         </div>
 
-        {/* Main table: same container, padding, search, and filter styling */}
+        {/* Reports table */}
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 p-4 sm:p-5">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -1050,28 +1014,27 @@ export default function AdminReports() {
                 <h2 className="text-lg font-bold text-slate-900">
                   All reports
                 </h2>
-
                 <p className="mt-1 text-sm text-slate-500">
-                  {filteredReports.length} matching{" "}
-                  {filteredReports.length === 1 ? "report" : "reports"}
+                  {totalReports} matching reports
                 </p>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
-                <div className="relative min-w-0 sm:min-w-[280px]">
+                <div className="relative min-w-0 sm:min-w-[260px]">
                   <Search
                     size={17}
                     className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
                   />
-
                   <input
                     type="search"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
+                    value={searchInput}
+                    onChange={(event) =>
+                      setSearchInput(event.target.value)
+                    }
                     onClick={(event) => event.stopPropagation()}
-                    placeholder="Search report, user, reason..."
+                    placeholder="Search reports, users, reasons..."
                     aria-label="Search reports"
-                    className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   />
                 </div>
 
@@ -1080,15 +1043,14 @@ export default function AdminReports() {
                     size={16}
                     className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
                   />
-
                   <select
                     value={statusFilter}
                     onChange={(event) =>
                       setStatusFilter(event.target.value)
                     }
                     onClick={(event) => event.stopPropagation()}
-                    aria-label="Filter by report status"
-                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white pl-10 pr-10 text-sm font-medium outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100 sm:min-w-[170px]"
+                    aria-label="Filter reports by status"
+                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white pl-10 pr-9 text-sm font-medium outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100 sm:min-w-[165px]"
                   >
                     {STATUS_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -1096,10 +1058,9 @@ export default function AdminReports() {
                       </option>
                     ))}
                   </select>
-
                   <ChevronDown
                     size={15}
-                    className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
                   />
                 </div>
 
@@ -1110,8 +1071,8 @@ export default function AdminReports() {
                       setTargetFilter(event.target.value)
                     }
                     onClick={(event) => event.stopPropagation()}
-                    aria-label="Filter by report target"
-                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-9 text-sm font-medium outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100 sm:min-w-[155px]"
+                    aria-label="Filter reports by target"
+                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-9 text-sm font-medium outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100 sm:min-w-[155px]"
                   >
                     {TARGET_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -1119,7 +1080,6 @@ export default function AdminReports() {
                       </option>
                     ))}
                   </select>
-
                   <ChevronDown
                     size={15}
                     className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -1130,49 +1090,39 @@ export default function AdminReports() {
           </div>
 
           {initialLoading ? (
-            <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 px-4">
+            <div className="flex min-h-[320px] flex-col items-center justify-center gap-3">
               <LoaderCircle
                 size={32}
                 className="animate-spin text-violet-600"
               />
-
               <p className="text-sm font-medium text-slate-600">
                 Loading reports...
               </p>
             </div>
-          ) : visibleReports.length === 0 ? (
+          ) : reports.length === 0 ? (
             <div className="flex min-h-[320px] flex-col items-center justify-center px-5 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                 <FileText size={29} />
               </div>
-
               <h3 className="mt-4 text-base font-bold text-slate-900">
                 No reports found
               </h3>
-
               <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
-                {search ||
-                statusFilter !== "all" ||
-                targetFilter !== "all"
-                  ? "Try changing your search or filters."
-                  : "There are no reports in the collection returned by the server."}
+                Try changing the search or filters, or refresh the list.
               </p>
-
-              {(search ||
-                statusFilter !== "all" ||
-                targetFilter !== "all") && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearch("");
-                    setStatusFilter("all");
-                    setTargetFilter("all");
-                  }}
-                  className="mt-4 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
-                >
-                  Clear filters
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchInput("");
+                  setSearch("");
+                  setStatusFilter("all");
+                  setTargetFilter("all");
+                  setPage(1);
+                }}
+                className="mt-4 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
+              >
+                Clear filters
+              </button>
             </div>
           ) : (
             <>
@@ -1204,114 +1154,97 @@ export default function AdminReports() {
                   </thead>
 
                   <tbody className="divide-y divide-slate-100">
-                    {visibleReports.map((report) => {
+                    {reports.map((report) => {
                       const status = getReportStatus(report);
                       const targetType = getTargetType(report);
                       const pending = status === "pending";
+                      const reportId = getId(report);
 
                       return (
                         <tr
-                          key={getId(report)}
+                          key={reportId}
                           className="transition hover:bg-violet-50/30"
                         >
-                          {/* Report */}
                           <td className="px-4 py-4">
-                            <div className="flex min-w-0 items-start gap-3">
+                            <div className="flex items-start gap-3">
                               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
                                 <FileText size={19} />
                               </div>
-
-                              <div className="min-w-0 max-w-[230px]">
+                              <div className="min-w-0 max-w-[220px]">
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    openReportDetails(report)
-                                  }
+                                  onClick={() => openReportDetails(report)}
                                   className="block max-w-full truncate text-left text-sm font-bold text-slate-900 hover:text-violet-700"
                                 >
                                   {formatLabel(report.reason)}
                                 </button>
-
                                 <p className="mt-1 truncate text-xs text-slate-500">
-                                  ID: {getId(report) || "Not specified"}
+                                  ID: {reportId}
                                 </p>
-
-                                <div className="mt-2 flex flex-wrap gap-1.5">
-                                  <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
-                                    {formatLabel(targetType)}
-                                  </span>
-                                </div>
+                                <span className="mt-2 inline-flex rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
+                                  {formatLabel(targetType)}
+                                </span>
                               </div>
                             </div>
                           </td>
 
-                          {/* Reporter */}
                           <td className="px-4 py-4">
                             <p className="max-w-[165px] truncate text-sm font-medium text-slate-800">
                               {getUserName(report.reporter)}
                             </p>
-
                             <p className="mt-1 max-w-[165px] truncate text-xs text-slate-500">
                               {getUserEmail(report.reporter)}
                             </p>
                           </td>
 
-                          {/* Target */}
                           <td className="px-4 py-4">
                             <div className="flex max-w-[190px] items-start gap-2">
-                              <div className="mt-0.5 shrink-0 text-slate-400">
-                                {targetType === "job" ? (
-                                  <BriefcaseBusiness size={15} />
-                                ) : (
-                                  <UserRound size={15} />
-                                )}
-                              </div>
-
+                              {targetType === "job" ? (
+                                <BriefcaseBusiness
+                                  size={15}
+                                  className="mt-0.5 shrink-0 text-slate-400"
+                                />
+                              ) : (
+                                <UserRound
+                                  size={15}
+                                  className="mt-0.5 shrink-0 text-slate-400"
+                                />
+                              )}
                               <div className="min-w-0">
                                 <p className="break-words text-sm font-medium text-slate-800">
                                   {getTargetName(report)}
                                 </p>
-
                                 <p className="mt-1 text-xs text-slate-500">
                                   {targetType === "job"
                                     ? getJobCompany(report.reportedJob)
-                                    : targetType === "user"
-                                      ? getUserEmail(report.reportedUser)
-                                      : "Target unavailable"}
+                                    : getUserEmail(report.reportedUser)}
                                 </p>
                               </div>
                             </div>
                           </td>
 
-                          {/* Reason */}
                           <td className="px-4 py-4">
                             <p className="max-w-[175px] break-words text-sm font-medium text-slate-800">
                               {formatLabel(report.reason)}
                             </p>
-
                             <p className="mt-1 max-w-[175px] truncate text-xs text-slate-500">
-                              {report.description?.trim() ||
-                                "No description"}
+                              {report.description?.trim() || "No description"}
                             </p>
                           </td>
 
-                          {/* Status */}
                           <td className="px-4 py-4">
                             <StatusBadge status={status} />
                           </td>
 
-                          {/* Date */}
                           <td className="px-4 py-4">
                             <p className="whitespace-nowrap text-sm text-slate-700">
                               {formatDate(report.createdAt)}
                             </p>
-
                             <p className="mt-1 text-xs text-slate-400">
                               Updated: {formatDate(report.updatedAt)}
                             </p>
                           </td>
 
-                          {/* Actions: same eye, check, and menu buttons */}
                           <td className="px-4 py-4">
                             <div
                               className="relative flex items-center justify-end gap-2"
@@ -1319,23 +1252,15 @@ export default function AdminReports() {
                             >
                               <IconButton
                                 title="View report details"
-                                onClick={() =>
-                                  openReportDetails(report)
-                                }
+                                onClick={() => openReportDetails(report)}
                               >
                                 <Eye size={17} />
                               </IconButton>
 
                               <IconButton
-                                title={
-                                  pending
-                                    ? "Resolve report"
-                                    : "Report already reviewed"
-                                }
+                                title="Resolve report"
                                 disabled={!pending || actionLoading}
-                                onClick={() =>
-                                  requestAction(report, "resolve")
-                                }
+                                onClick={() => requestAction(report, "resolve")}
                               >
                                 <CheckCircle size={17} />
                               </IconButton>
@@ -1345,16 +1270,14 @@ export default function AdminReports() {
                                   title="More actions"
                                   onClick={() =>
                                     setMenuReportId((current) =>
-                                      current === getId(report)
-                                        ? null
-                                        : getId(report)
+                                      current === reportId ? null : reportId
                                     )
                                   }
                                 >
                                   <MoreVertical size={18} />
                                 </IconButton>
 
-                                {menuReportId === getId(report) && (
+                                {menuReportId === reportId && (
                                   <div
                                     className="absolute right-0 top-11 z-20 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl"
                                     onClick={(event) =>
@@ -1377,12 +1300,9 @@ export default function AdminReports() {
                                         <button
                                           type="button"
                                           onClick={() =>
-                                            requestAction(
-                                              report,
-                                              "resolve"
-                                            )
+                                            requestAction(report, "resolve")
                                           }
-                                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+                                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-emerald-700 hover:bg-emerald-50"
                                         >
                                           <CheckCircle size={16} />
                                           Resolve report
@@ -1391,10 +1311,7 @@ export default function AdminReports() {
                                         <button
                                           type="button"
                                           onClick={() =>
-                                            requestAction(
-                                              report,
-                                              "reject"
-                                            )
+                                            requestAction(report, "reject")
                                           }
                                           className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50"
                                         >
@@ -1417,7 +1334,7 @@ export default function AdminReports() {
 
               {/* Mobile cards */}
               <div className="space-y-3 p-3 md:hidden">
-                {visibleReports.map((report) => {
+                {reports.map((report) => {
                   const status = getReportStatus(report);
                   const targetType = getTargetType(report);
                   const pending = status === "pending";
@@ -1436,14 +1353,11 @@ export default function AdminReports() {
                           <h3 className="break-words text-sm font-bold text-slate-900">
                             {formatLabel(report.reason)}
                           </h3>
-
                           <p className="mt-1 break-all text-xs text-slate-500">
-                            ID: {getId(report) || "Not specified"}
+                            ID: {getId(report)}
                           </p>
-
                           <div className="mt-2 flex flex-wrap gap-2">
                             <StatusBadge status={status} />
-
                             <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
                               {formatLabel(targetType)}
                             </span>
@@ -1460,18 +1374,16 @@ export default function AdminReports() {
                         </button>
                       </div>
 
-                      <div className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-100 pt-3">
-                        <div className="flex items-start gap-2 text-sm text-slate-600">
+                      <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
+                        <div className="flex items-start gap-2 text-sm">
                           <UserRound
                             size={15}
                             className="mt-0.5 shrink-0 text-slate-400"
                           />
-
                           <div className="min-w-0">
                             <p className="break-words font-medium text-slate-800">
                               {getUserName(report.reporter)}
                             </p>
-
                             <p className="break-words text-xs text-slate-500">
                               {getUserEmail(report.reporter)}
                             </p>
@@ -1490,7 +1402,6 @@ export default function AdminReports() {
                               className="mt-0.5 shrink-0 text-slate-400"
                             />
                           )}
-
                           <span className="break-words">
                             {getTargetName(report)}
                           </span>
@@ -1501,10 +1412,8 @@ export default function AdminReports() {
                             size={15}
                             className="mt-0.5 shrink-0 text-slate-400"
                           />
-
                           <span className="break-words">
-                            {report.description?.trim() ||
-                              "No description provided."}
+                            {report.description?.trim() || "No description"}
                           </span>
                         </div>
 
@@ -1513,8 +1422,7 @@ export default function AdminReports() {
                             size={15}
                             className="shrink-0 text-slate-400"
                           />
-
-                          <span>Submitted {formatDate(report.createdAt)}</span>
+                          Submitted {formatDate(report.createdAt)}
                         </div>
                       </div>
 
@@ -1523,9 +1431,7 @@ export default function AdminReports() {
                           <>
                             <button
                               type="button"
-                              onClick={() =>
-                                requestAction(report, "resolve")
-                              }
+                              onClick={() => requestAction(report, "resolve")}
                               className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-200 px-3 py-2.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
                             >
                               <CheckCircle size={15} />
@@ -1534,9 +1440,7 @@ export default function AdminReports() {
 
                             <button
                               type="button"
-                              onClick={() =>
-                                requestAction(report, "reject")
-                              }
+                              onClick={() => requestAction(report, "reject")}
                               className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 px-3 py-2.5 text-xs font-semibold text-red-700 hover:bg-red-50"
                             >
                               <XCircle size={15} />
@@ -1559,25 +1463,22 @@ export default function AdminReports() {
                 })}
               </div>
 
-              {/* Pagination: same dimensions as AdminJobs */}
+              {/* Server-side pagination */}
               <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                 <p className="text-sm text-slate-500">
-                  Showing{" "}
+                  Page{" "}
                   <span className="font-semibold text-slate-800">
-                    {filteredReports.length === 0
-                      ? 0
-                      : (safePage - 1) * PAGE_SIZE + 1}
-                    –
-                    {Math.min(
-                      safePage * PAGE_SIZE,
-                      filteredReports.length
-                    )}
+                    {currentPage}
                   </span>{" "}
                   of{" "}
                   <span className="font-semibold text-slate-800">
-                    {filteredReports.length}
+                    {totalPages}
+                  </span>
+                  {" · "}
+                  <span className="font-semibold text-slate-800">
+                    {totalReports}
                   </span>{" "}
-                  reports
+                  total reports
                 </p>
 
                 <div className="flex items-center gap-2">
@@ -1586,16 +1487,12 @@ export default function AdminReports() {
                     onClick={() =>
                       setPage((current) => Math.max(1, current - 1))
                     }
-                    disabled={safePage <= 1}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={currentPage <= 1 || initialLoading}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40"
                   >
                     <ChevronLeft size={16} />
                     Previous
                   </button>
-
-                  <span className="px-2 text-sm font-medium text-slate-600">
-                    {safePage} / {totalPages}
-                  </span>
 
                   <button
                     type="button"
@@ -1604,8 +1501,8 @@ export default function AdminReports() {
                         Math.min(totalPages, current + 1)
                       )
                     }
-                    disabled={safePage >= totalPages}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={currentPage >= totalPages || initialLoading}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40"
                   >
                     Next
                     <ChevronRight size={16} />
@@ -1617,14 +1514,12 @@ export default function AdminReports() {
         </section>
 
         <p className="px-1 text-xs leading-5 text-slate-400">
-          Statistics and pagination cover the reports currently returned
-          by your API. If your backend paginates reports, use server-side
-          pagination and filtering to include reports outside the loaded
-          response.
+          Summary cards count the reports loaded on the current page.
+          The total count and page navigation come from the backend.
         </p>
       </div>
 
-      {/* Report details modal */}
+      {/* Full report details */}
       {selected && (
         <ReportDetailsModal
           report={selected}
@@ -1635,11 +1530,13 @@ export default function AdminReports() {
         />
       )}
 
-      {/* Confirmation modal */}
+      {/* Resolve / reject confirmation */}
       {confirmAction && (
         <ConfirmModal
           action={confirmAction.type}
           report={confirmAction.report}
+          adminNote={adminNote}
+          setAdminNote={setAdminNote}
           loading={actionLoading}
           onCancel={() => {
             if (!actionLoading) setConfirmAction(null);
@@ -1648,7 +1545,6 @@ export default function AdminReports() {
         />
       )}
 
-      {/* Details loading indicator */}
       {detailsLoading && selected && (
         <div className="fixed bottom-5 right-5 z-[70] flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-lg">
           <LoaderCircle
