@@ -1,554 +1,402 @@
 import React, { useContext, useState } from "react";
 import {
-    Building2,
-    CalendarDays,
-    CircleHelp,
-    FileText,
-    FileUser,
-    LayoutGrid,
-    Menu,
-    MessagesSquare,
-    Search,
-    Settings,
-    User,
+  BriefcaseBusiness,
+  Building2,
+  CalendarDays,
+  ChevronLeft,
+  CircleHelp,
+  FileText,
+  FileUser,
+  LayoutGrid,
+  Menu,
+  MessagesSquare,
+  Search,
+  Settings,
+  User,
+  X,
 } from "lucide-react";
 
 import { TitleContext } from "../../context/TitleContext";
 import { useAuth, useHome } from "../../hooks/Hook";
 
 function Sidebar() {
-    const [isSidebarOpen, setisSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-    const { setTitle } = useContext(TitleContext);
+  const { setTitle } = useContext(TitleContext);
 
-    const { setActivePage, activePage, adminActivePage, setAdminActivePage } = useHome();
+  const {
+    setActivePage,
+    activePage,
+    adminActivePage,
+    setAdminActivePage,
+    recruiterActivePage,
+    setRecruiterActivePage
+  } = useHome();
 
-    const { admin, recruiter, user } = useAuth();
+  const { admin, recruiter, user } = useAuth();
 
-    const currentAccount = admin || recruiter || user;
+  const currentAccount = admin || recruiter || user;
+  const isAdmin = Boolean(admin);
+  const isRecruiter = Boolean(recruiter);
 
-    const isAdmin = !!admin;
+  const accountName =
+    currentAccount?.name ||
+    currentAccount?.fullName ||
+    "My Account";
+
+  const accountRole = isAdmin
+  ? "Administrator"
+  : isRecruiter
+    ? "Recruiter"
+    : "Candidate";
+
+  const adminItems = [
+    {
+      label: "Dashboard",
+      page: "admin/dashboard",
+      title: "Dashboard",
+      icon: LayoutGrid,
+    },
+    {
+      label: "Users",
+      page: "users",
+      title: "Users",
+      icon: User,
+    },
+    {
+      label: "Companies",
+      page: "companies",
+      title: "Companies",
+      icon: Building2,
+    },
+    {
+      label: "Jobs",
+      page: "admin/jobs",
+      title: "Jobs",
+      icon: FileText,
+    },
+    {
+      label: "Reports",
+      page: "reports",
+      title: "Reports",
+      icon: CircleHelp,
+    },
+    {
+      label: "Settings",
+      page: "admin/settings",
+      title: "Settings",
+      icon: Settings,
+      section: "ACCOUNT",
+    },
+  ];
+
+  const recruiterItems = [
+    {
+      label: "Dashboard",
+      page: "recruiter/dashboard",
+      title: "Dashboard",
+      icon: LayoutGrid
+    },
+    {
+      label: "Jobs Dashboard",
+      page: "recruiter/jobs",
+      title: "JobsDashboard",
+      icon: BriefcaseBusiness
+    },
+    {
+      label: "Applications Dashboard",
+      page: "recruiter/application",
+      title: "ApplicationsDashboard",
+      icon: FileText
+    },
+    {
+      label: "Interviews Dashboard",
+      page: "recruiter/interviews",
+      title: "InterviewsDashboard",
+      icon: CalendarDays
+    },
+    {
+      label: "Company Dashboard",
+      page: "recruiter/company",
+      title: "Company Dashboard",
+      icon: Building2
+    },
+    {
+      label: "Message Dashboard",
+      page: "recruiter/message",
+      title: "Message",
+      icon: MessagesSquare,
+    },
+    {
+      label: "Settings",
+      page: "recruiter/settings",
+      title: "Settings",
+      icon: Settings,
+      section: "ACCOUNT"
+    },
+  ]
+
+  const workspaceItems = [
+    {
+      label: "Overview",
+      page: "overview",
+      title: "Overview",
+      icon: LayoutGrid,
+    },
+    {
+      label: "Find jobs",
+      page: "jobs",
+      title: "Find jobs",
+      icon: Search,
+    },
+    {
+      label: "Applications",
+      page: "applications",
+      title: "Application",
+      icon: FileText,
+    },
+    {
+      label: "Interviews",
+      page: "interviews",
+      title: "Interviews",
+      icon: CalendarDays,
+    },
+    {
+      label: "Messages",
+      page: "messages",
+      title: "Messages",
+      icon: MessagesSquare,
+    },
+    {
+      label: "My Profile",
+      page: "profile",
+      title: "My Profile",
+      icon: User,
+      section: "ACCOUNT",
+    },
+    {
+      label: "Resume",
+      page: "resume",
+      title: "Resume",
+      icon: FileUser,
+    },
+    {
+      label: "Settings",
+      page: "settings",
+      title: "Settings",
+      icon: Settings,
+    },
+  ];
+
+  const items = isAdmin
+  ? adminItems
+  : isRecruiter
+    ? recruiterItems
+    : workspaceItems;
+
+  const handleNavigation = (item) => {
+    if (isAdmin) {
+      setAdminActivePage(item.page);
+    } else if (isRecruiter){
+      setRecruiterActivePage(item.page);
+    } else {
+      setActivePage(item.page);
+    }
+
+    setTitle(item.title);
+  };
+
+  const isActive = (page) =>
+    (isAdmin ? adminActivePage : isRecruiter ? recruiterActivePage : activePage) === page;
+
+  const sidebarWidth = isSidebarOpen ? "w-64" : "w-[76px]";
+
+  const itemBase =
+    "group relative flex h-11 w-full shrink-0 items-center rounded-xl text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-1";
+
+  const getItemClass = (active) =>
+    `${itemBase} ${
+      isSidebarOpen ? "gap-3 px-3" : "justify-center px-0"
+    } ${
+      active
+        ? "bg-[#EEF0FF] text-[#5950E6]"
+        : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+    }`;
+
+  const renderItem = (item) => {
+    const Icon = item.icon;
+    const active = isActive(item.page);
 
     return (
-        <div
-            className={`w-full ${
-                isSidebarOpen ? "md:w-64" : "md:w-25"
-            } h-screen overflow-y-auto overscroll-contain shrink-0 gap-4 p-4 bg-white flex flex-col`}
+      <React.Fragment key={item.page}>
+        {item.section && isSidebarOpen && (
+          <div className="px-3 pb-2 pt-5 text-[10px] font-bold tracking-[0.16em] text-slate-400">
+            {item.section}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => handleNavigation(item)}
+          aria-current={active ? "page" : undefined}
+          aria-label={!isSidebarOpen ? item.label : undefined}
+          title={!isSidebarOpen ? item.label : undefined}
+          className={getItemClass(active)}
         >
-            {/* ================= LOGO ================= */}
+          {active && (
+            <span className="absolute bottom-2 left-0 top-2 w-[3px] rounded-r-full bg-[#5950E6]" />
+          )}
 
-            <div className="flex items-center gap-2 sm:gap-3">
-                <div
-                    className={`w-8 h-8 items-center shadow shadow-violet-800 justify-center ${
-                        isSidebarOpen ? "" : "ml-5"
-                    } flex rounded-xl object-contain bg-violet-700`}
-                >
-                    <span className="font-extrabold text-[17px] text-white">
-                        P
-                    </span>
-                </div>
+          <Icon
+            size={19}
+            strokeWidth={active ? 2.2 : 1.8}
+            className={`shrink-0 transition-colors ${
+              active
+                ? "text-[#5950E6]"
+                : "text-slate-400 group-hover:text-slate-700"
+            }`}
+          />
 
-                {isSidebarOpen && (
-                    <p className="text-lg sm:text-xl font-bold text-slate-950">
-                        Peer.Hiring
-                    </p>
-                )}
-            </div>
-
-            {/* ================= ACCOUNT ================= */}
-
-            <button
-                type="button"
-                className={`outline-none cursor-pointer mt-3 p-3 border border-violet-200 rounded-xl w-full flex items-center gap-4 ${
-                    isSidebarOpen ? "text-left" : "justify-center"
-                } transition-all duration-200`}
-            >
-                <Building2 className="w-5 h-5 shrink-0" />
-
-                {isSidebarOpen && (
-                    <div>
-                        <p className="font-semibold text-xs">
-                            {currentAccount?.name}
-                        </p>
-
-                        <p className="text-[10px] text-slate-500 mt-1">
-                            {currentAccount?.role ||
-                                currentAccount?.type}
-                        </p>
-                    </div>
-                )}
-            </button>
-
-            {/* ================= SIDEBAR MENU ================= */}
-
-            <div className="flex flex-wrap flex-col gap-1">
-
-                {/* =====================================================
-                    ADMIN SIDEBAR
-                ====================================================== */}
-
-                {isAdmin ? (
-                    <>
-                        {isSidebarOpen && (
-                            <span className="text-[10px] p-3 pl-5 text-slate-500 font-semibold">
-                                ADMIN
-                            </span>
-                        )}
-
-                        {/* Dashboard */}
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setAdminActivePage("admin/dashboard");
-                                setTitle("Dashboard");
-                            }}
-                            className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                adminActivePage === "admin/dashboard"
-                                    ? "bg-[#EEF0FF] text-[#5950E6]"
-                                    : "text-gray-500 hover:bg-gray-100"
-                            }`}
-                        >
-                            <LayoutGrid
-                                className={`w-5 h-5 ${
-                                    adminActivePage === "admin/dashboard"
-                                        ? "text-[#5950E6]"
-                                        : "text-gray-500"
-                                }`}
-                            />
-
-                            {isSidebarOpen && (
-                                <span>Dashboard</span>
-                            )}
-                        </button>
-
-                        {/* Users */}
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setAdminActivePage("users");
-                                setTitle("Users");
-                            }}
-                            className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                adminActivePage === "users"
-                                    ? "bg-[#EEF0FF] text-[#5950E6]"
-                                    : "text-gray-500 hover:bg-gray-100"
-                            }`}
-                        >
-                            <User
-                                className={`w-5 h-5 ${
-                                    adminActivePage === "users"
-                                        ? "text-[#5950E6]"
-                                        : "text-gray-500"
-                                }`}
-                            />
-
-                            {isSidebarOpen && (
-                                <span>Users</span>
-                            )}
-                        </button>
-
-                        {/* Companies */}
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setAdminActivePage("companies");
-                                setTitle("Companies");
-                            }}
-                            className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                adminActivePage === "companies"
-                                    ? "bg-[#EEF0FF] text-[#5950E6]"
-                                    : "text-gray-500 hover:bg-gray-100"
-                            }`}
-                        >
-                            <Building2
-                                className={`w-5 h-5 ${
-                                    adminActivePage === "companies"
-                                        ? "text-[#5950E6]"
-                                        : "text-gray-500"
-                                }`}
-                            />
-
-                            {isSidebarOpen && (
-                                <span>Companies</span>
-                            )}
-                        </button>
-
-                        {/* Jobs */}
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setAdminActivePage("admin/jobs");
-                                setTitle("Jobs");
-                            }}
-                            className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                adminActivePage === "admin/jobs"
-                                    ? "bg-[#EEF0FF] text-[#5950E6]"
-                                    : "text-gray-500 hover:bg-gray-100"
-                            }`}
-                        >
-                            <FileText
-                                className={`w-5 h-5 ${
-                                    adminActivePage === "admin/jobs"
-                                        ? "text-[#5950E6]"
-                                        : "text-gray-500"
-                                }`}
-                            />
-
-                            {isSidebarOpen && (
-                                <span>Jobs</span>
-                            )}
-                        </button>
-
-                        {/* Reports */}
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setAdminActivePage("reports");
-                                setTitle("Reports");
-                            }}
-                            className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                adminActivePage === "reports"
-                                    ? "bg-[#EEF0FF] text-[#5950E6]"
-                                    : "text-gray-500 hover:bg-gray-100"
-                            }`}
-                        >
-                            <CircleHelp
-                                className={`w-5 h-5 ${
-                                    adminActivePage === "reports"
-                                        ? "text-[#5950E6]"
-                                        : "text-gray-500"
-                                }`}
-                            />
-
-                            {isSidebarOpen && (
-                                <span>Reports</span>
-                            )}
-                        </button>
-
-                        {/* Account */}
-
-                        {isSidebarOpen && (
-                            <span className="text-[10px] p-3 pl-5 text-slate-500 font-semibold">
-                                ACCOUNT
-                            </span>
-                        )}
-
-                        {/* Settings */}
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setAdminActivePage("admin/settings");
-                                setTitle("Settings");
-                            }}
-                            className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                adminActivePage === "admin/settings"
-                                    ? "bg-[#EEF0FF] text-[#5950E6]"
-                                    : "text-gray-500 hover:bg-gray-100"
-                            }`}
-                        >
-                            <Settings
-                                className={`w-5 h-5 ${
-                                    adminActivePage === "admin/settings"
-                                        ? "text-[#5950E6]"
-                                        : "text-gray-500"
-                                }`}
-                            />
-
-                            {isSidebarOpen && (
-                                <span>Settings</span>
-                            )}
-                        </button>
-                    </>
-                ) : (
-
-                    /* =====================================================
-                       USER / RECRUITER SIDEBAR
-                    ====================================================== */
-
-                    <>
-                        {isSidebarOpen && (
-                            <span className="text-[10px] p-3 pl-5 text-slate-500 font-semibold">
-                                WORKSPACE
-                            </span>
-                        )}
-
-                        {/* Overview */}
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActivePage("overview");
-                                setTitle("Overview");
-                            }}
-                            className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                activePage === "overview"
-                                    ? "bg-[#EEF0FF] text-[#5950E6]"
-                                    : "text-gray-500 hover:bg-gray-100"
-                            }`}
-                        >
-                            <LayoutGrid
-                                className={`w-5 h-5 ${
-                                    activePage === "overview"
-                                        ? "text-[#5950E6]"
-                                        : "text-gray-500"
-                                }`}
-                            />
-
-                            {isSidebarOpen && (
-                                <span>Overview</span>
-                            )}
-                        </button>
-
-                        {/* Find Jobs */}
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActivePage("jobs");
-                                setTitle("Find jobs");
-                            }}
-                            className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                activePage === "jobs"
-                                    ? "bg-[#EEF0FF] text-[#5950E6]"
-                                    : "text-gray-500 hover:bg-gray-100"
-                            }`}
-                        >
-                            <Search
-                                className={`w-5 h-5 ${
-                                    activePage === "jobs"
-                                        ? "text-[#5950E6]"
-                                        : "text-gray-500"
-                                }`}
-                            />
-
-                            {isSidebarOpen && (
-                                <span>Find jobs</span>
-                            )}
-                        </button>
-
-                        {/* Applications */}
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActivePage("applications");
-                                setTitle("Application");
-                            }}
-                            className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                activePage === "applications"
-                                    ? "bg-[#EEF0FF] text-[#5950E6]"
-                                    : "text-gray-500 hover:bg-gray-100"
-                            }`}
-                        >
-                            <FileText
-                                className={`w-5 h-5 ${
-                                    activePage === "applications"
-                                        ? "text-[#5950E6]"
-                                        : "text-gray-500"
-                                }`}
-                            />
-
-                            {isSidebarOpen && (
-                                <span>Applications</span>
-                            )}
-                        </button>
-
-                        {/* Interviews */}
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActivePage("interviews");
-                                setTitle("Interviews");
-                            }}
-                            className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                activePage === "interviews"
-                                    ? "bg-[#EEF0FF] text-[#5950E6]"
-                                    : "text-gray-500 hover:bg-gray-100"
-                            }`}
-                        >
-                            <CalendarDays
-                                className={`w-5 h-5 ${
-                                    activePage === "interviews"
-                                        ? "text-[#5950E6]"
-                                        : "text-gray-500"
-                                }`}
-                            />
-
-                            {isSidebarOpen && (
-                                <span>Interviews</span>
-                            )}
-                        </button>
-
-                        {/* Messages */}
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActivePage("messages");
-                                setTitle("Messages");
-                            }}
-                            className={`w-full flex items-center gap-2 p-2 pl-5 rounded-xl text-sm font-medium ${
-                                activePage === "messages"
-                                    ? "bg-[#EEF0FF] text-[#5950E6]"
-                                    : "text-gray-500 hover:bg-gray-100"
-                            }`}
-                        >
-                            <MessagesSquare
-                                className={`w-5 h-5 ${
-                                    activePage === "messages"
-                                        ? "text-[#5950E6]"
-                                        : "text-gray-500"
-                                }`}
-                            />
-
-                            {isSidebarOpen && (
-                                <span>Messages</span>
-                            )}
-                        </button>
-
-                        {/* Account */}
-
-                        {isSidebarOpen && (
-                            <span className="text-[10px] p-3 pl-5 text-slate-500 font-semibold">
-                                ACCOUNT
-                            </span>
-                        )}
-
-                        {/* Profile */}
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActivePage("profile");
-                                setTitle("My Profile");
-                            }}
-                            className={`w-full flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm font-medium ${
-                                activePage === "profile"
-                                    ? "bg-[#EEF0FF] text-[#5950E6]"
-                                    : "text-gray-500"
-                            }`}
-                        >
-                            <User
-                                className={`w-5 h-5 ${
-                                    activePage === "profile"
-                                        ? "text-[#5950E6]"
-                                        : "text-gray-500"
-                                }`}
-                            />
-
-                            {isSidebarOpen && (
-                                <span>My Profile</span>
-                            )}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActivePage("resume");
-                                setTitle("Resume");
-                            }}
-                            className={`w-full flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm font-medium ${
-                                activePage === "resume"
-                                    ? "bg-[#EEF0FF] text-[#5950E6]"
-                                    : "text-gray-500"
-                            }`}
-                        >
-                            <FileUser
-                                className={`w-5 h-5 ${
-                                    activePage === "resume"
-                                        ? "text-[#5950E6]"
-                                        : "text-gray-500"
-                                }`}
-                            />
-
-                            {isSidebarOpen && (
-                                <span>Resume</span>
-                            )}
-                        </button>
-
-                        {/* Settings */}
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setActivePage("settings");
-                                setTitle("Settings");
-                            }}
-                            className={`w-full flex gap-2 p-2 pl-5 rounded-xl hover:bg-gray-100 text-sm font-medium ${
-                                activePage === "settings"
-                                    ? "bg-[#EEF0FF] text-[#5950E6]"
-                                    : "text-gray-500"
-                            }`}
-                        >
-                            <Settings
-                                className={`w-5 h-5 ${
-                                    activePage === "settings"
-                                        ? "text-[#5950E6]"
-                                        : "text-gray-500"
-                                }`}
-                            />
-
-                            {isSidebarOpen && (
-                                <span>Settings</span>
-                            )}
-                        </button>
-                    </>
-                )}
-            </div>
-
-            {/* ================= HELP ================= */}
-
-            <p
-                className={`outline-none cursor-pointer mt-3 p-3 border-violet-300 bg-[#EEF0FF] border rounded-xl w-full flex items-center gap-4 ${
-                    isSidebarOpen ? "text-left" : "justify-center"
-                } transition-all duration-200`}
-            >
-                <CircleHelp className="w-5 h-5 text-indigo-500" />
-
-                {isSidebarOpen && (
-                    <div>
-                        <p className="font-semibold text-sm">
-                            Need a help?
-                        </p>
-
-                        <p className="text-[10px] text-slate-500 mt-1">
-                            Visit our help center
-                        </p>
-                    </div>
-                )}
-            </p>
-
-            {/* ================= COLLAPSE ================= */}
-
-            <div
-                className={`${
-                    isSidebarOpen
-                        ? ""
-                        : "flex text-center justify-center"
-                }`}
-            >
-                <button
-                    type="button"
-                    onClick={() =>
-                        setisSidebarOpen(!isSidebarOpen)
-                    }
-                    className="flex gap-2 p-2.5 px-10 font-medium justify-start hover:bg-gray-100 rounded-xl text-gray-500 text-sm"
-                >
-                    <Menu className="w-5 h-5 text-slate-400" />
-
-                    {isSidebarOpen && (
-                        <span>Collapse menu</span>
-                    )}
-                </button>
-            </div>
-        </div>
+          {isSidebarOpen && (
+            <span className="min-w-0 flex-1 truncate text-left">
+              {item.label}
+            </span>
+          )}
+        </button>
+      </React.Fragment>
     );
+  };
+
+  return (
+    <aside
+      className={`flex h-screen ${sidebarWidth} shrink-0 flex-col overflow-hidden border-r border-slate-200/80 bg-white transition-[width] duration-200 ease-in-out`}
+    >
+      {/* Logo */}
+      <div
+        className={`flex h-[76px] shrink-0 items-center border-b border-slate-100 ${
+          isSidebarOpen ? "gap-3 px-5" : "justify-center px-0"
+        }`}
+      >
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-700 text-white shadow-sm shadow-violet-700/20">
+          <span className="text-xl font-extrabold">P</span>
+        </div>
+
+        {isSidebarOpen && (
+          <span className="whitespace-nowrap text-lg font-bold tracking-tight text-slate-950">
+            Peer<span className="text-violet-600">.</span>Hiring
+          </span>
+        )}
+      </div>
+
+      {/* Account */}
+      <div className={`shrink-0 px-3 pt-5 ${isSidebarOpen ? "" : "px-2"}`}>
+        <button
+          type="button"
+          title={!isSidebarOpen ? `${accountName} · ${accountRole}` : undefined}
+          aria-label={`Account: ${accountName}, ${accountRole}`}
+          className={`flex min-h-[58px] w-full items-center rounded-xl border border-slate-200/80 bg-slate-50/70 transition-colors hover:border-violet-200 hover:bg-violet-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+            isSidebarOpen ? "gap-3 px-3" : "justify-center px-0"
+          }`}
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-violet-100 bg-white text-violet-700">
+            {isAdmin ? (
+              <Settings size={18} />
+            ) : (
+              <Building2 size={18} />
+            )}
+          </div>
+
+          {isSidebarOpen && (
+            <div className="min-w-0 flex-1 text-left">
+              <p className="truncate text-xs font-semibold text-slate-800">
+                {accountName}
+              </p>
+              <p className="mt-1 truncate text-[11px] capitalize text-slate-500">
+                {accountRole}
+              </p>
+            </div>
+          )}
+        </button>
+      </div>
+
+      {/* Navigation */}
+      <nav
+        aria-label="Main navigation"
+        className={`mt-5 min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-4 ${
+          isSidebarOpen ? "" : "px-2"
+        }`}
+      >
+        {isSidebarOpen && (
+          <p className="mb-3 px-3 text-[10px] font-bold tracking-[0.16em] text-slate-400">
+            {isAdmin
+  ? "ADMINISTRATION"
+  : isRecruiter
+    ? "RECRUITER"
+    : "WORKSPACE"}
+          </p>
+        )}
+
+        <div className="flex flex-col gap-1">
+          {items.map(renderItem)}
+        </div>
+      </nav>
+
+      {/* Bottom area */}
+      <div
+        className={`shrink-0 border-t border-slate-100 p-3 ${
+          isSidebarOpen ? "" : "px-2"
+        }`}
+      >
+        {/* Help */}
+        <button
+          type="button"
+          title={!isSidebarOpen ? "Help center" : undefined}
+          onClick={() => {
+            // Connect your help center route or modal here.
+            setTitle("Help Center");
+          }}
+          className={`mb-2 flex min-h-[54px] w-full items-center rounded-xl border border-violet-100 bg-[#EEF0FF]/70 text-left transition-colors hover:bg-[#EEF0FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+            isSidebarOpen ? "gap-3 px-3" : "justify-center px-0"
+          }`}
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#5950E6]">
+            <CircleHelp size={19} />
+          </span>
+
+          {isSidebarOpen && (
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs font-semibold text-slate-800">
+                Need help?
+              </span>
+              <span className="mt-1 block truncate text-[10px] text-slate-500">
+                Visit our help center
+              </span>
+            </span>
+          )}
+        </button>
+
+        {/* Collapse */}
+        <button
+          type="button"
+          onClick={() => setIsSidebarOpen((previous) => !previous)}
+          aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          className={`flex h-11 w-full items-center rounded-xl text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+            isSidebarOpen ? "gap-3 px-3" : "justify-center px-0"
+          }`}
+        >
+          {isSidebarOpen ? (
+            <>
+              <ChevronLeft size={19} className="shrink-0 text-slate-400" />
+              <span>Collapse menu</span>
+            </>
+          ) : (
+            <Menu size={20} className="text-slate-500" />
+          )}
+        </button>
+      </div>
+    </aside>
+  );
 }
 
 export default Sidebar;

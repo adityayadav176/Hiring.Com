@@ -17,7 +17,7 @@ import {
   ChevronDown,
   ListChecks,
 } from "lucide-react";
-import { useAdmin } from "../../hooks/Hook";
+import { useAdmin, useAuth } from "../../hooks/Hook";
 
 const guidelines = [
   {
@@ -186,6 +186,7 @@ const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 function AdminSettings() {
   const { adminLogout } = useAdmin();
+  const {setAdmin} = useAuth();
   const navigate = useNavigate();
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -202,6 +203,7 @@ function AdminSettings() {
 
     try {
       await adminLogout();
+      setAdmin(null);
       navigate("/login", { replace: true });
     } catch (error) {
       setLogoutError(

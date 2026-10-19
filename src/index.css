@@ -4,26 +4,45 @@
   background:#e5e5ec;
 }
 
-/* Recruiter Sidebar Scrollbar */
-
-.sidebar-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: #e5e7eb transparent;
+/* Hide scrollbars but keep scrolling functional */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer / Edge Legacy */
 }
 
-.sidebar-scroll::-webkit-scrollbar {
-  width: 4px;
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }
 
-.sidebar-scroll::-webkit-scrollbar-track {
-  background: transparent;
+
+.hide-horizontal-scrollbar {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.sidebar-scroll::-webkit-scrollbar-thumb {
-  background: #e5e7eb;
-  border-radius: 9999px;
+.hide-horizontal-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
-.sidebar-scroll::-webkit-scrollbar-thumb:hover {
-  background: #d1d5db;
+.hide-vertical-scrollbar {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-vertical-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Reusable hidden-scrollbar utility */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }

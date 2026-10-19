@@ -6,10 +6,8 @@ import SendPasswordResetOtp from "../pages/auth/SendPasswordResetOtp";
 import Dashboard from "../pages/seeker/Dashboard";
 import ADashboard from "../pages/admin/ADashboard";
 import ProtectedRoutes from "./ProtectedRoutes";
-import RecruiterLayout from "../recruiter/components/RecruiterLayout";
-import RecruiterJobs from "../recruiter/pages/RecruiterJobs";
-import RecruiterJobsLayout from "../recruiter/pages/RecruiterJobsLayout";
 import NotFound from "../pages/NotFound";
+import RecruiterLayout from '../pages/recruiter/RecruiterLayout';
 const AppRoutes = () => {
     return (
         <Routes>
@@ -18,17 +16,12 @@ const AppRoutes = () => {
             <Route path="/login" element={<Login/>}/>
             <Route path="/signup" element={<Signup/>}/>
 
-            <Route path="/recruiter" element={<RecruiterLayout/>}/>
-            <Route path="/recruiter/jobs" element={<RecruiterJobs />}/>
-            <Route path="/recruiter/jobsLayout" element={<RecruiterJobsLayout />}/>
-
-
             <Route element={<ProtectedRoutes allowedType="admin" />}>
             <Route path="/admin" element={<ADashboard/>}/>
             </Route>
 
             <Route element={<ProtectedRoutes allowedType="recruiter"/>}>
-            <Route path="/recruiter" element={<Dashboard/>}/>
+            <Route path="/recruiter" element={<RecruiterLayout/>}/>
             </Route>
 
             <Route element={<ProtectedRoutes allowedType="user"/>}>

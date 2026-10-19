@@ -351,7 +351,6 @@ const ListSection = ({ title, items }) => {
   );
 };
 
-/* ----------------------------- Job details modal ----------------------------- */
 
 const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
   if (!job) return null;
@@ -362,15 +361,104 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
 
   const companyLogo = getCompanyLogo(job);
   const companyName = getCompanyName(job);
-
   const skills = Array.isArray(job.skills) ? job.skills : [];
 
   const applicationCount = Number(job.applicantsCount ?? 0);
   const views = Number(job.views ?? 0);
 
+  const detailSections = [
+    {
+      title: "Job information",
+      items: [
+        { icon: Layers, label: "Category", value: formatLabel(job.category) },
+        {
+          icon: BriefcaseBusiness,
+          label: "Employment type",
+          value: formatLabel(job.employmentType),
+        },
+        {
+          icon: Building2,
+          label: "Work mode",
+          value: formatLabel(job.workSpaceType),
+        },
+        {
+          icon: UserRound,
+          label: "Experience level",
+          value: formatLabel(job.experienceLevel),
+        },
+        {
+          icon: Users,
+          label: "Openings",
+          value: job.openings ?? "Not specified",
+        },
+        {
+          icon: MapPin,
+          label: "Location",
+          value: getLocation(job),
+        },
+      ],
+    },
+    {
+      title: "Activity and timeline",
+      items: [
+        {
+          icon: Users,
+          label: "Applications",
+          value: applicationCount.toLocaleString("en-IN"),
+        },
+        {
+          icon: Eye,
+          label: "Views",
+          value: views.toLocaleString("en-IN"),
+        },
+        {
+          icon: CalendarDays,
+          label: "Date posted",
+          value: formatDate(job.createdAt),
+        },
+        {
+          icon: Clock,
+          label: "Application deadline",
+          value: formatDate(job.applicationDeadline),
+        },
+        {
+          icon: CalendarDays,
+          label: "Last updated",
+          value: formatDate(job.updatedAt),
+        },
+        {
+          icon: ShieldCheck,
+          label: "Moderation",
+          value: deleted
+            ? "Deleted"
+            : blocked
+              ? "Blocked by admin"
+              : "Not blocked",
+        },
+      ],
+    },
+  ];
+
+  const DetailCard = ({ icon: Icon, label, value }) => (
+    <div className="flex min-w-0 items-start gap-3 rounded-xl border border-slate-200/80 bg-white p-3.5 transition hover:border-violet-200">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
+        <Icon size={17} />
+      </div>
+
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-slate-500">{label}</p>
+        <p className="mt-1 break-words text-sm font-semibold text-slate-800">
+          {value === null || value === undefined || value === ""
+            ? "Not specified"
+            : value}
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-sm sm:p-6"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !busy) onClose();
       }}
@@ -379,42 +467,48 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
         role="dialog"
         aria-modal="true"
         aria-labelledby="job-details-title"
-        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
       >
-        <div className="relative overflow-hidden bg-gradient-to-br from-violet-700 via-violet-700 to-indigo-800 px-5 py-6 text-white sm:px-8">
-          <div className="absolute -right-10 -top-20 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
-
-          <div className="relative flex items-start justify-between gap-4">
+        {/* Header */}
+        <div className="border-b border-slate-200 bg-white px-5 py-5 sm:px-7">
+          <div className="flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-start gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/20 bg-white/10">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 text-violet-600">
                 {companyLogo ? (
                   <img
                     src={companyLogo}
-                    alt={companyName}
+                    alt={`${companyName} logo`}
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <Building2 size={26} />
+                  <Building2 size={25} />
                 )}
               </div>
 
               <div className="min-w-0">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold">
-                    Job details
+                  <span className="rounded-md bg-violet-50 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-violet-700">
+                    Job posting
                   </span>
                   <StatusBadge status={status} />
                 </div>
 
                 <h2
                   id="job-details-title"
-                  className="break-words text-xl font-bold sm:text-2xl"
+                  className="break-words text-xl font-bold tracking-tight text-slate-950 sm:text-2xl"
                 >
                   {job.title || "Untitled job"}
                 </h2>
 
-                <p className="mt-1 text-sm text-violet-100">
-                  {companyName}
+                <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
+                  <span className="font-semibold text-slate-700">
+                    {companyName}
+                  </span>
+                  <span className="hidden text-slate-300 sm:inline">•</span>
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin size={14} />
+                    {getLocation(job)}
+                  </span>
                 </p>
               </div>
             </div>
@@ -424,192 +518,230 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
               onClick={onClose}
               disabled={busy}
               aria-label="Close job details"
-              className="shrink-0 rounded-xl p-2 text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+              className="shrink-0 rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
             >
-              <X size={21} />
+              <X size={19} />
             </button>
           </div>
 
-          <div className="relative mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-violet-100">
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin size={15} />
-              {getLocation(job)}
-            </span>
+          {/* Quick metrics */}
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+              <p className="text-xs font-medium text-slate-500">Salary range</p>
+              <p className="mt-1 break-words text-sm font-bold text-slate-900">
+                {formatSalary(job.salary)}
+              </p>
+            </div>
 
-            <span className="inline-flex items-center gap-1.5">
-              <BriefcaseBusiness size={15} />
-              {formatLabel(job.employmentType)}
-            </span>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+              <p className="text-xs font-medium text-slate-500">Applications</p>
+              <p className="mt-1 text-lg font-bold text-slate-900">
+                {applicationCount.toLocaleString("en-IN")}
+              </p>
+            </div>
 
-            <span className="inline-flex items-center gap-1.5">
-              <IndianRupee size={15} />
-              {formatSalary(job.salary)}
-            </span>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+              <p className="text-xs font-medium text-slate-500">Job views</p>
+              <p className="mt-1 text-lg font-bold text-slate-900">
+                {views.toLocaleString("en-IN")}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+              <p className="text-xs font-medium text-slate-500">Recruiter</p>
+              <p className="mt-1 break-words text-sm font-bold text-slate-900">
+                {getRecruiterName(job)}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex-1 space-y-7 overflow-y-auto p-5 sm:p-8">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <DetailItem
-              icon={UserRound}
-              label="Recruiter"
-              value={getRecruiterName(job)}
-            />
+        {/* Scrollable body */}
+        <div className="flex-1 space-y-7 overflow-y-auto bg-[#F8F9FC] p-5 sm:p-7">
+          {detailSections.map((section) => (
+            <section key={section.title}>
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-slate-900">
+                  {section.title}
+                </h3>
+                <div className="mt-2 h-px bg-slate-200" />
+              </div>
 
-            <DetailItem
-              icon={Layers}
-              label="Category"
-              value={formatLabel(job.category)}
-            />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {section.items.map((item) => (
+                  <DetailCard key={item.label} {...item} />
+                ))}
+              </div>
+            </section>
+          ))}
 
-            <DetailItem
-              icon={BriefcaseBusiness}
-              label="Experience level"
-              value={formatLabel(job.experienceLevel)}
-            />
-
-            <DetailItem
-              icon={Building2}
-              label="Work mode"
-              value={formatLabel(job.workSpaceType)}
-            />
-
-            <DetailItem
-              icon={Users}
-              label="Openings"
-              value={job.openings ?? "Not specified"}
-            />
-
-            <DetailItem
-              icon={Users}
-              label="Applications"
-              value={applicationCount.toLocaleString("en-IN")}
-            />
-
-            <DetailItem
-              icon={Eye}
-              label="Views"
-              value={views.toLocaleString("en-IN")}
-            />
-
-            <DetailItem
-              icon={CalendarDays}
-              label="Posted"
-              value={formatDate(job.createdAt)}
-            />
-
-            <DetailItem
-              icon={Clock}
-              label="Application deadline"
-              value={formatDate(job.applicationDeadline)}
-            />
-
-            <DetailItem
-              icon={CircleDollarSign}
-              label="Salary negotiable"
-              value={job.salary?.isNegotiable ? "Yes" : "No"}
-            />
-
-            <DetailItem
-              icon={FileText}
-              label="Currency"
-              value={job.salary?.currency || "INR"}
-            />
-
-            <DetailItem
-              icon={FileText}
-              label="Job ID"
-              value={job._id}
-            />
-          </div>
-
+          {/* Skills */}
           {skills.length > 0 && (
             <section>
               <h3 className="mb-3 text-sm font-bold text-slate-900">
                 Required skills
               </h3>
 
-              <div className="flex flex-wrap gap-2">
-                {skills.map((skill, index) => {
-                  const label = getItemText(skill);
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex flex-wrap gap-2">
+                  {skills.map((skill, index) => {
+                    const label = getItemText(skill);
 
-                  if (!label) return null;
+                    if (!label) return null;
 
-                  return (
-                    <span
-                      key={`${label}-${index}`}
-                      className="rounded-full border border-violet-100 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700"
-                    >
-                      {formatLabel(label)}
-                    </span>
-                  );
-                })}
+                    return (
+                      <span
+                        key={`${label}-${index}`}
+                        className="rounded-lg border border-violet-100 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700"
+                      >
+                        {formatLabel(label)}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
             </section>
           )}
 
+          {/* Description */}
           <section>
             <h3 className="mb-3 text-sm font-bold text-slate-900">
               Job description
             </h3>
 
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-              <p className="whitespace-pre-wrap text-sm leading-7 text-slate-600">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+              <p className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-600">
                 {job.description || "No job description provided."}
               </p>
             </div>
           </section>
 
-          <ListSection title="Responsibilities" items={job.responsibilities} />
-          <ListSection title="Requirements" items={job.requirements} />
+          {/* Responsibilities and requirements */}
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            {[
+              {
+                title: "Responsibilities",
+                items: job.responsibilities,
+              },
+              {
+                title: "Requirements",
+                items: job.requirements,
+              },
+            ].map(({ title, items }) => {
+              const values = Array.isArray(items)
+                ? items.map(getItemText).filter(Boolean)
+                : [];
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <DetailItem
-              icon={CalendarDays}
-              label="Last updated"
-              value={formatDate(job.updatedAt)}
-            />
+              return (
+                <section key={title}>
+                  <h3 className="mb-3 text-sm font-bold text-slate-900">
+                    {title}
+                  </h3>
 
-            <DetailItem
-              icon={ShieldCheck}
-              label="Moderation"
-              value={deleted ? "Deleted" : blocked ? "Blocked" : "Not blocked"}
-            />
+                  <div className="h-full rounded-xl border border-slate-200 bg-white p-4">
+                    {values.length > 0 ? (
+                      <ul className="space-y-3">
+                        {values.map((value, index) => (
+                          <li
+                            key={`${title}-${index}`}
+                            className="flex items-start gap-2.5 text-sm leading-6 text-slate-600"
+                          >
+                            <CheckCircle
+                              size={16}
+                              className="mt-1 shrink-0 text-violet-600"
+                            />
+                            <span className="break-words">{value}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-slate-400">
+                        No {title.toLowerCase()} provided.
+                      </p>
+                    )}
+                  </div>
+                </section>
+              );
+            })}
           </div>
+
+          {/* IDs and moderation information */}
+          <section>
+            <h3 className="mb-3 text-sm font-bold text-slate-900">
+              Administrative information
+            </h3>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <DetailCard
+                icon={FileText}
+                label="Job ID"
+                value={job._id}
+              />
+              <DetailCard
+                icon={FileText}
+                label="Currency"
+                value={job.salary?.currency || "INR"}
+              />
+              <DetailCard
+                icon={CircleDollarSign}
+                label="Salary negotiable"
+                value={job.salary?.isNegotiable ? "Yes" : "No"}
+              />
+              <DetailCard
+                icon={ShieldCheck}
+                label="Moderation status"
+                value={
+                  deleted
+                    ? "Deleted"
+                    : blocked
+                      ? "Blocked by admin"
+                      : "Not blocked"
+                }
+              />
+            </div>
+          </section>
         </div>
 
-        <div className="flex flex-col-reverse gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:justify-between sm:px-8">
-          <button
-            type="button"
-            onClick={() => onModerate(job)}
-            disabled={busy || deleted}
-            className={cn(
-              "inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5",
-              "text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
-              blocked
-                ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                : "border-red-200 text-red-700 hover:bg-red-50"
-            )}
-          >
-            {busy ? (
-              <LoaderCircle size={16} className="animate-spin" />
-            ) : blocked ? (
-              <CheckCircle size={16} />
-            ) : (
-              <Ban size={16} />
-            )}
+        {/* Footer */}
+        <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <ShieldCheck size={16} className="shrink-0 text-slate-400" />
+            Admin moderation controls
+          </div>
 
-            {blocked ? "Unblock job" : "Block job"}
-          </button>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={busy}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              Close details
+            </button>
 
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={busy}
-            className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50"
-          >
-            Close details
-          </button>
+            <button
+              type="button"
+              onClick={() => onModerate(job)}
+              disabled={busy || deleted}
+              className={cn(
+                "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5",
+                "text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
+                blocked
+                  ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                  : "bg-red-600 text-white hover:bg-red-700"
+              )}
+            >
+              {busy ? (
+                <LoaderCircle size={16} className="animate-spin" />
+              ) : blocked ? (
+                <CheckCircle size={16} />
+              ) : (
+                <Ban size={16} />
+              )}
+
+              {blocked ? "Unblock job" : "Block job"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -11,7 +11,7 @@ import { useAuth, useHome, useTitle } from '../../hooks/Hook'
 function Navbar() {
   const { user, admin, recruiter } = useAuth()
   const { title, setTitle } = useTitle()
-  const { setActivePage, setAdminActivePage } = useHome()
+  const { setActivePage, setAdminActivePage, setRecruiterActivePage } = useHome()
   const currentAccount = admin || admin || recruiter
 
   return (
@@ -66,6 +66,9 @@ function Navbar() {
     if (currentAccount?.type === "admin") {
       setAdminActivePage("admin/profile");
       setTitle("Admin Profile");
+    } else if(currentAccount?.type === "recruiter") {
+      setRecruiterActivePage("recruiter/profile");
+      setTitle("Profile");
     } else {
       setActivePage("profile");
       setTitle("My Profile");

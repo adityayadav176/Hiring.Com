@@ -130,40 +130,41 @@ const handleLogin = async (details) => {
 
         
 
-        // ADMIN
-        if (data?.data?.type === "admin") {
-            setAdmin(data.data);
-            navigate("/admin");
-            return {
-                requires2FA: false,
-                success: true,
-            };
-        }
+        
+/* ADMIN */
+if (data?.data?.type === "admin") {
+  setAdmin(data.data);
+  navigate("/admin");
 
-        // RECRUITER
-        if (data?.data?.user?.role === "recruiter") {
-            setRecruiter(data.data.user);
-            navigate("/recruiter");
-            return {
-                requires2FA: false,
-                success: true,
-            };
-        }
+  return {
+    requires2FA: false,
+    success: true,
+  };
+}
 
-        // NORMAL USER
-        setUser(data.data.user);
+/* RECRUITER */
+if (data?.data?.type === "recruiter") {
+  setRecruiter(data.data.recruiter);
+  navigate("/recruiter");
 
-        console.log(
-            "User Login Successfully:",
-            data.data.user
-        );
+  return {
+    requires2FA: false,
+    success: true,
+  };
+}
 
-        navigate("/");
+/* NORMAL USER */
+if (data?.data?.type === "user") {
+  setUser(data.data.user);
+  navigate("/");
 
-        return {
-            requires2FA: false,
-            success: true,
-        };
+  return {
+    requires2FA: false,
+    success: true,
+  };
+}
+
+throw new Error("Unknown account type returned by server");
 
     } catch (error) {
         console.error("Login error:", error);
@@ -249,56 +250,76 @@ const handleGoogleAuth = async ({ credential, role = null }) => {
     }
 };
 
-    const handleSignup = async(details) => {
-        try {
-            const {name, email, password, avatar, coverImage, role, phoneNo} = details;
-
-            if (!role) {
-                alert("Please select your role.");
-                return;
-            }
-
-            if (!avatar) {
-                alert("Please select an avatar.");
-                return;
-            }
-
-            if (!coverImage) {
-                alert("Please select a cover image.");
-                return;
-            }
-
-            const formData = new FormData();
-
-            formData.append("name", name);
-            formData.append("email", email);
-            formData.append("password", password);
-            formData.append("phoneNo", phoneNo);
-            formData.append("avatar", avatar);
-            formData.append("coverImage", coverImage);
-            formData.append("role", role);
-            const response = await fetch("http://localhost:9000/api/v1/auth/register", {
-                method: "POST",
-                body: formData
-            });
     
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Signup Failed")
-            }
+const handleSignup = async (details) => {
+    try {
+        const {
+            name,
+            email,
+            password,
+            avatar,
+            coverImage,
+            role,
+            phoneNo,
+        } = details;
 
-            alert(
-                `Hello ${data?.data?.user?.name}, your account has been created! Welcome to Peer Hiring.`
-            );
-    
-            console.log("Signup Successfully");
-            navigate("/login");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
+        if (!role) {
+            alert("Please select your role.");
+            return;
         }
+
+        if (!(avatar instanceof File)) {
+            alert("Please select a valid avatar image.");
+            console.log("Avatar value:", avatar);
+            return;
+        }
+
+        if (!(coverImage instanceof File)) {
+            alert("Please select a valid cover image.");
+            console.log("Cover image value:", coverImage);
+            return;
+        }
+
+        const formData = new FormData();
+
+        formData.append("name", name);
+        formData.append("email", email);
+        formData.append("password", password);
+        formData.append("phoneNo", phoneNo ?? "");
+        formData.append("avatar", avatar);
+        formData.append("coverImage", coverImage);
+        formData.append("role", role);
+
+        // Debug: verify the files before sending
+        console.log("Avatar:", formData.get("avatar"));
+        console.log("Cover image:", formData.get("coverImage"));
+
+        const response = await fetch(
+            "http://localhost:9000/api/v1/auth/register",
+            {
+                method: "POST",
+                body: formData,
+                // Do not manually set Content-Type for FormData.
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Signup failed");
+        }
+
+        alert(
+            `Hello ${data?.data?.user?.name || name}, your account has been created! Welcome to Peer Hiring.`
+        );
+
+        navigate("/login");
+    } catch (error) {
+        console.error("Signup error:", error);
+        alert(error.message || "Something went wrong.");
     }
+};
+
 
     const handlePasswordResetOtp = async({email}) => {
         try {

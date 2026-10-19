@@ -376,6 +376,7 @@ const DetailItem = ({ icon: Icon, label, value }) => (
   </div>
 );
 
+
 const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
   if (!company) return null;
 
@@ -384,66 +385,32 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
   const logo = getCompanyLogo(company);
   const recruiters = getRecruiters(company);
   const companyId = getCompanyId(company);
+  const companyName = getCompanyName(company);
 
   const informationItems = [
-    {
-      icon: Building2,
-      label: "Company name",
-      value: getCompanyName(company),
-    },
-    {
-      icon: Hash,
-      label: "Company ID",
-      value: companyId,
-    },
-    {
-      icon: BriefcaseBusiness,
-      label: "Industry",
-      value: getCompanyIndustry(company),
-    },
-    {
-      icon: Users,
-      label: "Company size",
-      value: getCompanySize(company),
-    },
-    {
-      icon: CalendarDays,
-      label: "Founded year",
-      value: company.foundedYear,
-    },
-    {
-      icon: MapPin,
-      label: "Headquarters",
-      value: getCompanyLocation(company),
-    },
-    {
-      icon: Mail,
-      label: "Contact email",
-      value: getCompanyEmail(company),
-    },
-    {
-      icon: Phone,
-      label: "Contact phone",
-      value: getCompanyPhone(company),
-    },
-    {
-      icon: CalendarDays,
-      label: "Created on",
-      value: formatDateTime(company.createdAt),
-    },
-    {
-      icon: Clock,
-      label: "Last updated",
-      value: formatDateTime(company.updatedAt),
-    },
+    { icon: Building2, label: "Company name", value: companyName },
+    { icon: Hash, label: "Company ID", value: companyId },
+    { icon: BriefcaseBusiness, label: "Industry", value: getCompanyIndustry(company) },
+    { icon: Users, label: "Company size", value: getCompanySize(company) },
+    { icon: CalendarDays, label: "Founded year", value: company.foundedYear },
+    { icon: MapPin, label: "Headquarters", value: getCompanyLocation(company) },
+    { icon: Mail, label: "Contact email", value: getCompanyEmail(company) },
+    { icon: Phone, label: "Contact phone", value: getCompanyPhone(company) },
+    { icon: CalendarDays, label: "Created on", value: formatDateTime(company.createdAt) },
+    { icon: Clock, label: "Last updated", value: formatDateTime(company.updatedAt) },
   ];
 
-  const actionButtonClass =
+  const actionClass =
     "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50";
+
+  const displayValue = (value) =>
+    value === null || value === undefined || value === ""
+      ? "Not specified"
+      : value;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-sm sm:p-6"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !busy) onClose();
       }}
@@ -452,140 +419,123 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
         role="dialog"
         aria-modal="true"
         aria-labelledby="company-details-title"
-        className="flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-[#F8FAFC] shadow-2xl"
+        className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
       >
-        <div className="relative shrink-0 overflow-hidden border-b border-slate-200 bg-white">
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-600 via-indigo-500 to-violet-300" />
-
-          <div className="flex items-center justify-between gap-4 px-5 pb-4 pt-6 sm:px-8">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-600">
-                Peer.Hiring / Administration
-              </p>
-              <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-                Company profile
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Review company information and manage account access.
-              </p>
+        {/* Modal heading */}
+        <header className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 px-5 py-4 sm:px-7">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700">
+              <Building2 size={20} />
             </div>
 
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={busy}
-              aria-label="Close company details"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-50"
-            >
-              <X size={19} />
-            </button>
+            <div className="min-w-0">
+              <h2
+                id="company-details-title"
+                className="text-lg font-bold tracking-tight text-slate-900"
+              >
+                Company details
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Company profile and account management
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex-1 space-y-5 overflow-y-auto p-4 sm:p-7">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex min-w-0 items-start gap-4">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            aria-label="Close company details"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"
+          >
+            <X size={18} />
+          </button>
+        </header>
+
+        {/* Scrollable body */}
+        <main className="flex-1 space-y-6 overflow-y-auto bg-slate-50/60 p-4 sm:p-7">
+          {/* Company profile */}
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                 {logo ? (
                   <img
                     src={logo}
-                    alt={getCompanyName(company)}
-                    className="h-16 w-16 shrink-0 rounded-2xl border border-slate-200 bg-white object-contain p-1.5 sm:h-20 sm:w-20"
+                    alt={`${companyName} logo`}
+                    className="h-full w-full object-contain p-2"
                   />
                 ) : (
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-xl font-bold text-violet-700 sm:h-20 sm:w-20">
-                    {getCompanyInitials(getCompanyName(company))}
-                  </div>
+                  <span className="text-2xl font-bold text-violet-700">
+                    {getCompanyInitials(companyName)}
+                  </span>
                 )}
+              </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge status={companyStatus} />
-                    <VerificationBadge status={verification} />
-                  </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={companyStatus} />
+                  <VerificationBadge status={verification} />
+                </div>
 
-                  <h3
-                    id="company-details-title"
-                    className="mt-3 break-words text-xl font-bold tracking-tight text-slate-950 sm:text-2xl"
-                  >
-                    {getCompanyName(company)}
-                  </h3>
+                <h3 className="mt-3 break-words text-xl font-bold tracking-tight text-slate-900">
+                  {companyName}
+                </h3>
 
-                  <p className="mt-1 break-all text-sm text-slate-500">
-                    {company.slug ? `/${company.slug}` : companyId}
-                  </p>
+                <p className="mt-1 break-all text-sm text-slate-500">
+                  {company.slug ? `/${company.slug}` : companyId}
+                </p>
 
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500">
-                    <span className="inline-flex items-center gap-1.5">
-                      <BriefcaseBusiness
-                        size={15}
-                        className="text-violet-600"
-                      />
-                      {getCompanyIndustry(company)}
-                    </span>
-
-                    <span className="inline-flex items-center gap-1.5">
-                      <MapPin size={15} className="text-violet-600" />
-                      {getCompanyLocation(company)}
-                    </span>
-                  </div>
+                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-600">
+                  <span className="inline-flex items-center gap-2">
+                    <BriefcaseBusiness size={15} className="text-violet-600" />
+                    {getCompanyIndustry(company)}
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <MapPin size={15} className="text-violet-600" />
+                    {getCompanyLocation(company)}
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <Users size={15} className="text-violet-600" />
+                    {getCompanySize(company)} employees
+                  </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 lg:min-w-[250px]">
-                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                  <p className="text-xs font-medium text-slate-500">
-                    Recruiters
-                  </p>
+              <div className="grid grid-cols-2 gap-3 sm:min-w-40">
+                <div className="rounded-xl border border-slate-200 p-3">
+                  <p className="text-xs text-slate-500">Recruiters</p>
                   <p className="mt-1 text-xl font-bold text-slate-900">
                     {recruiters.length}
                   </p>
                 </div>
-
-                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                  <p className="text-xs font-medium text-slate-500">
-                    Founded
-                  </p>
+                <div className="rounded-xl border border-slate-200 p-3">
+                  <p className="text-xs text-slate-500">Founded</p>
                   <p className="mt-1 text-xl font-bold text-slate-900">
                     {company.foundedYear || "—"}
-                  </p>
-                </div>
-
-                <div className="col-span-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
-                  <p className="text-xs font-medium text-slate-500">
-                    Company created
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-800">
-                    {formatDate(company.createdAt)}
                   </p>
                 </div>
               </div>
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
-                <Building2 size={19} />
-              </div>
-
-              <div>
-                <h3 className="font-bold text-slate-900">
-                  Company information
-                </h3>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  Business details and contact information
-                </p>
-              </div>
+          {/* Business information */}
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="mb-5">
+              <h3 className="text-base font-bold text-slate-900">
+                Business information
+              </h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Company identity, contact details, and record history.
+              </p>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {informationItems.map(({ icon: Icon, label, value }) => (
                 <div
                   key={label}
-                  className="flex min-w-0 gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 transition hover:border-violet-100 hover:bg-violet-50/30"
+                  className="flex min-w-0 gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3.5"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-violet-600 shadow-sm ring-1 ring-slate-100">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-violet-700">
                     <Icon size={17} />
                   </div>
 
@@ -594,11 +544,7 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
                       {label}
                     </p>
                     <p className="mt-1 break-words text-sm font-semibold text-slate-800">
-                      {value === null ||
-                      value === undefined ||
-                      value === ""
-                        ? "Not specified"
-                        : value}
+                      {displayValue(value)}
                     </p>
                   </div>
                 </div>
@@ -606,80 +552,59 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
             </div>
           </section>
 
+          {/* Description */}
           {company.description && (
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
-                  <BriefcaseBusiness size={19} />
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-slate-900">
-                    About the company
-                  </h3>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    Company overview and description
-                  </p>
-                </div>
-              </div>
-
-              <p className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-600">
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+              <h3 className="text-base font-bold text-slate-900">
+                About the company
+              </h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Company overview and description.
+              </p>
+              <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-7 text-slate-600">
                 {company.description}
               </p>
             </section>
           )}
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          {/* Recruiters */}
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
-                  <Users size={19} />
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-slate-900">
-                    Associated recruiters
-                  </h3>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    Recruiters connected to this company
-                  </p>
-                </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Associated recruiters
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  People associated with this company account.
+                </p>
               </div>
-
-              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600">
-                {recruiters.length}{" "}
-                {recruiters.length === 1 ? "recruiter" : "recruiters"}
+              <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600">
+                {recruiters.length} total
               </span>
             </div>
 
             {recruiters.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center">
-                <Users
-                  size={27}
-                  className="mx-auto text-slate-300"
-                />
+                <Users size={26} className="mx-auto text-slate-300" />
                 <p className="mt-3 text-sm font-semibold text-slate-700">
-                  No recruiters found
+                  No associated recruiters
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  There are no recruiters associated with this company.
+                  No recruiter records are available for this company.
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                 {recruiters.map((recruiter, index) => {
-                  const recruiterId =
-                    recruiter?._id || recruiter?.id || index;
-
-                  const recruiterName =
-                    recruiter?.name || "Unnamed recruiter";
+                  const recruiterName = recruiter?.name || "Unnamed recruiter";
+                  const recruiterId = recruiter?._id || recruiter?.id || index;
 
                   return (
                     <div
                       key={recruiterId}
-                      className="flex min-w-0 items-start gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-violet-200 hover:bg-violet-50/20"
+                      className="flex min-w-0 items-start gap-3 rounded-xl border border-slate-200 p-4"
                     >
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-sm font-bold text-violet-700">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 font-bold text-violet-700">
                         {getCompanyInitials(recruiterName)}
                       </div>
 
@@ -687,11 +612,9 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
                         <p className="break-words text-sm font-bold text-slate-900">
                           {recruiterName}
                         </p>
-
                         <p className="mt-1 break-all text-sm text-slate-500">
                           {recruiter?.email || "No email available"}
                         </p>
-
                         {recruiter?.phoneNo && (
                           <p className="mt-1 text-xs text-slate-500">
                             {recruiter.phoneNo}
@@ -699,7 +622,7 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
                         )}
                       </div>
 
-                      <span className="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                      <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                         Recruiter
                       </span>
                     </div>
@@ -709,72 +632,61 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
             )}
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
-                <ShieldCheck size={19} />
+          {/* Verification and account status */}
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                <ShieldCheck size={20} />
               </div>
 
-              <div>
-                <h3 className="font-bold text-slate-900">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base font-bold text-slate-900">
                   Account and verification
                 </h3>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  Current company account status
+                <p className="mt-1 text-sm text-slate-500">
+                  Current status of the company account.
                 </p>
-              </div>
-            </div>
 
-            <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={companyStatus} />
-                <VerificationBadge status={verification} />
-              </div>
-
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                {companyStatus === "deleted"
-                  ? "This company has been soft-deleted."
-                  : companyStatus === "blocked"
-                    ? "This company is currently blocked from normal access."
-                    : verification === "verified"
-                      ? "This company's verification has been completed."
-                      : verification === "rejected"
-                        ? "This company's verification request has been rejected."
-                        : "This company has not completed verification yet."}
-              </p>
-
-              {company.deletedAt && (
-                <div className="mt-4 border-t border-slate-200 pt-3">
-                  <p className="text-xs font-medium text-slate-500">
-                    Deleted at
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-800">
-                    {formatDateTime(company.deletedAt)}
-                  </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <StatusBadge status={companyStatus} />
+                  <VerificationBadge status={verification} />
                 </div>
-              )}
 
-              {company.updatedAt && (
-                <div className="mt-4 border-t border-slate-200 pt-3">
-                  <p className="text-xs font-medium text-slate-500">
-                    Last modified
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-800">
-                    {formatDateTime(company.updatedAt)}
-                  </p>
-                </div>
-              )}
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  {companyStatus === "deleted"
+                    ? "This company has been soft-deleted."
+                    : companyStatus === "blocked"
+                      ? "This company is currently blocked."
+                      : verification === "verified"
+                        ? "Company verification is complete."
+                        : verification === "rejected"
+                          ? "Company verification has been rejected."
+                          : "This company is not currently verified."}
+                </p>
+
+                {company.deletedAt && (
+                  <div className="mt-4 border-t border-slate-100 pt-3">
+                    <p className="text-xs font-medium text-slate-500">
+                      Deleted at
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-800">
+                      {formatDateTime(company.deletedAt)}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </section>
-        </div>
+        </main>
 
-        <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-4 sm:px-7">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        {/* Actions */}
+        <footer className="shrink-0 border-t border-slate-200 bg-white px-4 py-4 sm:px-7">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
               onClick={() => onAction("delete", company)}
               disabled={busy || companyStatus === "deleted"}
-              className={`${actionButtonClass} border-red-200 text-red-700 hover:bg-red-50 lg:mr-auto`}
+              className={`${actionClass} border-red-200 text-red-700 hover:bg-red-50 sm:mr-auto`}
             >
               <Trash2 size={16} />
               Delete company
@@ -788,7 +700,7 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
                       type="button"
                       onClick={() => onAction("verify", company)}
                       disabled={busy || companyStatus === "blocked"}
-                      className={`${actionButtonClass} border-emerald-200 text-emerald-700 hover:bg-emerald-50`}
+                      className={`${actionClass} border-emerald-200 text-emerald-700 hover:bg-emerald-50`}
                     >
                       <BadgeCheck size={16} />
                       Verify
@@ -800,7 +712,7 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
                       type="button"
                       onClick={() => onAction("reject", company)}
                       disabled={busy || companyStatus === "blocked"}
-                      className={`${actionButtonClass} border-amber-200 text-amber-700 hover:bg-amber-50`}
+                      className={`${actionClass} border-amber-200 text-amber-700 hover:bg-amber-50`}
                     >
                       <ShieldAlert size={16} />
                       Reject
@@ -816,7 +728,7 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
                       )
                     }
                     disabled={busy}
-                    className={`${actionButtonClass} ${
+                    className={`${actionClass} ${
                       companyStatus === "blocked"
                         ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
                         : "border-red-200 text-red-700 hover:bg-red-50"
@@ -836,17 +748,18 @@ const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
                 type="button"
                 onClick={onClose}
                 disabled={busy}
-                className={`${actionButtonClass} border-transparent bg-violet-600 text-white hover:bg-violet-700`}
+                className={`${actionClass} border-transparent bg-violet-600 text-white hover:bg-violet-700`}
               >
                 Close
               </button>
             </div>
           </div>
-        </div>
+        </footer>
       </div>
     </div>
   );
 };
+
 
 const ConfirmModal = ({ action, company, onCancel, onConfirm, loading }) => {
   if (!action || !company) return null;

@@ -9,10 +9,6 @@ const ProtectedRoutes = ({ allowedType }) => {
         recruiter,
     } = useAuth();
 
-    // =========================================
-    // ADMIN ROUTES
-    // =========================================
-
     if (allowedType === "admin") {
 
         // Not logged in as admin
@@ -33,11 +29,6 @@ const ProtectedRoutes = ({ allowedType }) => {
 
         return <Outlet />;
     }
-
-
-    // =========================================
-    // USER ROUTES
-    // =========================================
 
     if (allowedType === "user") {
 
@@ -64,11 +55,6 @@ const ProtectedRoutes = ({ allowedType }) => {
 
         return <Outlet />;
     }
-
-
-    // =========================================
-    // RECRUITER ROUTES
-    // =========================================
 
     if (allowedType === "recruiter") {
 

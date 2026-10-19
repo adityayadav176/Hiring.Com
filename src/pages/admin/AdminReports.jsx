@@ -29,9 +29,16 @@ import {
   MessageSquareText,
   UserCheck,
   ShieldAlert,
+  Flag,
+  Hash,
+  Clock3,
+  CheckCircle2,
+  AlertTriangle,
+  Mail,
 } from "lucide-react";
 
 import { useReport } from "../../hooks/Hook";
+import { hash } from './../../../node_modules/goober/src/core/hash';
 
 const PAGE_SIZE = 8;
 
@@ -262,271 +269,474 @@ const DetailItem = ({ icon: Icon, label, value }) => (
   </div>
 );
 
+
+const getStatusStyle = (status) =>
+  STATUS_STYLES[String(status || "pending").toLowerCase()] ||
+  "bg-slate-100 text-slate-600 ring-slate-200";
+
+const getInitials = (name = "") =>
+  name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "U";
+
+const InfoItem = ({ icon: Icon, label, value }) => (
+  <div className="min-w-0">
+    <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+      <Icon size={14} />
+      {label}
+    </p>
+    <p className="break-words text-sm font-semibold text-slate-800">
+      {value || "Not available"}
+    </p>
+  </div>
+);
+
+const Section = ({ icon: Icon, title, children, action }) => (
+  <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+    <div className="mb-4 flex items-center justify-between gap-3">
+      <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+          <Icon size={16} />
+        </span>
+        {title}
+      </h3>
+      {action}
+    </div>
+    {children}
+  </section>
+);
+
 const ReportDetailsModal = ({
   report,
   onClose,
   onResolve,
   onReject,
-  busy = false,
+  loading = false,
 }) => {
+  const [adminNote, setAdminNote] = useState("");
+  const [actionType, setActionType] = useState("");
+
+  useEffect(() => {
+    if (!report) return;
+
+    setAdminNote(report.adminNote || report.reviewNote || "");
+    setActionType("");
+  }, [report]);
+
+  useEffect(() => {
+    if (!report) return;
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape" && !loading) onClose?.();
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [report, loading, onClose]);
+
   if (!report) return null;
 
-  const status = getReportStatus(report);
-  const targetType = getTargetType(report);
-  const isPending = status === "pending";
+  // Adjust these aliases if your backend uses a different response shape.
+  const reporter =
+    report.reporter ||
+    report.reportedBy ||
+    report.user ||
+    report.createdBy ||
+    {};
 
-  const reporter = report.reporter || {};
-  const reportedUser = report.reportedUser || null;
-  const reportedJob = report.reportedJob || null;
+  const target =
+    report.target ||
+    report.reportedTarget ||
+    report.reportedUser ||
+    report.job ||
+    {};
 
-  const reporterName = getUserName(reporter);
-  const reporterEmail = getUserEmail(reporter);
-  const reporterAvatar =
-    reporter.avatar ||
-    reporter.profilePicture ||
-    reporter.profileImage ||
+  const reporterName =
+    reporter.fullName ||
+    reporter.name ||
+    [reporter.firstName, reporter.lastName].filter(Boolean).join(" ") ||
+    report.reporterName ||
+    "Unknown user";
+
+  const targetName =
+    target.title ||
+    target.fullName ||
+    target.name ||
+    target.companyName ||
+    report.targetName ||
+    report.reportedName ||
+    "Target information unavailable";
+
+  const targetType =
+    report.targetType ||
+    report.reportType ||
+    report.entityType ||
+    (report.job ? "Job" : report.reportedUser ? "User" : "Reported target");
+
+  const reason =
+    report.reason ||
+    report.reportReason ||
+    report.category ||
+    "Reason not specified";
+
+  const description =
+    report.description ||
+    report.message ||
+    report.details ||
+    report.content ||
     "";
 
-  const targetName = getTargetName(report);
-  const targetId = getId(
-    targetType === "job" ? reportedJob : reportedUser
-  );
+  const status = String(report.status || "pending").toLowerCase();
+  const isPending = status === "pending";
 
-  const company = reportedJob?.company || reportedJob?.postedBy || {};
-  const companyName =
-    getJobCompany(reportedJob) || getUserName(company) || "Unknown company";
+  const reportId = report._id || report.id || "N/A";
 
-  const statusStyles = {
-    pending: "bg-amber-50 text-amber-700 ring-amber-200",
-    resolved: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-    rejected: "bg-rose-50 text-rose-700 ring-rose-200",
+  const handleAction = async (type) => {
+    setActionType(type);
+
+    try {
+      const callback = type === "resolve" ? onResolve : onReject;
+
+      // Supports callbacks that accept (reportId, adminNote).
+      await callback?.(reportId, adminNote.trim());
+    } finally {
+      setActionType("");
+    }
   };
-
-  const statusLabel = {
-    pending: "Pending",
-    resolved: "Resolved",
-    rejected: "Rejected",
-  };
-
-  const Section = ({ title, children }) => (
-    <section>
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-        {title}
-      </h3>
-      {children}
-    </section>
-  );
-
-  const Detail = ({ label, value }) => (
-    <div className="min-w-0">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-1 break-words text-sm font-medium text-slate-800">
-        {value || "—"}
-      </p>
-    </div>
-  );
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-sm sm:p-6"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !busy) onClose();
+        if (event.target === event.currentTarget && !loading) onClose?.();
       }}
     >
       <div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="report-details-title"
-        className="flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-black/10"
+        aria-labelledby="report-modal-title"
+        className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-white/60 bg-slate-50 shadow-2xl shadow-slate-950/20"
       >
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2
-                id="report-details-title"
-                className="text-lg font-semibold tracking-tight text-slate-900"
-              >
-                Report details
-              </h2>
+        <div className="relative overflow-hidden border-b border-slate-200 bg-white px-5 py-5 sm:px-7">
+          <div className="pointer-events-none absolute -right-12 -top-20 h-48 w-48 rounded-full bg-violet-100/70 blur-3xl" />
 
-              <span
-                className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset ${
-                  statusStyles[status] || statusStyles.pending
-                }`}
-              >
-                {statusLabel[status] || formatLabel(status)}
-              </span>
-            </div>
-
-            <p className="mt-1 text-xs text-slate-500">
-              Report ID: {getId(report) || "—"}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={busy}
-            aria-label="Close modal"
-            className="ml-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="space-y-6 overflow-y-auto px-5 py-5 sm:px-6">
-          {/* Reason */}
-          <Section title="Reason for report">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">
-                {formatLabel(report.reason) || "No reason specified"}
-              </p>
-
-              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
-                {report.description?.trim() ||
-                  "No additional description provided."}
-              </p>
-            </div>
-          </Section>
-
-          {/* Reporter */}
-          <Section title="Reported by">
-            <div className="flex items-center gap-3">
-              {reporterAvatar ? (
-                <img
-                  src={reporterAvatar}
-                  alt={reporterName || "Reporter"}
-                  className="h-11 w-11 rounded-full border border-slate-200 object-cover"
-                />
-              ) : (
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-50 text-sm font-semibold text-violet-700">
-                  {reporterName?.charAt(0)?.toUpperCase() || "U"}
-                </div>
-              )}
+          <div className="relative flex items-start justify-between gap-4">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                <Flag size={23} />
+              </div>
 
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900">
-                  {reporterName || "Unknown user"}
-                </p>
-                <p className="break-all text-xs text-slate-500">
-                  {reporterEmail || "No email available"}
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-violet-700">
+                    Report review
+                  </span>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold capitalize ring-1 ring-inset ${getStatusStyle(status)}`}
+                  >
+                    {status}
+                  </span>
+                </div>
+
+                <h2
+                  id="report-modal-title"
+                  className="break-words text-xl font-bold tracking-tight text-slate-950 sm:text-2xl"
+                >
+                  {reason}
+                </h2>
+
+                <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+                  <span className="inline-flex items-center gap-1">
+                    <Hash size={13} />
+                    {String(reportId).slice(-12)}
+                  </span>
+                  <span className="text-slate-300">•</span>
+                  <span className="inline-flex items-center gap-1">
+                    <CalendarDays size={13} />
+                    {formatDate(report.createdAt || report.submittedAt)}
+                  </span>
                 </p>
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-4 rounded-xl border border-slate-100 p-3">
-              <Detail label="Reporter ID" value={getId(reporter)} />
-              <Detail
-                label="Submitted"
-                value={formatDateTime(report.createdAt)}
-              />
-            </div>
-          </Section>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              aria-label="Close report details"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
 
-          {/* Reported target */}
-          <Section title="Reported target">
-            <div className="rounded-xl border border-slate-200 p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-                  {targetType === "job" ? (
-                    <BriefcaseBusiness size={19} />
+        {/* Scrollable body */}
+        <div className="overflow-y-auto px-4 py-5 sm:px-7 sm:py-6">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="space-y-4">
+              {/* Report summary */}
+              <Section icon={AlertTriangle} title="Report summary">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-5">
+                  <InfoItem
+                    icon={Flag}
+                    label="Reason"
+                    value={reason}
+                  />
+                  <InfoItem
+                    icon={Clock3}
+                    label="Submitted"
+                    value={formatDate(report.createdAt || report.submittedAt)}
+                  />
+                  <InfoItem
+                    icon={FileText}
+                    label="Target type"
+                    value={targetType}
+                  />
+                  <InfoItem
+                    icon={ShieldCheck}
+                    label="Review status"
+                    value={status}
+                  />
+                </div>
+
+                <div className="mt-5 border-t border-slate-100 pt-4">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Description
+                  </p>
+
+                  <div className="whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">
+                    {description || "No additional description was provided."}
+                  </div>
+                </div>
+              </Section>
+
+              {/* Reporter */}
+              <Section icon={UserRound} title="Reported by">
+                <div className="flex items-start gap-3">
+                  {reporter.avatar || reporter.profilePicture ? (
+                    <img
+                      src={reporter.avatar || reporter.profilePicture}
+                      alt={reporterName}
+                      className="h-12 w-12 shrink-0 rounded-2xl object-cover ring-1 ring-slate-200"
+                    />
                   ) : (
-                    <UserRound size={19} />
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-sm font-bold text-violet-700">
+                      {getInitials(reporterName)}
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words font-bold text-slate-900">
+                      {reporterName}
+                    </p>
+                    <p className="mt-1 flex items-center gap-1.5 break-all text-xs text-slate-500">
+                      <Mail size={13} className="shrink-0" />
+                      {reporter.email || report.reporterEmail || "Email unavailable"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
+                  <InfoItem
+                    icon={Hash}
+                    label="Reporter ID"
+                    value={reporter._id || reporter.id || report.reporterId}
+                  />
+                  <InfoItem
+                    icon={CalendarDays}
+                    label="Reported on"
+                    value={formatDate(report.createdAt || report.submittedAt)}
+                  />
+                </div>
+              </Section>
+
+              {/* Admin review */}
+              <Section icon={MessageSquareText} title="Admin review">
+                <label
+                  htmlFor="report-admin-note"
+                  className="mb-2 block text-sm font-semibold text-slate-700"
+                >
+                  Internal review note
+                </label>
+
+                <textarea
+                  id="report-admin-note"
+                  value={adminNote}
+                  onChange={(event) => setAdminNote(event.target.value)}
+                  rows={4}
+                  maxLength={2000}
+                  disabled={!isPending || loading}
+                  placeholder="Record the reason for your decision or any relevant review details..."
+                  className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm leading-6 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 disabled:bg-slate-100 disabled:text-slate-500"
+                />
+
+                <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-400">
+                  <span>
+                    {isPending
+                      ? "Add context before taking action."
+                      : "This report is no longer pending."}
+                  </span>
+                  <span>{adminNote.length}/2000</span>
+                </div>
+
+                {(report.reviewedBy || report.resolvedAt || report.reviewedAt) && (
+                  <div className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-xs text-slate-500">
+                    {report.reviewedBy && (
+                      <p>
+                        Reviewed by:{" "}
+                        <span className="font-semibold text-slate-700">
+                          {report.reviewedBy.fullName ||
+                            report.reviewedBy.name ||
+                            report.reviewedBy.email ||
+                            "Admin"}
+                        </span>
+                      </p>
+                    )}
+                    {(report.resolvedAt || report.reviewedAt) && (
+                      <p>
+                        Review date:{" "}
+                        <span className="font-semibold text-slate-700">
+                          {formatDate(report.resolvedAt || report.reviewedAt)}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                )}
+              </Section>
+            </div>
+
+            {/* Reported target */}
+            <div className="space-y-4">
+              <Section icon={BriefcaseBusiness} title="Reported target">
+                <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-4">
+                  <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-white text-violet-700 shadow-sm ring-1 ring-violet-100">
+                    {String(targetType).toLowerCase().includes("user") ? (
+                      <UserRound size={20} />
+                    ) : (
+                      <BriefcaseBusiness size={20} />
+                    )}
+                  </div>
+
+                  <p className="text-xs font-medium text-slate-500">
+                    {targetType}
+                  </p>
+
+                  <h4 className="mt-1 break-words text-base font-bold text-slate-900">
+                    {targetName}
+                  </h4>
+
+                  {target.email && (
+                    <p className="mt-1 break-all text-xs text-slate-500">
+                      {target.email}
+                    </p>
+                  )}
+
+                  {(target.companyName || target.company?.name) && (
+                    <p className="mt-2 text-sm text-slate-600">
+                      Company: {target.companyName || target.company?.name}
+                    </p>
+                  )}
+
+                  {(target._id || target.id || report.targetId) && (
+                    <p className="mt-3 break-all border-t border-violet-100 pt-3 text-xs text-slate-500">
+                      Target ID: {target._id || target.id || report.targetId}
+                    </p>
                   )}
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-slate-900">
-                    {targetType === "job"
-                      ? getJobTitle(reportedJob) || targetName || "Untitled job"
-                      : targetName || "Unknown user"}
-                  </p>
-
-                  <p className="mt-1 text-xs text-slate-500">
-                    {targetType === "job"
-                      ? companyName
-                      : "User account"}
-                  </p>
-                </div>
-
-                <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-slate-600">
-                  {formatLabel(targetType)}
-                </span>
-              </div>
-
-              <div className="mt-4 border-t border-slate-100 pt-3">
-                <Detail label="Target ID" value={targetId} />
-              </div>
-            </div>
-          </Section>
-
-          {/* Resolution information */}
-          {(report.adminNote || report.resolvedAt || report.resolvedBy) && (
-            <Section title="Resolution details">
-              <div className="space-y-3 rounded-xl border border-slate-200 p-4">
-                {report.resolvedBy && (
-                  <Detail
-                    label="Reviewed by"
-                    value={
-                      typeof report.resolvedBy === "string"
-                        ? report.resolvedBy
-                        : getUserName(report.resolvedBy)
-                    }
-                  />
+                {target.title && target.company && (
+                  <div className="mt-4 space-y-3">
+                    <InfoItem
+                      icon={BriefcaseBusiness}
+                      label="Job title"
+                      value={target.title}
+                    />
+                    <InfoItem
+                      icon={UserRound}
+                      label="Company"
+                      value={target.company.name || target.companyName}
+                    />
+                  </div>
                 )}
 
-                {report.resolvedAt && (
-                  <Detail
-                    label="Review date"
-                    value={formatDateTime(report.resolvedAt)}
-                  />
-                )}
-
-                {report.adminNote && (
-                  <div>
-                    <p className="text-xs text-slate-500">Admin note</p>
-                    <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">
-                      {report.adminNote}
+                {target.description && (
+                  <div className="mt-4">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Target description
+                    </p>
+                    <p className="line-clamp-5 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
+                      {target.description}
                     </p>
                   </div>
                 )}
+              </Section>
+
+              {/* Decision guidance */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                    <ShieldCheck size={18} />
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      Moderation checklist
+                    </h3>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      Review the report details, verify the target, and record
+                      your reasoning before deciding.
+                    </p>
+                  </div>
+                </div>
               </div>
-            </Section>
-          )}
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col-reverse gap-2 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
           <button
             type="button"
             onClick={onClose}
-            disabled={busy}
-            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+            disabled={loading}
+            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
           >
             Close
           </button>
 
           {isPending && (
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
               <button
                 type="button"
-                onClick={() => onReject(report)}
-                disabled={busy}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-rose-200 px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => handleAction("reject")}
+                disabled={loading}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-bold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <XCircle size={15} />
-                Reject
+                {loading && actionType === "reject" ? (
+                  <LoaderCircle size={16} className="animate-spin" />
+                ) : (
+                  <XCircle size={16} />
+                )}
+                Reject report
               </button>
 
               <button
                 type="button"
-                onClick={() => onResolve(report)}
-                disabled={busy}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => handleAction("resolve")}
+                disabled={loading}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-violet-200 transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <CheckCircle size={15} />
+                {loading && actionType === "resolve" ? (
+                  <LoaderCircle size={16} className="animate-spin" />
+                ) : (
+                  <CheckCircle2 size={16} />
+                )}
                 Resolve report
               </button>
             </div>
