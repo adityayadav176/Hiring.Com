@@ -1,227 +1,222 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useCallback } from "react";
 
-export const CompanyContext = createContext()
+export const CompanyContext = createContext();
 
-const CompanyProvider = ({children}) => {
-    const API_URL = import.meta.env.VITE_API_URL;
+const CompanyProvider = ({ children }) => {
+  const API_URL = import.meta.env.VITE_API_URL;
 
-    const [company, setCompany] = useState(null);
-    const [companyPagination, setCompanyPagination] = useState({});
-    const [companies, setCompanies] = useState([]);
+  const [company, setCompany] = useState(null);
 
-    const handleCreateCompany = async({details}) => {
-        try {
-            const {name, description, industry, companySize, foundedYear, headquarters, socialLinks} = details;
+  const handleCreateCompany = useCallback(async ({ details, logo }) => {
+    try {
+      if (!details) {
+        throw new Error("Company details are required.");
+      }
 
-            if([name, description, industry, companySize, foundedYear, headquarters, socialLinks].some((some) => !some)) {
-                throw new Error("All Fields Are Required");
-            }
+      const {
+        name,
+        description,
+        industry,
+        companySize,
+        foundedYear,
+        headquarters,
+        socialLinks,
+      } = details;
 
-            const response = await fetch(`${API_URL}/company`, {
-                credentials: "include",
-                method: "POST",
-                headers: {
-                    "Content-Type":"application/json",
-                },
-                body: JSON.stringify({name, description, industry, companySize, foundedYear, headquarters, socialLinks})
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Failed To Create Company");
-            }
-    
-            setCompany(data.data);
-            setCompanies((prev) => [data.data, ...prev]);
-            setCompanyPagination((prev) => ({...prev, totalCompanies: prev.totalCompanies + 1}))
-            console.log("Company Created Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-            throw error;
-        }
+      if (!name?.trim()) {
+        throw new Error("Company name is required.");
+      }
+
+      const formData = new FormData();
+
+      formData.append("name", name.trim());
+      formData.append("description", description ?? "");
+      formData.append("industry", industry ?? "");
+
+      if (companySize) {
+        formData.append("companySize", companySize);
+      }
+
+      if (foundedYear !== undefined && foundedYear !== "") {
+        formData.append("foundedYear", foundedYear);
+      }
+
+      if (headquarters) {
+        formData.append("headquarters", JSON.stringify(headquarters));
+      }
+
+      if (socialLinks) {
+        formData.append("socialLinks", JSON.stringify(socialLinks));
+      }
+
+      if (logo) {
+        formData.append("logo", logo);
+      }
+
+      const response = await fetch(`${API_URL}/companies`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create company.");
+      }
+
+      setCompany(data.data);
+
+      return data.data;
+    } catch (error) {
+      console.error("Create company error:", error);
+      throw error;
     }
+  }, [API_URL]);
 
-    const handleGetCompanyByIdForU = async({companyId}) => {
-        try {
+  const handleGetMyCompany = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/companies/my-company`, {
+        method: "GET",
+        credentials: "include",
+      });
 
-            if(!companyId) {
-                throw new Error("CompanyId is required");
-            }
+      const data = await response.json();
 
-            const response = await fetch(`${API_URL}/company/${companyId}`, {
-                method: "GET",
-                credentials: "include"
-            })
-            
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Failed To Fetch Company");
-            }
-    
-            setCompany(data.data);
-            console.log("Company Fetched Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-            throw error;
-        }
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch your company.");
+      }
+
+      setCompany(data.data);
+
+      return data.data;
+    } catch (error) {
+      console.error("Get my company error:", error);
+      throw error;
     }
+  }, [API_URL]);
 
-    const handleGetAllCompaniesForU = async() => {
-        try {
-            const response = await fetch(`${API_URL}/company`, {
-                method: "GET",
-                credentials: "include"
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Failed To Fetch Companys");
-            }
-    
-            setCompanies(data.data.companies);
-            setCompanyPagination(data.data.pagination)
-            console.log("Companys Fetched Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-            throw error;
+  const handleGetCompanyById = useCallback(async ({ companyId }) => {
+    try {
+      if (!companyId) {
+        throw new Error("Company ID is required.");
+      }
+
+      const response = await fetch(
+        `${API_URL}/companies/${companyId}`,
+        {
+          method: "GET",
+          credentials: "include",
         }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch company.");
+      }
+
+      setCompany(data.data);
+
+      return data.data;
+    } catch (error) {
+      console.error("Get company by ID error:", error);
+      throw error;
     }
+  }, [API_URL]);
 
-    const handleUpdateCompanyForU = async({companyId, details}) => {
-        try {
-            const {name, description, industry, companySize, foundedYear, headquarters, socialLinks} = details;
+  const handleUpdateCompany = useCallback(async ({ companyId, details }) => {
+    try {
+      if (!companyId) {
+        throw new Error("Company ID is required.");
+      }
 
-            if(!companyId) {
-                throw new Error("CompanyId is required");
-            }
+      if (!details || Object.keys(details).length === 0) {
+        throw new Error("Company details are required.");
+      }
 
-            if([name, description, industry, companySize, foundedYear, headquarters, socialLinks].some((some) => !some)) {
-                throw new Error("All Fields Are Required");
-            }
-
-            const response = await fetch(`${API_URL}/company/${companyId}`, {
-                method: "PATCH",
-                credentials: "include",
-                headers: {
-                    "Content-Type":"application/json",
-                },
-                body: JSON.stringify({name, description, industry, companySize, foundedYear, headquarters, socialLinks})
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Failed To Update Company");
-            }
-
-            setCompanies((prev) => prev.map((item) => item._id === companyId ? data.data : item));
-            setCompany(data.data);
-            console.log("Company Update Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-            throw error;
+      const response = await fetch(
+        `${API_URL}/companies/${companyId}`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(details),
         }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update company.");
+      }
+
+      setCompany(data.data);
+
+      return data.data;
+    } catch (error) {
+      console.error("Update company error:", error);
+      throw error;
     }
-    const handleDeleteCompanyForU = async({companyId}) => {
-        try {
-            if(!companyId) {
-                throw new Error("CompanyId is Required");
-            }
+  }, [API_URL]);
 
-            const response = await fetch(`${API_URL}/company/${companyId}/delete`, {
-                method: "PATCH",
-                credentials: "include"
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Failed To Delete Company");
-            }
-
-            setCompanies((prev) => prev.filter((item) => item._id !== companyId));
-            setCompanyPagination((prev) => ({...prev, totalCompanies: Math.max(0, prev.totalCompanies - 1)}))
-            console.log("Company Delete Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-            throw error
+  const handleUpdateCompanyLogo = useCallback(
+    async ({ companyId, logo }) => {
+      try {
+        if (!companyId) {
+          throw new Error("Company ID is required.");
         }
-    }
-    const handleParmanentDeleteCompanyForU = async({companyId}) => {
-        try {
 
-            if(!companyId) {
-                throw new Error("CompanyId is Required");
-            }
-
-            const response = await fetch(`${API_URL}/company/${companyId}/permanent`, {
-                method: "DELETE",
-                credentials: "include"
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Failed To Delete Company");
-            }
-
-            setCompanies((prev) => prev.filter((item) => item._id !== companyId));
-            setCompanyPagination((prev) => ({...prev, totalCompanies: Math.max(0, prev.totalCompanies - 1)}))
-            console.log("Company Delete Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-            throw error;
+        if (!logo) {
+          throw new Error("Company logo is required.");
         }
-    }
-    const handleRestoreCompanyForU = async({companyId}) => {
-        try {
 
-            if(!companyId) {
-                throw new Error("Company Id Is Required");
-            }
+        const formData = new FormData();
+        formData.append("logo", logo);
 
-            const response = await fetch(`${API_URL}/company/${companyId}/restore`, {
-                method: "PATCH",
-                credentials: "include"
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Failed To Restore Company");
-            }
+        const response = await fetch(
+          `${API_URL}/companies/${companyId}/logo`,
+          {
+            method: "PATCH",
+            credentials: "include",
+            body: formData,
+          }
+        );
 
-            setCompanies((prev) => {
-            const exists = prev.some((item) => item._id === companyId);
+        const data = await response.json();
 
-            if (exists) {
-                return prev.map((item) => item._id === companyId ? data.data : item);
-            }
-
-            return [data.data, ...prev];
-            });
-            console.log("Company Restore Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-            throw error;
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to update company logo.");
         }
-    }
 
-    return (
-        <CompanyContext.Provider value={{company, companies, companyPagination, handleCreateCompany, handleDeleteCompanyForU, handleGetAllCompaniesForU, handleGetCompanyByIdForU, handleParmanentDeleteCompanyForU, handleRestoreCompanyForU, handleUpdateCompanyForU}}>
-            {children}
-        </CompanyContext.Provider>
-    )
-}
+        setCompany(data.data);
+
+        return data.data;
+      } catch (error) {
+        console.error("Update company logo error:", error);
+        throw error;
+      }
+    },
+    [API_URL]
+  );
+
+  return (
+    <CompanyContext.Provider
+      value={{
+        company,
+        setCompany,
+        handleCreateCompany,
+        handleGetMyCompany,
+        handleGetCompanyById,
+        handleUpdateCompany,
+        handleUpdateCompanyLogo,
+      }}
+    >
+      {children}
+    </CompanyContext.Provider>
+  );
+};
 
 export default CompanyProvider;

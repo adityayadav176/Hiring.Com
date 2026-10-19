@@ -1,258 +1,374 @@
-import { createContext, useCallback, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useState,
+} from "react";
 
-export const ApplicationContext = createContext();
+export const ApplicationContext = createContext(null);
 
-const ApplicationProvider = ({children}) => {
-    const API_URL = import.meta.env.VITE_API_URL;
-    const [application, setApplication] = useState(null);
-    const [applications, setApplications] = useState([]);
-    const [deletedApplications, setDeletedApplication] = useState([]);
-    const [myApplicationPagination, setMyApplicationPagination] = useState({}); 
-    const [jobApplications, setJobApplications] = useState([]);
-    const [jobApplicationPagination, setJobApplicationPagination] = useState({});
+const ApplicationProvider = ({ children }) => {
+  const API_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, "");
+  const APPLICATIONS_URL = `${API_URL}/applications`;
 
-    
-const handleApplyForAJob = async ({
-  jobId,
-  resumeId,
-  MessageToRecruiter = "",
-}) => {
-  try {
-    const response = await fetch(
-      `${API_URL}/application/${jobId}`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          resumeId,
-          MessageToRecruiter,
-        }),
-      }
-    );
+  const [application, setApplication] = useState(null);
+  const [applications, setApplications] = useState([]);
+  const [deletedApplications, setDeletedApplications] = useState([]);
+  const [myApplicationPagination, setMyApplicationPagination] =
+    useState(null);
 
-    const data = await response.json();
+  const [jobApplications, setJobApplications] = useState([]);
+  const [jobApplicationPagination, setJobApplicationPagination] =
+    useState(null);
+  const [deletedApplicationPagination, setDeletedApplicationPagination] =
+    useState(null);
 
-    if (!response.ok) {
-      throw new Error(
-        data?.message || "Failed to apply for this job"
-      );
-    }
-
-    setApplications((prev) => [
-      data.data,
-      ...prev,
-    ]);
-
-    console.log("Applied for job successfully");
-
-    return data.data;
-  } catch (error) {
-    console.error("Apply for job error:", error);
-    alert(error.message || "Something went wrong");
-    throw error;
-  }
-};
-
-const handleGetMyApplications = useCallback(async () => {
-  try {
-    const response = await fetch(`${API_URL}/application`, {
-      method: "GET",
+  // Shared API helper
+  const request = async (url, options = {}) => {
+    const response = await fetch(url, {
       credentials: "include",
+      ...options,
+      headers: {
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...options.headers,
+      },
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      throw new Error(
-        data?.message || "Failed to get applications"
+      throw new Error(data?.message || "Request failed");
+    }
+
+    return data;
+  };
+
+  // Apply for a job
+  const handleApplyForAJob = async ({
+    jobId,
+    resumeId,
+    messageToRecruiter = "",
+  }) => {
+    try {
+      const data = await request(`${APPLICATIONS_URL}/${jobId}`, {
+        method: "POST",
+        body: JSON.stringify({
+          resumeId,
+          messageToRecruiter,
+        }),
+      });
+
+      const newApplication = data?.data;
+
+      if (newApplication) {
+        setApplications((prev) => [
+          newApplication,
+          ...prev.filter(
+            (item) => item._id !== newApplication._id
+          ),
+        ]);
+      }
+
+      return newApplication;
+    } catch (error) {
+      console.error("Apply for job error:", error);
+      throw error;
+    }
+  };
+
+  // Get candidate's applications
+  const handleGetMyApplications = useCallback(
+    async ({ page = 1, limit = 10 } = {}) => {
+      try {
+        const query = new URLSearchParams({
+          page: String(page),
+          limit: String(limit),
+        });
+
+        const data = await request(
+          `${APPLICATIONS_URL}?${query.toString()}`
+        );
+
+        const result = data?.data;
+        const items = result?.applications ?? [];
+
+        setApplications(items);
+        setMyApplicationPagination(result?.pagination ?? null);
+
+        return items;
+      } catch (error) {
+        console.error("Get my applications error:", error);
+        throw error;
+      }
+    },
+    [APPLICATIONS_URL]
+  );
+
+  // Get candidate's deleted applications
+  const handleGetDeletedApplications = async ({
+    page = 1,
+    limit = 10,
+  } = {}) => {
+    try {
+      const query = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+      });
+
+      const data = await request(
+        `${APPLICATIONS_URL}/deleted?${query.toString()}`
       );
+
+      const result = data?.data;
+
+      setDeletedApplications(result?.applications ?? []);
+      setDeletedApplicationPagination(result?.pagination ?? null);
+
+      return result?.applications ?? [];
+    } catch (error) {
+      console.error("Get deleted applications error:", error);
+      throw error;
     }
+  };
 
-    const applications = data?.data?.applications ?? [];
+  // Get one candidate-owned application
+  const handleGetMyApplicationById = async ({ applicationId }) => {
+    try {
+      const data = await request(
+        `${APPLICATIONS_URL}/my/${applicationId}`
+      );
 
-    setApplications(applications);
-    setMyApplicationPagination(
-      data?.data?.pagination ?? null
-    );
+      setApplication(data?.data ?? null);
+      return data?.data;
+    } catch (error) {
+      console.error("Get my application details error:", error);
+      throw error;
+    }
+  };
 
-    console.log("Applications fetched successfully");
+  // Get one recruiter-owned application
+  const handleGetApplicationById = async ({ applicationId }) => {
+    try {
+      const data = await request(
+        `${APPLICATIONS_URL}/${applicationId}`
+      );
 
-    return applications;
-  } catch (error) {
-    console.error("Get My Applications Error:", error);
+      setApplication(data?.data ?? null);
+      return data?.data;
+    } catch (error) {
+      console.error("Get recruiter application details error:", error);
+      throw error;
+    }
+  };
 
-    setApplications([]);
-    setMyApplicationPagination(null);
+  // Get applicants for a recruiter's job
+  const handleGetJobApplications = async ({
+    jobId,
+    page = 1,
+    limit = 10,
+    status = "",
+  }) => {
+    try {
+      const query = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+      });
 
-    return [];
-  }
-}, [API_URL]);
+      if (status) {
+        query.set("status", status);
+      }
 
+      const data = await request(
+        `${APPLICATIONS_URL}/jobs/${jobId}?${query.toString()}`
+      );
 
-    const handleGetDeletedApplications = async() => {
-        try {
-            const response = await fetch(`${API_URL}/application/deleted`, {
-                credentials: "include",
-                method: "GET"
-            })
+      const result = data?.data;
 
-            const data = await response.json();
+      setJobApplications(result?.applications ?? []);
+      setJobApplicationPagination(result?.pagination ?? null);
 
-            if(!response.ok) {
-                throw new Error(data.message || "Failed to GetApplications");
-            }
+      return result?.applications ?? [];
+    } catch (error) {
+      console.error("Get job applications error:", error);
+      throw error;
+    }
+  };
 
-            setDeletedApplication(data.data);
-            console.log("Application Fetched Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
+  // Update recruiter notes
+  const handleUpdateRecruiterNotes = async ({
+    applicationId,
+    recruiterNotes,
+  }) => {
+    try {
+      const data = await request(
+        `${APPLICATIONS_URL}/${applicationId}/recruiter-notes`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ recruiterNotes }),
         }
-    }
-    const handleUpdateRecruiterNotes = async({applicationId, recruiterNotes}) => {
-        try {
-            const response = await fetch(`${API_URL}/application/${applicationId}/recruiter-notes`, {
-                credentials: "include",
-                method: "PATCH",
-                headers: {
-                    "Content-Type":"application/json"
-                },
-                body: JSON.stringify({recruiterNotes})
-            });
+      );
 
-            const data = await response.json();
+      const updated = data?.data;
 
-            if(!response.ok) {
-                throw new Error(data.message || "Failed to UpdateRecruiterNotes");
+      const updateNotes = (item) =>
+        item._id === applicationId ||
+        item.applicationId === applicationId
+          ? {
+              ...item,
+              recruiterNotes: updated?.recruiterNotes ?? recruiterNotes,
+              updatedAt: updated?.updatedAt ?? item.updatedAt,
             }
+          : item;
 
-            setApplications((prev) => prev.map((item) => item._id === applicationId ? data.data : item));
-            console.log("RecruiterNotes Updated Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
-    }
+      setApplications((prev) => prev.map(updateNotes));
+      setJobApplications((prev) => prev.map(updateNotes));
 
-    const handleDeleteApplication = async({applicationId}) => {
-        try {
-            const response = await fetch(`${API_URL}/application/${applicationId}`, {
-                credentials: "include",
-                method: "PATCH"
-            })
-
-            const data = await response.json();
-
-            if(!response.ok) {
-                throw new Error(data.message || "Failed to Delete Application");
+      setApplication((prev) =>
+        prev?._id === applicationId
+          ? {
+              ...prev,
+              recruiterNotes: updated?.recruiterNotes ?? recruiterNotes,
+              updatedAt: updated?.updatedAt ?? prev.updatedAt,
             }
-            setDeletedApplication((prev) => [data.data, ...prev]);
-            setApplications((prev) => prev.filter((item) => item._id !== applicationId));
-            console.log("Application Deleted Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
+          : prev
+      );
+
+      return updated;
+    } catch (error) {
+      console.error("Update recruiter notes error:", error);
+      throw error;
     }
+  };
 
-    const handleUpdateApplicationStatus = async({applicationId, status}) => {
-         try {
-            const response = await fetch(`${API_URL}/application/${applicationId}/status`, {
-                credentials: "include",
-                method: "PATCH",
-                headers: {
-                    "Content-Type":"application/json"
-                },
-                body: JSON.stringify({status})
-            })
+  // Soft-delete a candidate's application
+  const handleDeleteApplication = async ({ applicationId }) => {
+    try {
+      const existingApplication = applications.find(
+        (item) => item._id === applicationId
+      );
 
-            const data = await response.json();
+      await request(`${APPLICATIONS_URL}/${applicationId}`, {
+        method: "PATCH",
+      });
 
-            if(!response.ok) {
-                throw new Error(data.message || "Failed to Updated Application");
-            }
+      setApplications((prev) =>
+        prev.filter((item) => item._id !== applicationId)
+      );
 
-            setApplications((prev) => prev.map((item) => item._id === applicationId ? data.data : item));
-            console.log("Application Updated Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
+      if (existingApplication) {
+        setDeletedApplications((prev) => [
+          {
+            ...existingApplication,
+            isDeleted: true,
+            deletedAt: new Date().toISOString(),
+          },
+          ...prev,
+        ]);
+      }
+
+      setApplication((prev) =>
+        prev?._id === applicationId ? null : prev
+      );
+
+      return true;
+    } catch (error) {
+      console.error("Delete application error:", error);
+      throw error;
     }
+  };
 
-    const handleGetApplicationById = async({applicationId}) => {
-        try {
-            const response = await fetch(`${API_URL}/application/${applicationId}`, {
-                credentials: "include",
-                method: "GET",
-            })
-
-            const data = await response.json();
-
-            if(!response.ok) {
-                throw new Error(data.message || "Failed to GET Application");
-            }
-
-            setApplication(data.data);
-            console.log("Application Fetched Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
+  // Update application status (recruiter)
+  const handleUpdateApplicationStatus = async ({
+    applicationId,
+    status,
+  }) => {
+    try {
+      const data = await request(
+        `${APPLICATIONS_URL}/${applicationId}/status`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ status }),
         }
+      );
+
+      const updated = data?.data;
+
+      const updateStatus = (item) =>
+        item._id === applicationId
+          ? { ...item, ...updated }
+          : item;
+
+      setApplications((prev) => prev.map(updateStatus));
+      setJobApplications((prev) => prev.map(updateStatus));
+
+      setApplication((prev) =>
+        prev?._id === applicationId
+          ? { ...prev, ...updated }
+          : prev
+      );
+
+      return updated;
+    } catch (error) {
+      console.error("Update application status error:", error);
+      throw error;
     }
+  };
 
-    const handleWithdrawnApplication = async({applicationId}) => {
-        try {
-            const response = await fetch(`${API_URL}/application/${applicationId}/withdraw`, {
-                credentials: "include",
-                method: "PATCH",
-            })
+  // Withdraw a candidate's application
+  const handleWithdrawApplication = async ({ applicationId }) => {
+    try {
+      const data = await request(
+        `${APPLICATIONS_URL}/${applicationId}/withdraw`,
+        { method: "PATCH" }
+      );
 
-            const data = await response.json();
+      const updated = data?.data;
 
-            if(!response.ok) {
-                throw new Error(data.message || "Failed to Withdrawn Application");
-            }
+      const updateStatus = (item) =>
+        item._id === applicationId
+          ? { ...item, ...updated }
+          : item;
 
-            setApplications((prev) => prev.map((item) => item._id === applicationId ? data.data : item));
-            console.log("Application Withdrawn Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
+      setApplications((prev) => prev.map(updateStatus));
+
+      setApplication((prev) =>
+        prev?._id === applicationId
+          ? { ...prev, ...updated }
+          : prev
+      );
+
+      return updated;
+    } catch (error) {
+      console.error("Withdraw application error:", error);
+      throw error;
     }
+  };
 
-    const handleGetJobApplication = async({jobId}) => {
-        try {
-            const response = await fetch(`${API_URL}/application/jobs/${jobId}`, {
-                credentials: "include",
-                method: "GET",
-            })
+  return (
+    <ApplicationContext.Provider
+      value={{
+        application,
+        applications,
+        deletedApplications,
+        myApplicationPagination,
+        deletedApplicationPagination,
+        jobApplications,
+        jobApplicationPagination,
 
-            const data = await response.json();
-
-            if(!response.ok) {
-                throw new Error(data.message || "Failed to Fetch Application");
-            }
-
-            setJobApplications(data.data.applications);
-            setJobApplicationPagination(data.data.pagination);
-            console.log("Application Fetched Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
-    }
-
-    
-    return (
-        <ApplicationContext.Provider value={{jobApplicationPagination, application, applications, deletedApplications, jobApplications, myApplicationPagination, handleApplyForAJob, handleGetMyApplications, handleGetDeletedApplications, handleUpdateRecruiterNotes, handleDeleteApplication, handleUpdateApplicationStatus, handleGetApplicationById, handleWithdrawnApplication, handleGetJobApplication}}>
-            {children}
-        </ApplicationContext.Provider>
-    )
-}
+        handleApplyForAJob,
+        handleGetMyApplications,
+        handleGetDeletedApplications,
+        handleGetMyApplicationById,
+        handleGetApplicationById,
+        handleGetJobApplications,
+        handleUpdateRecruiterNotes,
+        handleDeleteApplication,
+        handleUpdateApplicationStatus,
+        handleWithdrawApplication,
+      }}
+    >
+      {children}
+    </ApplicationContext.Provider>
+  );
+};
 
 export default ApplicationProvider;
