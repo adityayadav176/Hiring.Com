@@ -74,20 +74,19 @@ function normalizeStatus(company) {
   const status = String(company.verificationStatus || "").toLowerCase();
 
   if (
-    company.isVerified === true ||
-    ["approved", "verified", "accepted"].includes(status)
+    company.isVerified === true || status === "verified"
   ) {
     return "approved";
   }
 
   if (
-    ["rejected", "declined", "needs_attention"].includes(status)
+    status === "rejected"
   ) {
     return "rejected";
   }
 
   if (
-    ["pending", "under_review", "submitted", "in_review"].includes(status)
+    status === "pending"
   ) {
     return "pending";
   }
@@ -862,25 +861,17 @@ function CompanyDashboard({
   );
 }
 
-export default function RecruiterCompanies({
-  company: companyProp,
-  loading = false,
-  error: externalError = "",
-  onCreateCompany,
-  onUpdateCompany,
-  onRefresh,
-  onManageRecruiters,
-  onManageJobs,
-  onSettings,
-}) {
+export default function RecruiterCompanies() {
   const [localCompany, setLocalCompany] = useState(null);
   const [modal, setModal] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  // Use the real company supplied by the parent whenever available.
-  const company = companyProp !== undefined ? companyProp : localCompany;
+  const loading = false;
+  const externalError = "";
+
+  const company = localCompany;
   const status = normalizeStatus(company);
 
   const initialValues = useMemo(() => {
@@ -904,48 +895,43 @@ export default function RecruiterCompanies({
     setError("");
 
     try {
-      let result;
+      const result = {
+        ...values,
+        _id: company?._id || `preview-${Date.now()}`,
+        verificationStatus: company
+          ? company.verificationStatus || "pending"
+          : "pending",
+        isVerified: company?.isVerified || false,
+        recruiters: company?.recruiters || [],
+        stats: company?.stats || {
+          jobs: 0,
+          applications: 0,
+          interviews: 0,
+        },
+      };
 
-      if (company && onUpdateCompany) {
-        result = await onUpdateCompany(values);
-      } else if (!company && onCreateCompany) {
-        result = await onCreateCompany(values);
-      } else if (!companyProp) {
-        // Local preview only; replace this branch when wiring up the context.
-        result = {
-          ...values,
-          _id: `preview-${Date.now()}`,
-          verificationStatus: "pending",
-          isVerified: false,
-          recruiters: [],
-        };
-      } else {
-        throw new Error("Company actions are not connected yet.");
-      }
-
-      if (!companyProp && result) setLocalCompany(result.company || result);
+      setLocalCompany(result);
       setModal("");
+
       setNotice(
         company
           ? "Company profile update submitted."
           : "Company profile submitted for review."
       );
     } catch (err) {
-      setError(err?.message || "Could not save company details. Please try again.");
+      setError(
+        err?.message ||
+          "Could not save company details. Please try again."
+      );
     } finally {
       setBusy(false);
     }
   }
 
   async function handleRefresh() {
-    if (!onRefresh) {
-      setNotice("Connect the refresh action to your company status API.");
-      return;
-    }
-
     setBusy(true);
+
     try {
-      await onRefresh();
       setNotice("Company status refreshed.");
     } catch {
       setNotice("Could not refresh company status.");
@@ -954,15 +940,32 @@ export default function RecruiterCompanies({
     }
   }
 
+  const handleManageRecruiters = () => {
+    setNotice("Connect recruiter management.");
+  };
+
+  const handleManageJobs = () => {
+    setNotice("Connect your recruiter jobs page.");
+  };
+
+  const handleSettings = () => {
+    setNotice("Connect company settings.");
+  };
+
   if (loading) {
     return (
       <main className="flex min-h-[60vh] items-center justify-center bg-[#F7F8FC] px-5">
         <div className="text-center">
-          <LoaderCircle size={34} className="mx-auto animate-spin text-violet-700" />
+          <LoaderCircle
+            size={34}
+            className="mx-auto animate-spin text-violet-700"
+          />
           <p className="mt-4 text-sm font-semibold text-slate-700">
             Loading company workspace...
           </p>
-          <p className="mt-1 text-xs text-slate-500">Fetching your company status.</p>
+          <p className="mt-1 text-xs text-slate-500">
+            Fetching your company status.
+          </p>
         </div>
       </main>
     );
@@ -977,9 +980,11 @@ export default function RecruiterCompanies({
               <span className="h-1.5 w-1.5 rounded-full bg-violet-600" />
               Recruiter workspace
             </div>
+
             <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
               Company<span className="text-violet-600">.</span>
             </h1>
+
             <p className="mt-2 text-sm leading-6 text-slate-500">
               Your organization, your team, and your hiring operations.
             </p>
@@ -988,12 +993,16 @@ export default function RecruiterCompanies({
           {company && (
             <div className="flex flex-wrap gap-2">
               <StatusBadge status={status} />
+
               <button
                 onClick={handleRefresh}
                 disabled={busy}
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-violet-200 hover:text-violet-700 disabled:opacity-60"
               >
-                <RefreshCw size={15} className={busy ? "animate-spin" : ""} />
+                <RefreshCw
+                  size={15}
+                  className={busy ? "animate-spin" : ""}
+                />
                 Refresh
               </button>
             </div>
@@ -1033,9 +1042,9 @@ export default function RecruiterCompanies({
               setModal("edit");
             }}
             onRefresh={handleRefresh}
-            onManageRecruiters={onManageRecruiters || (() => setNotice("Connect recruiter management."))}
-            onManageJobs={onManageJobs || (() => setNotice("Connect your recruiter jobs page."))}
-            onSettings={onSettings || (() => setNotice("Connect company settings."))}
+            onManageRecruiters={handleManageRecruiters}
+            onManageJobs={handleManageJobs}
+            onSettings={handleSettings}
             busy={busy}
           />
         )}
@@ -1060,10 +1069,16 @@ export default function RecruiterCompanies({
             <div className="rounded-lg bg-violet-100 p-2 text-violet-700">
               <CheckCircle2 size={17} />
             </div>
+
             <div className="flex-1">
-              <p className="text-sm font-bold text-slate-900">Peer.Hiring</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500">{notice}</p>
+              <p className="text-sm font-bold text-slate-900">
+                Peer.Hiring
+              </p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                {notice}
+              </p>
             </div>
+
             <button
               onClick={() => setNotice("")}
               className="rounded-md p-1 text-slate-400 hover:bg-slate-100"

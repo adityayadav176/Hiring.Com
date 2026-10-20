@@ -59,6 +59,17 @@ const AdminProvider = ({ children }) => {
     return params.toString();
   }, []);
 
+  const getResponseData = (result) => {
+  return (
+    result?.data?.company ??
+    result?.data?.data?.company ??
+    result?.data?.data ??
+    result?.data ??
+    result?.company ??
+    result
+  );
+};
+
   const handleGetAdminDashboard = useCallback(async () => {
     try {
       setLoading(true);
@@ -472,6 +483,7 @@ const handleGetAllAdminCompanies = useCallback(
       }
 
       setCompanies(data.companies);
+      setCompaniesPagination(data.pagination ?? null);
 
       return {
         companies: data.companies,
@@ -514,7 +526,8 @@ const handleGetCompanyById = useCallback(
       const company = getResponseData(result);
 
       if (!company || typeof company !== "object" || !company._id) {
-        throw new Error("Invalid company response.");
+        console.error("Unexpected company response:", result);
+        throw new Error("Invalid company response from server.");
       }
 
       setSelectedCompany(company);

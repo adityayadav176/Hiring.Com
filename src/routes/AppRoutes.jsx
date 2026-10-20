@@ -9,9 +9,7 @@ import ProtectedRoutes from "./ProtectedRoutes";
 import NotFound from "../pages/NotFound";
 import RecruiterLayout from '../pages/recruiter/RecruiterLayout';
 import RecruiterApplication from "../components/RecruiterApplication";
-import RecruiterJobs from "../components/RecruiterJobs";
 import RecruiterInterviews from "../components/RecruiterInterviews";
-import RecruiterCompanies from "../components/RecruiterCompanies";
 import CandidateProfile from "../components/CandidateProfile";
 import RecruiterProfile from "../components/RecruiterProfile";
 import RecruiterDashboard from "../components/RecruiterDashboard";
@@ -23,9 +21,7 @@ const AppRoutes = () => {
             <Route path="/login" element={<Login/>}/>
             <Route path="/signup" element={<Signup/>}/>
             <Route path="/application" element={<RecruiterApplication/>}/>
-            <Route path="/jobs" element={<RecruiterJobs/>}/>
             <Route path="/interviews" element={<RecruiterInterviews/>}/>
-            <Route path="/company" element={<RecruiterCompanies/>}/>
             <Route path="/profile" element={<CandidateProfile/>}/>
             <Route path="rp" element={<RecruiterProfile/>}/>
             <Route path="/dashboard" element={<RecruiterDashboard/>}/>

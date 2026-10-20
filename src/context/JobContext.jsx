@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useCallback, useState } from "react";
 
 export const JobContext = createContext();
 
@@ -154,33 +154,34 @@ const JobProvider = ({ children }) => {
     };
 
     // Get Recruiter Jobs
-    const handleGetRecruiterJobs = async ({ query = "" } = {}) => {
-        try {
-            const response = await fetch(
-                `${API_URL}/job/recruiter${query}`,
-                {
-                    method: "GET",
-                    credentials: "include",
-                }
-            );
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    getErrorMessage(data, "Failed to Get Recruiter Jobs")
-                );
-            }
-
-            setRecruiterJobs(data?.data?.jobs || []);
-            setRecruiterJobPagination(data?.data?.pagination || {});
-
-            return data;
-        } catch (error) {
-            console.error("Get Recruiter Jobs Error:", error);
-            throw error;
+const handleGetRecruiterJobs = useCallback(
+  async ({ query = "" } = {}) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/job/recruiter${query}`,
+        {
+          method: "GET",
+          credentials: "include",
         }
-    };
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch recruiter jobs");
+      }
+
+      setRecruiterJobs(data?.data?.jobs || []);
+      setRecruiterJobPagination(data?.data?.pagination || {});
+
+      return data?.data;
+    } catch (error) {
+      console.error("Get recruiter jobs error:", error);
+      throw error;
+    }
+  },
+  []
+);
 
     // Get Deleted Jobs
     const handleGetDeletedJobs = async ({ query = "" } = {}) => {
@@ -212,46 +213,61 @@ const JobProvider = ({ children }) => {
     };
 
     // Get Recruiter Job By ID
-    const handleGetJobById = async ({ jobId }) => {
-        try {
-            if (!jobId) {
-                throw new Error("Job ID is required");
-            }
+const handleGetJobById = useCallback(
+  async ({ JobId, jobId } = {}) => {
+    try {
+      const id = String(JobId ?? jobId ?? "").trim();
 
-            const response = await fetch(
-                `${API_URL}/job/recruiter/${jobId}`,
-                {
-                    method: "GET",
-                    credentials: "include",
-                }
-            );
+      if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+        console.error("Invalid Job ID received:", {
+          JobId,
+          jobId,
+        });
 
-            const data = await response.json();
+        throw new Error(`Invalid Job ID: ${id || "missing ID"}`);
+      }
 
-            if (!response.ok) {
-                throw new Error(
-                    getErrorMessage(data, "Failed to Get Recruiter Job")
-                );
-            }
-
-            setJob(data.data);
-
-            return data.data;
-        } catch (error) {
-            console.error("Get Recruiter Job Error:", error);
-            throw error;
+      const response = await fetch(
+        `${API_URL}/job/recruiter/${encodeURIComponent(id)}`,
+        {
+          method: "GET",
+          credentials: "include",
         }
-    };
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message || "Failed to get recruiter job"
+        );
+      }
+
+      const fetchedJob = data?.data?.job ?? data?.data;
+
+      if (!fetchedJob?._id) {
+        throw new Error("Job was not found in the API response.");
+      }
+
+      setJob(fetchedJob);
+      return fetchedJob;
+    } catch (error) {
+      console.error("Get Recruiter Job Error:", error);
+      throw error;
+    }
+  },
+  [API_URL]
+);
 
     // Get User Job By ID
-    const handleGetUserJobById = async ({ jobId }) => {
+    const handleGetUserJobById = async ({ JobId }) => {
         try {
-            if (!jobId) {
+            if (!JobId) {
                 throw new Error("Job ID is required");
             }
 
             const response = await fetch(
-                `${API_URL}/job/user/${jobId}`,
+                `${API_URL}/job/user/${JobId}`,
                 {
                     method: "GET",
                     credentials: "include",
@@ -276,9 +292,9 @@ const JobProvider = ({ children }) => {
     };
 
     // Update Job
-    const handleUpdateJob = async ({ jobId, jobData }) => {
+    const handleUpdateJob = async ({ JobId, jobData }) => {
         try {
-            const response = await fetch(`${API_URL}/job/${jobId}`, {
+            const response = await fetch(`${API_URL}/job/${JobId}`, {
                 method: "PATCH",
                 credentials: "include",
                 headers: {
@@ -298,18 +314,18 @@ const JobProvider = ({ children }) => {
             const updatedJob = data.data;
 
             setJob((prev) =>
-                prev?._id === jobId ? updatedJob : prev
+                prev?._id === JobId ? updatedJob : prev
             );
 
             setJobs((prev) =>
                 prev.map((item) =>
-                    item._id === jobId ? updatedJob : item
+                    item._id === JobId ? updatedJob : item
                 )
             );
 
             setRecruiterJobs((prev) =>
                 prev.map((item) =>
-                    item._id === jobId ? updatedJob : item
+                    item._id === JobId ? updatedJob : item
                 )
             );
 
@@ -321,10 +337,10 @@ const JobProvider = ({ children }) => {
     };
 
     // Soft Delete Job
-    const handleDeleteJob = async ({ jobId }) => {
+    const handleDeleteJob = async ({ JobId }) => {
         try {
             const response = await fetch(
-                `${API_URL}/job/${jobId}/delete`,
+                `${API_URL}/job/${JobId}/delete`,
                 {
                     method: "PATCH",
                     credentials: "include",
@@ -340,19 +356,19 @@ const JobProvider = ({ children }) => {
             }
 
             setJobs((prev) =>
-                prev.filter((item) => item._id !== jobId)
+                prev.filter((item) => item._id !== JobId)
             );
 
             setRecruiterJobs((prev) =>
-                prev.filter((item) => item._id !== jobId)
+                prev.filter((item) => item._id !== JobId)
             );
 
             setJob((prev) =>
-                prev?._id === jobId ? null : prev
+                prev?._id === JobId ? null : prev
             );
 
             setSelectedJobs((prev) =>
-                prev?._id === jobId ? null : prev
+                prev?._id === JobId ? null : prev
             );
 
             return data;
@@ -363,10 +379,10 @@ const JobProvider = ({ children }) => {
     };
 
     // Permanently Delete Job
-    const handlePermanentDeleteJob = async ({ jobId }) => {
+    const handlePermanentDeleteJob = async ({ JobId }) => {
         try {
             const response = await fetch(
-                `${API_URL}/job/${jobId}/permanent`,
+                `${API_URL}/job/${JobId}/permanent`,
                 {
                     method: "DELETE",
                     credentials: "include",
@@ -385,15 +401,15 @@ const JobProvider = ({ children }) => {
             }
 
             setDeletedJobs((prev) =>
-                prev.filter((item) => item._id !== jobId)
+                prev.filter((item) => item._id !== JobId)
             );
 
             setJob((prev) =>
-                prev?._id === jobId ? null : prev
+                prev?._id === JobId ? null : prev
             );
 
             setSelectedJobs((prev) =>
-                prev?._id === jobId ? null : prev
+                prev?._id === JobId ? null : prev
             );
 
             return data;
@@ -404,10 +420,10 @@ const JobProvider = ({ children }) => {
     };
 
     // Change Job Status
-    const handleChangeJobStatus = async ({ jobId, status }) => {
+    const handleChangeJobStatus = async ({ JobId, status }) => {
         try {
             const response = await fetch(
-                `${API_URL}/job/${jobId}/status`,
+                `${API_URL}/job/${JobId}/status`,
                 {
                     method: "PATCH",
                     credentials: "include",
@@ -429,18 +445,18 @@ const JobProvider = ({ children }) => {
             const updatedJob = data.data;
 
             setJob((prev) =>
-                prev?._id === jobId ? updatedJob : prev
+                prev?._id === JobId ? updatedJob : prev
             );
 
             setJobs((prev) =>
                 prev.map((item) =>
-                    item._id === jobId ? updatedJob : item
+                    item._id === JobId ? updatedJob : item
                 )
             );
 
             setRecruiterJobs((prev) =>
                 prev.map((item) =>
-                    item._id === jobId ? updatedJob : item
+                    item._id === JobId ? updatedJob : item
                 )
             );
 
@@ -452,10 +468,10 @@ const JobProvider = ({ children }) => {
     };
 
     // Restore Job
-    const handleRestoreJob = async ({ jobId }) => {
+    const handleRestoreJob = async ({ JobId }) => {
         try {
             const response = await fetch(
-                `${API_URL}/job/${jobId}/restore`,
+                `${API_URL}/job/${JobId}/restore`,
                 {
                     method: "PATCH",
                     credentials: "include",
@@ -473,12 +489,12 @@ const JobProvider = ({ children }) => {
             const restoredJob = data.data;
 
             setDeletedJobs((prev) =>
-                prev.filter((item) => item._id !== jobId)
+                prev.filter((item) => item._id !== JobId)
             );
 
             setRecruiterJobs((prev) => [
                 restoredJob,
-                ...prev.filter((item) => item._id !== jobId),
+                ...prev.filter((item) => item._id !== JobId),
             ]);
 
             return restoredJob;

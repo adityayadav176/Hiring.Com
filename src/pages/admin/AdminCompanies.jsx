@@ -1,3 +1,4 @@
+
 import React, {
   useCallback,
   useEffect,
@@ -7,32 +8,31 @@ import React, {
 
 import {
   Building2,
-  ShieldCheck,
-  ShieldAlert,
-  Ban,
-  Trash2,
   Search,
   RefreshCw,
   LoaderCircle,
   ChevronLeft,
   ChevronRight,
-  MoreVertical,
   Eye,
-  CheckCircle,
-  Clock,
   X,
-  CalendarDays,
+  CheckCircle2,
+  XCircle,
+  ShieldCheck,
+  ShieldAlert,
+  Ban,
+  Trash2,
+  AlertCircle,
+  Clock3,
+  Users,
+  Globe,
   Mail,
   Phone,
-  AlertCircle,
-  Filter,
-  ChevronDown,
-  Hash,
   MapPin,
-  BriefcaseBusiness,
-  BadgeCheck,
+  CalendarDays,
+  ExternalLink,
+  Filter,
   RotateCcw,
-  Users,
+  BriefcaseBusiness,
 } from "lucide-react";
 
 import { useAdmin } from "../../hooks/Hook";
@@ -41,72 +41,58 @@ const PAGE_SIZE = 8;
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
+const getErrorMessage = (error, fallback) =>
+  error?.response?.data?.message ||
+  error?.data?.message ||
+  error?.message ||
+  fallback;
+
 const getCompanyId = (company) =>
   company?._id || company?.id || company?.companyId || "";
 
 const getCompanyName = (company) =>
-  company?.name || company?.companyName || "Unnamed company";
+  company?.name ||
+  company?.companyName ||
+  company?.companyDetails?.name ||
+  "Unnamed company";
 
-const getCompanyEmail = (company) =>
-  company?.email ||
-  company?.contactEmail ||
-  company?.recruiters?.[0]?.email ||
-  "No email available";
+const getVerificationStatus = (company) => {
+  const status = String(company?.verificationStatus || "").toLowerCase();
 
-const getCompanyPhone = (company) =>
-  company?.phone ||
-  company?.phoneNo ||
-  company?.contactPhone ||
-  company?.recruiters?.[0]?.phoneNo ||
-  "Not specified";
+  if (["verified", "approved"].includes(status) || company?.isVerified === true) {
+    return "verified";
+  }
 
-const getCompanyLogo = (company) => {
-  const logo = company?.logo;
+  if (status === "rejected") return "rejected";
 
-  if (typeof logo === "string") return logo;
-  if (typeof logo?.url === "string") return logo.url;
-
-  return company?.logoUrl || company?.image || company?.profileImage || "";
+  return "pending";
 };
 
-const getCompanyLocation = (company) => {
-  const headquarters = company?.headquarters;
+const getCompanyStatus = (company) => {
+  if (
+    company?.isDeleted ||
+    company?.deletedAt ||
+    String(company?.status || "").toLowerCase() === "deleted"
+  ) {
+    return "deleted";
+  }
 
-  if (typeof headquarters === "string") return headquarters;
+  if (
+    company?.isBlocked ||
+    String(company?.status || "").toLowerCase() === "blocked"
+  ) {
+    return "blocked";
+  }
 
-  return (
-    [
-      headquarters?.city,
-      headquarters?.state,
-      headquarters?.country,
-    ]
-      .filter(Boolean)
-      .join(", ") ||
-    company?.location ||
-    "Not specified"
-  );
+  return "active";
 };
-
-const getCompanyIndustry = (company) =>
-  company?.industry || "Not specified";
-
-const getCompanySize = (company) =>
-  company?.companySize || company?.size || "Not specified";
-
-const getCompanyInitials = (name = "") =>
-  name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "C";
 
 const formatDate = (value) => {
-  if (!value) return "Not specified";
+  if (!value) return "Not available";
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) return "Not specified";
+  if (Number.isNaN(date.getTime())) return "Not available";
 
   return date.toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -115,768 +101,204 @@ const formatDate = (value) => {
   });
 };
 
-const formatDateTime = (value) => {
+const formatCompanySize = (value) => {
   if (!value) return "Not specified";
 
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) return "Not specified";
-
-  return date.toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-const formatLabel = (value) => {
-  if (value === null || value === undefined || value === "") {
-    return "Not specified";
+  if (typeof value === "object") {
+    return (
+      value.label ||
+      value.value ||
+      value.name ||
+      "Not specified"
+    );
   }
 
-  return String(value)
-    .trim()
-    .replace(/[_-]+/g, " ")
-    .toLowerCase()
-    .replace(/\b\w/g, (character) => character.toUpperCase());
+  return String(value);
 };
 
-const getVerificationStatus = (company) => {
-  if (!company) return "unknown";
-
-  const status = String(company.verificationStatus || "")
-    .trim()
-    .toLowerCase();
-
-  if (["pending", "verified", "rejected"].includes(status)) {
-    return status;
-  }
-
-  if (company.isVerified === true) return "verified";
-  if (company.isVerified === false) return "pending";
-
-  return "unknown";
+const statusStyles = {
+  verified: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  pending: "bg-amber-50 text-amber-700 ring-amber-200",
+  rejected: "bg-rose-50 text-rose-700 ring-rose-200",
+  active: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  blocked: "bg-orange-50 text-orange-700 ring-orange-200",
+  deleted: "bg-gray-100 text-gray-600 ring-gray-200",
 };
 
-const getCompanyStatus = (company) => {
-  if (!company) return "unknown";
-
-  if (
-    company.isDeleted === true ||
-    company.deletedAt ||
-    company.status === "deleted"
-  ) {
-    return "deleted";
-  }
-
-  if (company.isBlocked === true || company.status === "blocked") {
-    return "blocked";
-  }
-
-  return "active";
-};
-
-const getRecruiters = (company) =>
-  Array.isArray(company?.recruiters) ? company.recruiters : [];
-
-const getPagination = (pagination, count) => {
-  const total = Number(
-    pagination?.totalCompanies ??
-      pagination?.total ??
-      pagination?.totalItems ??
-      count
-  );
-
-  const page = Number(
-    pagination?.currentPage ?? pagination?.page ?? pagination?.current ?? 1
-  );
-
-  const limit = Number(
-    pagination?.limit ?? pagination?.pageSize ?? PAGE_SIZE
-  );
-
-  const totalPages = Number(
-    pagination?.totalPages ??
-      pagination?.pages ??
-      Math.max(1, Math.ceil(total / limit))
-  );
-
-  return {
-    total: Number.isFinite(total) ? total : count,
-    page: Number.isFinite(page) && page > 0 ? page : 1,
-    limit: Number.isFinite(limit) && limit > 0 ? limit : PAGE_SIZE,
-    totalPages:
-      Number.isFinite(totalPages) && totalPages > 0 ? totalPages : 1,
+function StatusBadge({ status }) {
+  const labels = {
+    verified: "Verified",
+    pending: "Pending review",
+    rejected: "Rejected",
+    active: "Active",
+    blocked: "Blocked",
+    deleted: "Deleted",
   };
-};
-
-const getReturnedCompany = (result) => {
-  const candidates = [
-    result?.data?.company,
-    result?.data?.data?.company,
-    result?.data?.data,
-    result?.data,
-    result?.company,
-    result,
-  ];
 
   return (
-    candidates.find(
-      (item) =>
-        item &&
-        typeof item === "object" &&
-        (item._id || item.id || item.companyId)
-    ) || null
-  );
-};
-
-const COMPANY_STATUS_OPTIONS = [
-  { value: "all", label: "All statuses" },
-  { value: "active", label: "Active" },
-  { value: "blocked", label: "Blocked" },
-  { value: "deleted", label: "Deleted" },
-];
-
-const VERIFICATION_OPTIONS = [
-  { value: "all", label: "All verification" },
-  { value: "pending", label: "Pending" },
-  { value: "verified", label: "Verified" },
-  { value: "rejected", label: "Rejected" },
-];
-
-const COMPANY_SIZE_OPTIONS = [
-  { value: "all", label: "All company sizes" },
-  { value: "1-10", label: "1–10 employees" },
-  { value: "11-50", label: "11–50 employees" },
-  { value: "51-200", label: "51–200 employees" },
-  { value: "201-500", label: "201–500 employees" },
-  { value: "501-1000", label: "501–1,000 employees" },
-  { value: "1001-5000", label: "1,001–5,000 employees" },
-  { value: "5001-10000", label: "5,001–10,000 employees" },
-];
-
-const STATUS_STYLES = {
-  active: "bg-emerald-50 text-emerald-700 ring-emerald-600/15",
-  blocked: "bg-red-50 text-red-700 ring-red-600/15",
-  deleted: "bg-slate-100 text-slate-600 ring-slate-500/15",
-  unknown: "bg-amber-50 text-amber-700 ring-amber-600/15",
-};
-
-const VERIFICATION_STYLES = {
-  verified: "bg-emerald-50 text-emerald-700",
-  pending: "bg-amber-50 text-amber-700",
-  rejected: "bg-red-50 text-red-700",
-  unknown: "bg-slate-100 text-slate-600",
-};
-
-const StatusBadge = ({ status }) => (
-  <span
-    className={cn(
-      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1",
-      "text-xs font-semibold capitalize ring-1 ring-inset",
-      STATUS_STYLES[status] || STATUS_STYLES.unknown
-    )}
-  >
     <span
       className={cn(
-        "h-1.5 w-1.5 rounded-full",
-        status === "active" && "bg-emerald-500",
-        status === "blocked" && "bg-red-500",
-        status === "deleted" && "bg-slate-400",
-        status === "unknown" && "bg-amber-500"
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset",
+        statusStyles[status] || statusStyles.pending
       )}
-    />
-    {formatLabel(status)}
-  </span>
-);
+    >
+      {status === "verified" || status === "active" ? (
+        <CheckCircle2 size={13} />
+      ) : status === "blocked" || status === "rejected" ? (
+        <ShieldAlert size={13} />
+      ) : status === "deleted" ? (
+        <Trash2 size={13} />
+      ) : (
+        <Clock3 size={13} />
+      )}
+      {labels[status] || status}
+    </span>
+  );
+}
 
-const VerificationBadge = ({ status }) => (
-  <span
-    className={cn(
-      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1",
-      "text-xs font-semibold",
-      VERIFICATION_STYLES[status] || VERIFICATION_STYLES.unknown
-    )}
-  >
-    {status === "verified" ? (
-      <BadgeCheck size={13} />
-    ) : status === "rejected" ? (
-      <X size={13} />
-    ) : (
-      <Clock size={13} />
-    )}
-    {formatLabel(status)}
-  </span>
-);
+function Toast({ toast, onClose }) {
+  if (!toast) return null;
 
-const IconButton = ({
-  title,
-  onClick,
-  children,
-  danger = false,
-  disabled = false,
-}) => (
-  <button
-    type="button"
-    title={title}
-    aria-label={title}
-    disabled={disabled}
-    onClick={onClick}
-    className={cn(
-      "inline-flex h-9 w-9 items-center justify-center rounded-xl",
-      "border transition disabled:cursor-not-allowed disabled:opacity-50",
-      danger
-        ? "border-red-100 text-red-600 hover:bg-red-50"
-        : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-violet-700"
-    )}
-  >
-    {children}
-  </button>
-);
+  const variants = {
+    success: {
+      wrapper: "border-emerald-200 bg-white",
+      icon: "bg-emerald-50 text-emerald-600",
+      Icon: CheckCircle2,
+    },
+    error: {
+      wrapper: "border-rose-200 bg-white",
+      icon: "bg-rose-50 text-rose-600",
+      Icon: XCircle,
+    },
+    warning: {
+      wrapper: "border-amber-200 bg-white",
+      icon: "bg-amber-50 text-amber-600",
+      Icon: AlertCircle,
+    },
+    info: {
+      wrapper: "border-violet-200 bg-white",
+      icon: "bg-violet-50 text-violet-600",
+      Icon: ShieldCheck,
+    },
+  };
 
-const StatCard = ({ title, value, description, icon: Icon, iconClass }) => (
-  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-    <div className="flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-slate-500">{title}</p>
-        <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-          {value}
-        </p>
-        <p className="mt-1 text-xs text-slate-500">{description}</p>
-      </div>
+  const style = variants[toast.type] || variants.info;
+  const Icon = style.Icon;
 
+  return (
+    <div
+      className="fixed right-4 top-4 z-[120] w-[calc(100%-2rem)] max-w-md"
+      role={toast.type === "error" ? "alert" : "status"}
+      aria-live="polite"
+    >
       <div
         className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
-          iconClass
+          "flex items-start gap-3 rounded-2xl border p-4 shadow-xl shadow-slate-900/10",
+          style.wrapper
         )}
       >
-        <Icon size={21} />
+        <span
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+            style.icon
+          )}
+        >
+          <Icon size={20} />
+        </span>
+
+        <div className="min-w-0 flex-1 pt-0.5">
+          <p className="text-sm font-bold text-slate-900">
+            {toast.type === "success"
+              ? "Success"
+              : toast.type === "error"
+              ? "Something went wrong"
+              : toast.type === "warning"
+              ? "Attention required"
+              : "Notification"}
+          </p>
+          <p className="mt-1 break-words text-sm leading-5 text-slate-600">
+            {toast.message}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close notification"
+          className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+        >
+          <X size={17} />
+        </button>
       </div>
     </div>
-  </div>
-);
+  );
+}
 
-const DetailItem = ({ icon: Icon, label, value }) => (
-  <div className="flex min-w-0 gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3">
-    <div className="mt-0.5 shrink-0 text-violet-600">
-      <Icon size={17} />
+function StatCard({ title, value, description, icon: Icon, accent }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-slate-500">{title}</p>
+          <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+            {value}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">{description}</p>
+        </div>
+
+        <span
+          className={cn(
+            "flex h-11 w-11 items-center justify-center rounded-xl",
+            accent
+          )}
+        >
+          <Icon size={21} />
+        </span>
+      </div>
     </div>
+  );
+}
 
-    <div className="min-w-0">
-      <p className="text-xs font-medium text-slate-500">{label}</p>
-      <p className="mt-1 break-words text-sm font-semibold text-slate-800">
-        {value === null || value === undefined || value === ""
-          ? "Not specified"
-          : value}
-      </p>
-    </div>
-  </div>
-);
-
-
-const CompanyDetailsModal = ({ company, onClose, onAction, busy }) => {
-  if (!company) return null;
-
-  const companyStatus = getCompanyStatus(company);
-  const verification = getVerificationStatus(company);
-  const logo = getCompanyLogo(company);
-  const recruiters = getRecruiters(company);
-  const companyId = getCompanyId(company);
-  const companyName = getCompanyName(company);
-
-  const informationItems = [
-    { icon: Building2, label: "Company name", value: companyName },
-    { icon: Hash, label: "Company ID", value: companyId },
-    { icon: BriefcaseBusiness, label: "Industry", value: getCompanyIndustry(company) },
-    { icon: Users, label: "Company size", value: getCompanySize(company) },
-    { icon: CalendarDays, label: "Founded year", value: company.foundedYear },
-    { icon: MapPin, label: "Headquarters", value: getCompanyLocation(company) },
-    { icon: Mail, label: "Contact email", value: getCompanyEmail(company) },
-    { icon: Phone, label: "Contact phone", value: getCompanyPhone(company) },
-    { icon: CalendarDays, label: "Created on", value: formatDateTime(company.createdAt) },
-    { icon: Clock, label: "Last updated", value: formatDateTime(company.updatedAt) },
-  ];
-
-  const actionClass =
-    "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50";
-
-  const displayValue = (value) =>
-    value === null || value === undefined || value === ""
-      ? "Not specified"
+function DetailRow({ icon: Icon, label, value, href }) {
+  const displayValue =
+    value === undefined || value === null || value === ""
+      ? "Not provided"
       : value;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-sm sm:p-6"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !busy) onClose();
-      }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="company-details-title"
-        className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
-      >
-        {/* Modal heading */}
-        <header className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 px-5 py-4 sm:px-7">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700">
-              <Building2 size={20} />
-            </div>
+    <div className="flex items-start gap-3 py-3">
+      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+        <Icon size={17} />
+      </span>
 
-            <div className="min-w-0">
-              <h2
-                id="company-details-title"
-                className="text-lg font-bold tracking-tight text-slate-900"
-              >
-                Company details
-              </h2>
-              <p className="mt-0.5 text-xs text-slate-500">
-                Company profile and account management
-              </p>
-            </div>
-          </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+          {label}
+        </p>
 
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={busy}
-            aria-label="Close company details"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"
+        {href && displayValue !== "Not provided" ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 inline-flex max-w-full items-center gap-1 break-all text-sm font-medium text-violet-700 hover:underline"
           >
-            <X size={18} />
-          </button>
-        </header>
-
-        {/* Scrollable body */}
-        <main className="flex-1 space-y-6 overflow-y-auto bg-slate-50/60 p-4 sm:p-7">
-          {/* Company profile */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-                {logo ? (
-                  <img
-                    src={logo}
-                    alt={`${companyName} logo`}
-                    className="h-full w-full object-contain p-2"
-                  />
-                ) : (
-                  <span className="text-2xl font-bold text-violet-700">
-                    {getCompanyInitials(companyName)}
-                  </span>
-                )}
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusBadge status={companyStatus} />
-                  <VerificationBadge status={verification} />
-                </div>
-
-                <h3 className="mt-3 break-words text-xl font-bold tracking-tight text-slate-900">
-                  {companyName}
-                </h3>
-
-                <p className="mt-1 break-all text-sm text-slate-500">
-                  {company.slug ? `/${company.slug}` : companyId}
-                </p>
-
-                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-600">
-                  <span className="inline-flex items-center gap-2">
-                    <BriefcaseBusiness size={15} className="text-violet-600" />
-                    {getCompanyIndustry(company)}
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <MapPin size={15} className="text-violet-600" />
-                    {getCompanyLocation(company)}
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <Users size={15} className="text-violet-600" />
-                    {getCompanySize(company)} employees
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 sm:min-w-40">
-                <div className="rounded-xl border border-slate-200 p-3">
-                  <p className="text-xs text-slate-500">Recruiters</p>
-                  <p className="mt-1 text-xl font-bold text-slate-900">
-                    {recruiters.length}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-slate-200 p-3">
-                  <p className="text-xs text-slate-500">Founded</p>
-                  <p className="mt-1 text-xl font-bold text-slate-900">
-                    {company.foundedYear || "—"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Business information */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-            <div className="mb-5">
-              <h3 className="text-base font-bold text-slate-900">
-                Business information
-              </h3>
-              <p className="mt-1 text-sm text-slate-500">
-                Company identity, contact details, and record history.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {informationItems.map(({ icon: Icon, label, value }) => (
-                <div
-                  key={label}
-                  className="flex min-w-0 gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3.5"
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-violet-700">
-                    <Icon size={17} />
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-slate-500">
-                      {label}
-                    </p>
-                    <p className="mt-1 break-words text-sm font-semibold text-slate-800">
-                      {displayValue(value)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Description */}
-          {company.description && (
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-              <h3 className="text-base font-bold text-slate-900">
-                About the company
-              </h3>
-              <p className="mt-1 text-sm text-slate-500">
-                Company overview and description.
-              </p>
-              <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-7 text-slate-600">
-                {company.description}
-              </p>
-            </section>
-          )}
-
-          {/* Recruiters */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  Associated recruiters
-                </h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  People associated with this company account.
-                </p>
-              </div>
-              <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600">
-                {recruiters.length} total
-              </span>
-            </div>
-
-            {recruiters.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center">
-                <Users size={26} className="mx-auto text-slate-300" />
-                <p className="mt-3 text-sm font-semibold text-slate-700">
-                  No associated recruiters
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  No recruiter records are available for this company.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                {recruiters.map((recruiter, index) => {
-                  const recruiterName = recruiter?.name || "Unnamed recruiter";
-                  const recruiterId = recruiter?._id || recruiter?.id || index;
-
-                  return (
-                    <div
-                      key={recruiterId}
-                      className="flex min-w-0 items-start gap-3 rounded-xl border border-slate-200 p-4"
-                    >
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 font-bold text-violet-700">
-                        {getCompanyInitials(recruiterName)}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="break-words text-sm font-bold text-slate-900">
-                          {recruiterName}
-                        </p>
-                        <p className="mt-1 break-all text-sm text-slate-500">
-                          {recruiter?.email || "No email available"}
-                        </p>
-                        {recruiter?.phoneNo && (
-                          <p className="mt-1 text-xs text-slate-500">
-                            {recruiter.phoneNo}
-                          </p>
-                        )}
-                      </div>
-
-                      <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                        Recruiter
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          {/* Verification and account status */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
-                <ShieldCheck size={20} />
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <h3 className="text-base font-bold text-slate-900">
-                  Account and verification
-                </h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  Current status of the company account.
-                </p>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <StatusBadge status={companyStatus} />
-                  <VerificationBadge status={verification} />
-                </div>
-
-                <p className="mt-3 text-sm leading-6 text-slate-600">
-                  {companyStatus === "deleted"
-                    ? "This company has been soft-deleted."
-                    : companyStatus === "blocked"
-                      ? "This company is currently blocked."
-                      : verification === "verified"
-                        ? "Company verification is complete."
-                        : verification === "rejected"
-                          ? "Company verification has been rejected."
-                          : "This company is not currently verified."}
-                </p>
-
-                {company.deletedAt && (
-                  <div className="mt-4 border-t border-slate-100 pt-3">
-                    <p className="text-xs font-medium text-slate-500">
-                      Deleted at
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-slate-800">
-                      {formatDateTime(company.deletedAt)}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-        </main>
-
-        {/* Actions */}
-        <footer className="shrink-0 border-t border-slate-200 bg-white px-4 py-4 sm:px-7">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <button
-              type="button"
-              onClick={() => onAction("delete", company)}
-              disabled={busy || companyStatus === "deleted"}
-              className={`${actionClass} border-red-200 text-red-700 hover:bg-red-50 sm:mr-auto`}
-            >
-              <Trash2 size={16} />
-              Delete company
-            </button>
-
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-              {companyStatus !== "deleted" && (
-                <>
-                  {verification !== "verified" && (
-                    <button
-                      type="button"
-                      onClick={() => onAction("verify", company)}
-                      disabled={busy || companyStatus === "blocked"}
-                      className={`${actionClass} border-emerald-200 text-emerald-700 hover:bg-emerald-50`}
-                    >
-                      <BadgeCheck size={16} />
-                      Verify
-                    </button>
-                  )}
-
-                  {verification !== "rejected" && (
-                    <button
-                      type="button"
-                      onClick={() => onAction("reject", company)}
-                      disabled={busy || companyStatus === "blocked"}
-                      className={`${actionClass} border-amber-200 text-amber-700 hover:bg-amber-50`}
-                    >
-                      <ShieldAlert size={16} />
-                      Reject
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onAction(
-                        companyStatus === "blocked" ? "unblock" : "block",
-                        company
-                      )
-                    }
-                    disabled={busy}
-                    className={`${actionClass} ${
-                      companyStatus === "blocked"
-                        ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                        : "border-red-200 text-red-700 hover:bg-red-50"
-                    }`}
-                  >
-                    {companyStatus === "blocked" ? (
-                      <CheckCircle size={16} />
-                    ) : (
-                      <Ban size={16} />
-                    )}
-                    {companyStatus === "blocked" ? "Unblock" : "Block"}
-                  </button>
-                </>
-              )}
-
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={busy}
-                className={`${actionClass} border-transparent bg-violet-600 text-white hover:bg-violet-700`}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </footer>
+            {displayValue}
+            <ExternalLink size={13} />
+          </a>
+        ) : (
+          <p className="mt-1 break-words text-sm font-medium text-slate-800">
+            {displayValue}
+          </p>
+        )}
       </div>
     </div>
   );
-};
-
-
-const ConfirmModal = ({ action, company, onCancel, onConfirm, loading }) => {
-  if (!action || !company) return null;
-
-  const isDelete = action === "delete";
-  const isBlock = action === "block";
-  const isUnblock = action === "unblock";
-  const isVerify = action === "verify";
-  const isReject = action === "reject";
-
-  const title = isDelete
-    ? "Delete this company?"
-    : isBlock
-      ? "Block this company?"
-      : isUnblock
-        ? "Unblock this company?"
-        : isVerify
-          ? "Verify this company?"
-          : "Reject this company's verification?";
-
-  const description = isDelete
-    ? "This will soft-delete the company. It will no longer appear in the normal company listing."
-    : isBlock
-      ? "This will block the company according to your admin controller."
-      : isUnblock
-        ? "This will remove the company block."
-        : isVerify
-          ? "This will mark the company as verified."
-          : "This will mark the company's verification status as rejected.";
-
-  const destructive = isDelete || isBlock || isReject;
-
-  return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !loading) onCancel();
-      }}
-    >
-      <div
-        role="alertdialog"
-        aria-modal="true"
-        className="w-full max-w-md rounded-3xl border border-slate-100 bg-white p-6 shadow-2xl"
-      >
-        <div
-          className={cn(
-            "mb-4 flex h-12 w-12 items-center justify-center rounded-2xl",
-            destructive ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
-          )}
-        >
-          {isDelete ? (
-            <Trash2 size={23} />
-          ) : isBlock ? (
-            <Ban size={23} />
-          ) : isReject ? (
-            <ShieldAlert size={23} />
-          ) : isVerify ? (
-            <BadgeCheck size={23} />
-          ) : (
-            <CheckCircle size={23} />
-          )}
-        </div>
-
-        <h3 className="text-lg font-bold text-slate-900">{title}</h3>
-        <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
-
-        <div className="mt-4 rounded-xl bg-slate-50 p-3">
-          <p className="break-words text-sm font-semibold text-slate-800">
-            {getCompanyName(company)}
-          </p>
-          <p className="mt-1 break-all text-xs text-slate-500">
-            {getCompanyId(company)}
-          </p>
-        </div>
-
-        <div className="mt-6 flex gap-3">
-          <button
-            type="button"
-            disabled={loading}
-            onClick={onCancel}
-            className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            disabled={loading}
-            onClick={onConfirm}
-            className={cn(
-              "inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5",
-              "text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60",
-              destructive ? "bg-red-600 hover:bg-red-700" : "bg-emerald-600 hover:bg-emerald-700"
-            )}
-          >
-            {loading && <LoaderCircle size={16} className="animate-spin" />}
-            {loading
-              ? "Processing..."
-              : isDelete
-                ? "Delete company"
-                : isBlock
-                  ? "Block company"
-                  : isUnblock
-                    ? "Unblock company"
-                    : isVerify
-                      ? "Verify company"
-                      : "Reject verification"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+}
 
 export default function AdminCompanies() {
   const {
-    companies: rawCompanies = [],
+    companies,
     companiesPagination,
     handleGetAllAdminCompanies,
     handleGetCompanyById,
@@ -893,48 +315,60 @@ export default function AdminCompanies() {
   const [sizeFilter, setSizeFilter] = useState("all");
   const [page, setPage] = useState(1);
 
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [detailsLoading, setDetailsLoading] = useState(false);
-
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState("");
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
   const [selected, setSelected] = useState(null);
-  const [confirmAction, setConfirmAction] = useState(null);
-  const [menuCompanyId, setMenuCompanyId] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [toast, setToast] = useState(null);
 
-  const clearMessages = useCallback(() => {
-    setError("");
-    setNotice("");
+  const showToast = useCallback((type, message) => {
+    setToast({ type, message });
   }, []);
 
-  const fetchCompanies = useCallback(
-    async (isRefresh = false) => {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setInitialLoading(true);
-      }
+  useEffect(() => {
+    if (!toast) return undefined;
 
+    const timer = setTimeout(() => setToast(null), 4500);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const fetchCompanies = useCallback(
+    async (requestedPage = page) => {
+      setLoading(true);
       setError("");
 
       try {
+        if (typeof handleGetAllAdminCompanies !== "function") {
+          throw new Error(
+            "The admin companies API handler is missing from AdminContext."
+          );
+        }
+
         await handleGetAllAdminCompanies({
-          page,
-          limit: PAGE_SIZE,
-          search: search.trim(),
-          status: statusFilter,
-          verificationStatus: verificationFilter,
-          companySize: sizeFilter,
-          sortBy: "createdAt",
-          sortOrder: "desc",
-        });
+  page: requestedPage,
+  limit: PAGE_SIZE,
+  search: search.trim(),
+  ...(statusFilter !== "all" && { status: statusFilter }),
+  ...(verificationFilter !== "all" && {
+    verificationStatus: verificationFilter,
+  }),
+  ...(sizeFilter !== "all" && {
+    companySize: sizeFilter,
+  }),
+  sortBy: "createdAt",
+  sortOrder: "desc",
+});
       } catch (err) {
-        setError(err?.message || "Unable to load companies. Please try again.");
+        const message = getErrorMessage(
+          err,
+          "Unable to load companies. Please try again."
+        );
+
+        setError(message);
+        showToast("error", message);
       } finally {
-        setInitialLoading(false);
-        setRefreshing(false);
+        setLoading(false);
       }
     },
     [
@@ -944,905 +378,961 @@ export default function AdminCompanies() {
       statusFilter,
       verificationFilter,
       sizeFilter,
+      showToast,
     ]
   );
 
   useEffect(() => {
-    fetchCompanies();
-  }, [fetchCompanies]);
+    fetchCompanies(page);
+  }, [fetchCompanies, page]);
 
   useEffect(() => {
     setPage(1);
   }, [search, statusFilter, verificationFilter, sizeFilter]);
 
-  const companies = useMemo(
-    () => (Array.isArray(rawCompanies) ? rawCompanies : []),
-    [rawCompanies]
+  const companyList = useMemo(
+    () => (Array.isArray(companies) ? companies : []),
+    [companies]
   );
 
-  const pagination = useMemo(
-    () => getPagination(companiesPagination, companies.length),
-    [companiesPagination, companies.length]
+  const pagination = companiesPagination || {};
+  const total = Number(
+    pagination.total ??
+      pagination.totalCompanies ??
+      pagination.totalItems ??
+      companyList.length
   );
 
-  const hasServerPagination = Boolean(companiesPagination);
-
-  const filteredCompanies = useMemo(() => {
-  const query = search.trim().toLowerCase();
-
-  return companies.filter((company) => {
-    const searchable = [
-      getCompanyName(company),
-      company.slug,
-      company.description,
-      getCompanyIndustry(company),
-      getCompanyLocation(company),
-      getCompanyId(company),
-      getCompanyEmail(company),
-      getCompanyPhone(company),
-      getVerificationStatus(company),
-      getCompanyStatus(company),
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-
-    return !query || searchable.includes(query);
-  });
-}, [companies, search, getVerificationStatus]);
-
-  const stats = useMemo(
-    () => ({
-      total: pagination.total,
-      verified: companies.filter(
-        (company) => getVerificationStatus(company) === "verified"
-      ).length,
-      pending: companies.filter(
-        (company) => getVerificationStatus(company) === "pending"
-      ).length,
-      blocked: companies.filter(
-        (company) => getCompanyStatus(company) === "blocked"
-      ).length,
-    }),
-    [pagination.total, companies]
+  const totalPages = Math.max(
+    1,
+    Number(
+      pagination.totalPages ??
+        Math.ceil(total / PAGE_SIZE) ??
+        1
+    )
   );
 
-  const totalPages = hasServerPagination
-    ? pagination.totalPages
-    : Math.max(1, Math.ceil(filteredCompanies.length / PAGE_SIZE));
-
-  const safePage = Math.min(page, totalPages);
-
-  const visibleCompanies = useMemo(() => {
-    if (hasServerPagination) return filteredCompanies;
-
-    const start = (safePage - 1) * PAGE_SIZE;
-    return filteredCompanies.slice(start, start + PAGE_SIZE);
-  }, [filteredCompanies, hasServerPagination, safePage]);
-
-  const showingStart =
-    visibleCompanies.length === 0
-      ? 0
-      : hasServerPagination
-        ? (safePage - 1) * pagination.limit + 1
-        : (safePage - 1) * PAGE_SIZE + 1;
-
-  const showingEnd =
-    visibleCompanies.length === 0
-      ? 0
-      : hasServerPagination
-        ? Math.min(
-            (safePage - 1) * pagination.limit + visibleCompanies.length,
-            pagination.total
-          )
-        : Math.min(
-            (safePage - 1) * PAGE_SIZE + visibleCompanies.length,
-            filteredCompanies.length
-          );
-
-  const handleRefresh = async () => {
-    clearMessages();
-    await fetchCompanies(true);
-  };
-
-  const closeDetails = () => {
-    if (actionLoading) return;
-    setSelected(null);
-  };
-
-  const openCompanyDetails = useCallback(
-    async (company) => {
-      setMenuCompanyId(null);
-      setSelected(company);
-      setDetailsLoading(true);
-      setError("");
-
-      try {
-        const result = await handleGetCompanyById(getCompanyId(company));
-        const fullCompany = getReturnedCompany(result);
-
-        if (fullCompany) setSelected(fullCompany);
-      } catch (err) {
-        setError(err?.message || "Could not load complete company details.");
-      } finally {
-        setDetailsLoading(false);
-      }
-    },
-    [handleGetCompanyById]
+  const currentPage = Math.min(
+    Math.max(1, Number(pagination.page ?? page)),
+    totalPages
   );
 
-  const requestAction = (type, company) => {
-    setMenuCompanyId(null);
-    setConfirmAction({ type, company });
-  };
+  const stats = useMemo(() => {
+    const verified = companyList.filter(
+      (company) => getVerificationStatus(company) === "verified"
+    ).length;
 
-  const runConfirmedAction = async () => {
-    if (!confirmAction?.company) return;
+    const pending = companyList.filter(
+      (company) => getVerificationStatus(company) === "pending"
+    ).length;
 
-    const { type, company } = confirmAction;
+    const blocked = companyList.filter(
+      (company) => getCompanyStatus(company) === "blocked"
+    ).length;
+
+    return { verified, pending, blocked };
+  }, [companyList]);
+
+  const openCompanyDetails = async (company) => {
     const companyId = getCompanyId(company);
 
     if (!companyId) {
-      setError("Cannot perform this action because the company ID is missing.");
+      showToast("error", "This company does not have a valid ID.");
       return;
     }
 
-    setActionLoading(true);
-    clearMessages();
-
-    const successMessages = {
-      verify: "Company verified successfully.",
-      reject: "Company verification rejected.",
-      block: "Company blocked successfully.",
-      unblock: "Company unblocked successfully.",
-      delete: "Company deleted successfully.",
-    };
-
-    const actionFunctions = {
-      verify: handleVerifyCompany,
-      reject: handleRejectCompany,
-      block: handleBlockCompany,
-      unblock: handleUnblockCompany,
-      delete: handleSoftDeleteCompany,
-    };
+    setDetailsLoading(true);
 
     try {
-      const actionFunction = actionFunctions[type];
-
-      if (typeof actionFunction !== "function") {
-        throw new Error(`The ${type} API is not available in useAdmin.`);
+      if (typeof handleGetCompanyById !== "function") {
+        setSelected(company);
+        return;
       }
 
-      await actionFunction(companyId);
+      const result = await handleGetCompanyById(companyId);
 
-      setNotice(successMessages[type] || "Company updated successfully.");
-      setConfirmAction(null);
+      const details =
+        result?.data?.company ||
+        result?.data?.data?.company ||
+        result?.data?.data ||
+        result?.data ||
+        result?.company ||
+        result ||
+        company;
 
-      if (type === "delete") {
-        setSelected(null);
-      } else if (selected && getCompanyId(selected) === companyId) {
-        try {
-          const result = await handleGetCompanyById(companyId);
-          const refreshedCompany = getReturnedCompany(result);
-          if (refreshedCompany) setSelected(refreshedCompany);
-        } catch {
-          // Keep current details if refreshing them fails.
-        }
-      }
-
-      await fetchCompanies(true);
+      setSelected(
+        details && typeof details === "object" ? details : company
+      );
     } catch (err) {
-      setError(err?.message || "The action failed. Please try again.");
+      const message = getErrorMessage(
+        err,
+        "Could not load company details."
+      );
+
+      showToast("error", message);
     } finally {
-      setActionLoading(false);
+      setDetailsLoading(false);
     }
   };
 
-  const clearFilters = () => {
+  const runConfirmedAction = async (type, company) => {
+    const companyId = getCompanyId(company);
+    const companyName = getCompanyName(company);
+
+    if (!companyId) {
+      showToast("error", "This company does not have a valid ID.");
+      return;
+    }
+
+    const actionConfig = {
+      verify: {
+        handler: handleVerifyCompany,
+        confirm: `Verify ${companyName}?`,
+        success: "Company verified successfully.",
+        missing: "Company verification is not available.",
+      },
+      reject: {
+        handler: handleRejectCompany,
+        confirm: `Reject verification for ${companyName}?`,
+        success: "Company verification rejected.",
+        missing: "Company rejection is not available.",
+      },
+      block: {
+        handler: handleBlockCompany,
+        confirm: `Block ${companyName}? The company may lose access to restricted features.`,
+        success: "Company blocked successfully.",
+        missing: "Company blocking is not available.",
+      },
+      unblock: {
+        handler: handleUnblockCompany,
+        confirm: `Unblock ${companyName}?`,
+        success: "Company unblocked successfully.",
+        missing: "Company unblocking is not available.",
+      },
+      delete: {
+        handler: handleSoftDeleteCompany,
+        confirm: `Soft-delete ${companyName}? Make sure you want to continue.`,
+        success: "Company moved to deleted status.",
+        missing: "Company deletion is not available.",
+      },
+    };
+
+    const config = actionConfig[type];
+
+    if (!config) {
+      showToast("error", "Unknown company action.");
+      return;
+    }
+
+    if (typeof config.handler !== "function") {
+      showToast("error", config.missing);
+      return;
+    }
+
+    if (!window.confirm(config.confirm)) return;
+
+    setActionLoading(`${type}:${companyId}`);
+
+    try {
+      const result = await config.handler(companyId);
+
+      const message =
+        result?.message ||
+        result?.data?.message ||
+        config.success;
+
+      showToast("success", message);
+
+      await fetchCompanies(page);
+
+      if (selected && getCompanyId(selected) === companyId) {
+        setSelected(null);
+      }
+    } catch (err) {
+      const message = getErrorMessage(
+        err,
+        `Unable to ${type} this company. Please try again.`
+      );
+
+      showToast("error", message);
+    } finally {
+      setActionLoading("");
+    }
+  };
+
+  const resetFilters = () => {
     setSearch("");
     setStatusFilter("all");
     setVerificationFilter("all");
     setSizeFilter("all");
     setPage(1);
+    showToast("info", "Filters have been reset.");
   };
 
-  const hasFilters =
-    Boolean(search) ||
-    statusFilter !== "all" ||
-    verificationFilter !== "all" ||
-    sizeFilter !== "all";
+  const isActionBusy = (type, company) =>
+    actionLoading === `${type}:${getCompanyId(company)}`;
 
   return (
-    <div
-      className="min-h-screen bg-[#F7F8FC] px-4 py-6 text-slate-900 sm:px-6 lg:px-8"
-      onClick={() => {
-        if (menuCompanyId) setMenuCompanyId(null);
-      }}
-    >
+    <div className="min-h-screen bg-[#F7F8FC] px-4 py-6 sm:px-6 lg:px-8">
+      <Toast toast={toast} onClose={() => setToast(null)} />
+
       <div className="mx-auto max-w-[1600px] space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* Header */}
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-violet-600">
-              <ShieldCheck size={15} />
-              Administration
+            <div className="flex items-center gap-2 text-sm font-semibold text-violet-700">
+              <ShieldCheck size={17} />
+              ADMINISTRATION
             </div>
 
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-              Companies management
+            <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              Company Management
             </h1>
 
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              Review company profiles, manage verification requests, control
-              access, and maintain company records across your Peer.Hiring
-              platform.
+            <p className="mt-1 text-sm text-slate-500">
+              Review, verify, and manage companies registered on Peer.Hiring.
             </p>
           </div>
 
           <button
             type="button"
-            onClick={handleRefresh}
-            disabled={refreshing || initialLoading}
-            className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-violet-200 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-60 sm:self-center"
+            onClick={() => fetchCompanies(page)}
+            disabled={loading}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
-            {refreshing ? "Refreshing..." : "Refresh companies"}
+            <RefreshCw
+              size={16}
+              className={loading ? "animate-spin" : ""}
+            />
+            Refresh companies
           </button>
         </div>
 
-        {error && (
-          <div
-            role="alert"
-            className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
-          >
-            <AlertCircle size={19} className="mt-0.5 shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold">Something went wrong</p>
-              <p className="mt-1 break-words">{error}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setError("")}
-              aria-label="Dismiss error"
-              className="rounded-lg p-1 hover:bg-red-100"
-            >
-              <X size={17} />
-            </button>
-          </div>
-        )}
-
-        {notice && (
-          <div
-            role="status"
-            className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
-          >
-            <CheckCircle size={19} className="mt-0.5 shrink-0" />
-            <p className="flex-1">{notice}</p>
-            <button
-              type="button"
-              onClick={() => setNotice("")}
-              aria-label="Dismiss message"
-              className="rounded-lg p-1 hover:bg-emerald-100"
-            >
-              <X size={17} />
-            </button>
-          </div>
-        )}
-
+        {/* Summary cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
-            title="Total companies"
-            value={stats.total}
-            description="Total from API pagination"
+            title="Companies found"
+            value={total}
+            description="Matching your current filters"
             icon={Building2}
-            iconClass="bg-violet-50 text-violet-700"
+            accent="bg-violet-50 text-violet-700"
           />
+
           <StatCard
-            title="Verified companies"
+            title="Verified on this page"
             value={stats.verified}
-            description="Verified in loaded results"
-            icon={BadgeCheck}
-            iconClass="bg-emerald-50 text-emerald-700"
+            description="Companies marked as verified"
+            icon={CheckCircle2}
+            accent="bg-emerald-50 text-emerald-700"
           />
+
           <StatCard
-            title="Pending verification"
+            title="Pending on this page"
             value={stats.pending}
-            description="Pending in loaded results"
-            icon={Clock}
-            iconClass="bg-amber-50 text-amber-700"
+            description="Awaiting verification review"
+            icon={Clock3}
+            accent="bg-amber-50 text-amber-700"
           />
+
           <StatCard
-            title="Blocked companies"
+            title="Blocked on this page"
             value={stats.blocked}
-            description="Blocked in loaded results"
+            description="Currently blocked companies"
             icon={Ban}
-            iconClass="bg-red-50 text-red-700"
+            accent="bg-rose-50 text-rose-700"
           />
         </div>
 
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 p-4 sm:p-5">
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">
-                    All companies
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {filteredCompanies.length} matching{" "}
-                    {filteredCompanies.length === 1 ? "company" : "companies"}{" "}
-                    on this page
-                  </p>
-                </div>
-
-                {hasFilters && (
-                  <button
-                    type="button"
-                    onClick={clearFilters}
-                    className="inline-flex items-center gap-2 self-start rounded-xl px-3 py-2 text-sm font-semibold text-violet-700 transition hover:bg-violet-50"
-                  >
-                    <RotateCcw size={15} />
-                    Clear filters
-                  </button>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="relative min-w-0">
-                  <Search
-                    size={17}
-                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <input
-                    type="search"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    onClick={(event) => event.stopPropagation()}
-                    placeholder="Search company, industry, ID..."
-                    aria-label="Search companies"
-                    className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                  />
-                </div>
-
-                <div className="relative">
-                  <Filter
-                    size={16}
-                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <select
-                    value={statusFilter}
-                    onChange={(event) => setStatusFilter(event.target.value)}
-                    onClick={(event) => event.stopPropagation()}
-                    aria-label="Filter by company status"
-                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white pl-10 pr-10 text-sm font-medium outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                  >
-                    {COMPANY_STATUS_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={15}
-                    className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                </div>
-
-                <div className="relative">
-                  <ShieldCheck
-                    size={16}
-                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <select
-                    value={verificationFilter}
-                    onChange={(event) => setVerificationFilter(event.target.value)}
-                    onClick={(event) => event.stopPropagation()}
-                    aria-label="Filter by verification status"
-                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white pl-10 pr-10 text-sm font-medium outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                  >
-                    {VERIFICATION_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={15}
-                    className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                </div>
-
-                <div className="relative">
-                  <Users
-                    size={16}
-                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                  <select
-                    value={sizeFilter}
-                    onChange={(event) => setSizeFilter(event.target.value)}
-                    onClick={(event) => event.stopPropagation()}
-                    aria-label="Filter by company size"
-                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white pl-10 pr-10 text-sm font-medium outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                  >
-                    {COMPANY_SIZE_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={15}
-                    className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
-                </div>
-              </div>
-            </div>
+        {/* Filters */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <Filter size={18} className="text-violet-700" />
+            <h2 className="font-bold text-slate-900">Search and filters</h2>
           </div>
 
-          {initialLoading ? (
-            <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 px-4">
-              <LoaderCircle size={32} className="animate-spin text-violet-600" />
-              <p className="text-sm font-medium text-slate-600">
-                Loading companies...
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="relative">
+              <Search
+                size={17}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search company..."
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+              />
+            </div>
+
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+            >
+              <option value="all">All company statuses</option>
+              <option value="active">Active</option>
+              <option value="blocked">Blocked</option>
+              <option value="deleted">Deleted</option>
+            </select>
+
+            <select
+              value={verificationFilter}
+              onChange={(event) =>
+                setVerificationFilter(event.target.value)
+              }
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+            >
+              <option value="all">All verification statuses</option>
+              <option value="pending">Pending</option>
+              <option value="verified">Verified</option>
+              <option value="rejected">Rejected</option>
+            </select>
+
+            <select
+              value={sizeFilter}
+              onChange={(event) => setSizeFilter(event.target.value)}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+            >
+              <option value="all">All company sizes</option>
+              <option value="1-10">1–10 employees</option>
+              <option value="11-50">11–50 employees</option>
+              <option value="51-200">51–200 employees</option>
+              <option value="201-500">201–500 employees</option>
+              <option value="501-1000">501–1,000 employees</option>
+              <option value="1000+">1,000+ employees</option>
+            </select>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-slate-500">
+              {loading
+                ? "Loading company records..."
+                : `${companyList.length} record(s) on this page`}
+            </p>
+
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-violet-700"
+            >
+              <RotateCcw size={15} />
+              Reset filters
+            </button>
+          </div>
+        </section>
+
+        {/* Error banner */}
+        {error && (
+          <div
+            role="alert"
+            className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-800"
+          >
+            <AlertCircle size={20} className="mt-0.5 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold">Could not load companies</p>
+              <p className="mt-1 break-words text-sm">{error}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => fetchCompanies(page)}
+              className="shrink-0 rounded-lg bg-white px-3 py-2 text-xs font-bold text-rose-700 ring-1 ring-rose-200 hover:bg-rose-100"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Company table */}
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-col justify-between gap-2 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="font-bold text-slate-900">Registered companies</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Company information and administrative actions
               </p>
             </div>
-          ) : visibleCompanies.length === 0 ? (
-            <div className="flex min-h-[320px] flex-col items-center justify-center px-5 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
-                <Building2 size={29} />
-              </div>
-              <h3 className="mt-4 text-base font-bold text-slate-900">
-                No companies found
-              </h3>
-              <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
-                {hasFilters
-                  ? "Try changing your search or filters."
-                  : "There are no companies in the collection returned by the server."}
-              </p>
-              {hasFilters && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="mt-4 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
-                >
-                  Clear filters
-                </button>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="hidden overflow-x-auto md:block">
-                <table className="w-full min-w-[1150px] border-collapse text-left">
-                  <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/80">
-                      {[
-                        "Company",
-                        "Industry",
-                        "Verification",
-                        "Account status",
-                        "Location",
-                        "Created",
-                        "Actions",
-                      ].map((heading) => (
-                        <th
-                          key={heading}
-                          className={cn(
-                            "px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500",
-                            heading === "Actions" && "text-right"
-                          )}
-                        >
-                          {heading}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
 
-                  <tbody className="divide-y divide-slate-100">
-                    {visibleCompanies.map((company) => {
-                      const companyId = getCompanyId(company);
-                      const name = getCompanyName(company);
-                      const status = getCompanyStatus(company);
-                      const verification = getVerificationStatus(company);
-                      const logo = getCompanyLogo(company);
+            {loading && (
+              <span className="inline-flex items-center gap-2 text-xs font-semibold text-violet-700">
+                <LoaderCircle size={15} className="animate-spin" />
+                Updating records
+              </span>
+            )}
+          </div>
 
-                      return (
-                        <tr
-                          key={companyId || name}
-                          className="transition hover:bg-violet-50/30"
-                        >
-                          <td className="px-4 py-4">
-                            <div className="flex min-w-0 items-start gap-3">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1050px] text-left">
+              <thead className="bg-slate-50">
+                <tr className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <th className="px-5 py-4">Company</th>
+                  <th className="px-5 py-4">Contact</th>
+                  <th className="px-5 py-4">Company size</th>
+                  <th className="px-5 py-4">Verification</th>
+                  <th className="px-5 py-4">Status</th>
+                  <th className="px-5 py-4">Registered</th>
+                  <th className="px-5 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-slate-100">
+                {loading && companyList.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-5 py-16 text-center">
+                      <LoaderCircle
+                        size={30}
+                        className="mx-auto animate-spin text-violet-600"
+                      />
+                      <p className="mt-3 text-sm font-semibold text-slate-700">
+                        Loading companies
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Please wait while records are retrieved.
+                      </p>
+                    </td>
+                  </tr>
+                ) : companyList.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-5 py-16 text-center">
+                      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                        <Building2 size={26} />
+                      </span>
+                      <p className="mt-4 text-sm font-bold text-slate-800">
+                        No companies found
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Try changing your search or filters.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={resetFilters}
+                        className="mt-4 rounded-xl bg-violet-700 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-800"
+                      >
+                        Clear filters
+                      </button>
+                    </td>
+                  </tr>
+                ) : (
+                  companyList.map((company) => {
+                    const id = getCompanyId(company);
+                    const verification = getVerificationStatus(company);
+                    const companyStatus = getCompanyStatus(company);
+                    const logo =
+                      company?.logo?.url ||
+                      company?.logoUrl ||
+                      company?.companyLogo ||
+                      "";
+
+                    const email =
+                      company?.email ||
+                      company?.contactEmail ||
+                      company?.recruiter?.email ||
+                      company?.owner?.email ||
+                      "";
+
+                    const website =
+                      company?.website ||
+                      company?.websiteUrl ||
+                      "";
+
+                    const busy =
+                      actionLoading.endsWith(`:${id}`) && Boolean(actionLoading);
+
+                    return (
+                      <tr
+                        key={id || getCompanyName(company)}
+                        className="transition hover:bg-violet-50/30"
+                      >
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-violet-50 text-violet-700">
                               {logo ? (
                                 <img
                                   src={logo}
-                                  alt={name}
-                                  className="h-11 w-11 shrink-0 rounded-xl border border-slate-100 bg-white object-contain p-1"
+                                  alt={`${getCompanyName(company)} logo`}
+                                  className="h-full w-full object-cover"
                                 />
                               ) : (
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-sm font-bold text-violet-700">
-                                  {getCompanyInitials(name)}
-                                </div>
+                                <Building2 size={20} />
                               )}
+                            </div>
 
-                              <div className="min-w-0 max-w-[260px]">
+                            <div className="min-w-0">
+                              <p className="max-w-[220px] truncate text-sm font-bold text-slate-900">
+                                {getCompanyName(company)}
+                              </p>
+                              <p className="mt-1 max-w-[220px] truncate text-xs text-slate-500">
+                                {company?.industry ||
+                                  company?.category ||
+                                  "Industry not specified"}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <p className="max-w-[220px] truncate text-sm font-medium text-slate-700">
+                            {email || "No email provided"}
+                          </p>
+                          <p className="mt-1 max-w-[220px] truncate text-xs text-slate-500">
+                            {company?.phone ||
+                              company?.contactNumber ||
+                              "No phone provided"}
+                          </p>
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <span className="text-sm text-slate-700">
+                            {formatCompanySize(
+                              company?.companySize || company?.size
+                            )}
+                          </span>
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <StatusBadge status={verification} />
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <StatusBadge status={companyStatus} />
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <span className="text-sm text-slate-600">
+                            {formatDate(
+                              company?.createdAt || company?.registeredAt
+                            )}
+                          </span>
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              title="View company details"
+                              aria-label={`View ${getCompanyName(company)}`}
+                              onClick={() => openCompanyDetails(company)}
+                              disabled={busy}
+                              className="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-50"
+                            >
+                              <Eye size={16} />
+                            </button>
+
+                            {verification !== "verified" &&
+                              companyStatus !== "deleted" && (
                                 <button
                                   type="button"
-                                  onClick={() => openCompanyDetails(company)}
-                                  className="block max-w-full truncate text-left text-sm font-bold text-slate-900 hover:text-violet-700"
+                                  title="Verify company"
+                                  aria-label={`Verify ${getCompanyName(company)}`}
+                                  onClick={() =>
+                                    runConfirmedAction("verify", company)
+                                  }
+                                  disabled={busy}
+                                  className="rounded-lg border border-emerald-200 p-2 text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
                                 >
-                                  {name}
+                                  {isActionBusy("verify", company) ? (
+                                    <LoaderCircle
+                                      size={16}
+                                      className="animate-spin"
+                                    />
+                                  ) : (
+                                    <CheckCircle2 size={16} />
+                                  )}
                                 </button>
-                                <p className="mt-1 truncate text-xs text-slate-500">
-                                  {company.slug ? `/${company.slug}` : companyId}
-                                </p>
-                                <div className="mt-2 flex flex-wrap gap-1.5">
-                                  <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
-                                    {getCompanySize(company)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-
-                          <td className="px-4 py-4">
-                            <div className="flex max-w-[180px] items-start gap-2 text-sm text-slate-600">
-                              <BriefcaseBusiness size={15} className="mt-0.5 shrink-0 text-slate-400" />
-                              <span className="break-words">{getCompanyIndustry(company)}</span>
-                            </div>
-                          </td>
-
-                          <td className="px-4 py-4">
-                            <VerificationBadge status={verification} />
-                          </td>
-
-                          <td className="px-4 py-4">
-                            <StatusBadge status={status} />
-                          </td>
-
-                          <td className="px-4 py-4">
-                            <div className="flex max-w-[220px] items-start gap-1.5 text-sm text-slate-600">
-                              <MapPin size={15} className="mt-0.5 shrink-0 text-slate-400" />
-                              <span className="break-words">{getCompanyLocation(company)}</span>
-                            </div>
-                          </td>
-
-                          <td className="px-4 py-4">
-                            <div className="flex items-start gap-2">
-                              <CalendarDays size={15} className="mt-0.5 shrink-0 text-slate-400" />
-                              <div>
-                                <p className="whitespace-nowrap text-sm text-slate-700">
-                                  {formatDate(company.createdAt)}
-                                </p>
-                                <p className="mt-1 text-xs text-slate-400">
-                                  {company.updatedAt
-                                    ? `Updated ${formatDate(company.updatedAt)}`
-                                    : "Company"}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-
-                          <td className="px-4 py-4">
-                            <div
-                              className="relative flex items-center justify-end gap-2"
-                              onClick={(event) => event.stopPropagation()}
-                            >
-                              <IconButton
-                                title="View company details"
-                                onClick={() => openCompanyDetails(company)}
-                              >
-                                <Eye size={17} />
-                              </IconButton>
-
-                              {status !== "deleted" && (
-                                <>
-                                  <IconButton
-                                    title={verification === "verified" ? "Company is verified" : "Verify company"}
-                                    disabled={verification === "verified" || status === "blocked"}
-                                    onClick={() => requestAction("verify", company)}
-                                  >
-                                    <BadgeCheck size={17} />
-                                  </IconButton>
-
-                                  <IconButton
-                                    title={status === "blocked" ? "Unblock company" : "Block company"}
-                                    danger={status !== "blocked"}
-                                    onClick={() =>
-                                      requestAction(status === "blocked" ? "unblock" : "block", company)
-                                    }
-                                  >
-                                    {status === "blocked" ? (
-                                      <CheckCircle size={17} />
-                                    ) : (
-                                      <Ban size={17} />
-                                    )}
-                                  </IconButton>
-                                </>
                               )}
 
-                              <div className="relative">
-                                <IconButton
-                                  title="More actions"
+                            {verification !== "rejected" &&
+                              verification !== "verified" &&
+                              companyStatus !== "deleted" && (
+                                <button
+                                  type="button"
+                                  title="Reject verification"
+                                  aria-label={`Reject ${getCompanyName(company)}`}
                                   onClick={() =>
-                                    setMenuCompanyId((current) =>
-                                      current === companyId ? null : companyId
-                                    )
+                                    runConfirmedAction("reject", company)
                                   }
+                                  disabled={busy}
+                                  className="rounded-lg border border-rose-200 p-2 text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
                                 >
-                                  <MoreVertical size={18} />
-                                </IconButton>
+                                  {isActionBusy("reject", company) ? (
+                                    <LoaderCircle
+                                      size={16}
+                                      className="animate-spin"
+                                    />
+                                  ) : (
+                                    <XCircle size={16} />
+                                  )}
+                                </button>
+                              )}
 
-                                {menuCompanyId === companyId && (
-                                  <div
-                                    className="absolute right-0 top-11 z-20 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl"
-                                    onClick={(event) => event.stopPropagation()}
-                                  >
-                                    <button
-                                      type="button"
-                                      onClick={() => openCompanyDetails(company)}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-violet-50 hover:text-violet-700"
-                                    >
-                                      <Eye size={16} />
-                                      View details
-                                    </button>
-
-                                    {status !== "deleted" && (
-                                      <>
-                                        {verification !== "verified" && (
-                                          <button
-                                            type="button"
-                                            onClick={() => requestAction("verify", company)}
-                                            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-emerald-700 hover:bg-emerald-50"
-                                          >
-                                            <BadgeCheck size={16} />
-                                            Verify company
-                                          </button>
-                                        )}
-
-                                        {verification !== "rejected" && (
-                                          <button
-                                            type="button"
-                                            onClick={() => requestAction("reject", company)}
-                                            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-amber-700 hover:bg-amber-50"
-                                          >
-                                            <ShieldAlert size={16} />
-                                            Reject verification
-                                          </button>
-                                        )}
-
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            requestAction(status === "blocked" ? "unblock" : "block", company)
-                                          }
-                                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
-                                        >
-                                          {status === "blocked" ? <CheckCircle size={16} /> : <Ban size={16} />}
-                                          {status === "blocked" ? "Unblock company" : "Block company"}
-                                        </button>
-                                      </>
-                                    )}
-
-                                    <div className="my-1 border-t border-slate-100" />
-
-                                    {status !== "deleted" && (
-                                      <button
-                                        type="button"
-                                        onClick={() => requestAction("delete", company)}
-                                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50"
-                                      >
-                                        <Trash2 size={16} />
-                                        Delete company
-                                      </button>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="space-y-3 p-3 md:hidden">
-                {visibleCompanies.map((company) => {
-                  const companyId = getCompanyId(company);
-                  const name = getCompanyName(company);
-                  const status = getCompanyStatus(company);
-                  const verification = getVerificationStatus(company);
-                  const logo = getCompanyLogo(company);
-
-                  return (
-                    <article
-                      key={companyId || name}
-                      className="rounded-2xl border border-slate-200 bg-white p-4"
-                    >
-                      <div className="flex items-start gap-3">
-                        {logo ? (
-                          <img
-                            src={logo}
-                            alt={name}
-                            className="h-12 w-12 shrink-0 rounded-xl border border-slate-100 bg-white object-contain p-1"
-                          />
-                        ) : (
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-sm font-bold text-violet-700">
-                            {getCompanyInitials(name)}
-                          </div>
-                        )}
-
-                        <div className="min-w-0 flex-1">
-                          <h3 className="break-words text-sm font-bold text-slate-900">{name}</h3>
-                          <p className="mt-1 break-all text-xs text-slate-500">
-                            {company.slug ? `/${company.slug}` : companyId}
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <StatusBadge status={status} />
-                            <VerificationBadge status={verification} />
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          aria-label="View company details"
-                          onClick={() => openCompanyDetails(company)}
-                          className="rounded-lg p-2 text-slate-500 hover:bg-violet-50 hover:text-violet-700"
-                        >
-                          <Eye size={18} />
-                        </button>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-100 pt-3">
-                        <div className="flex items-start gap-2 text-sm text-slate-600">
-                          <BriefcaseBusiness size={15} className="mt-0.5 shrink-0 text-slate-400" />
-                          <span>{getCompanyIndustry(company)}</span>
-                        </div>
-                        <div className="flex items-start gap-2 text-sm text-slate-600">
-                          <MapPin size={15} className="mt-0.5 shrink-0 text-slate-400" />
-                          <span className="break-words">{getCompanyLocation(company)}</span>
-                        </div>
-                        <div className="flex items-start gap-2 text-sm text-slate-600">
-                          <Users size={15} className="mt-0.5 shrink-0 text-slate-400" />
-                          <span>{getCompanySize(company)} employees</span>
-                        </div>
-                        <div className="flex items-start gap-2 text-sm text-slate-600">
-                          <CalendarDays size={15} className="mt-0.5 shrink-0 text-slate-400" />
-                          <span>Created {formatDate(company.createdAt)}</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
-                        <button
-                          type="button"
-                          onClick={() => openCompanyDetails(company)}
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                        >
-                          <Eye size={15} />
-                          Details
-                        </button>
-
-                        {status !== "deleted" && (
-                          <>
-                            {verification !== "verified" && (
+                            {companyStatus === "blocked" ? (
                               <button
                                 type="button"
-                                onClick={() => requestAction("verify", company)}
-                                disabled={status === "blocked"}
-                                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-200 px-3 py-2.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                                title="Unblock company"
+                                aria-label={`Unblock ${getCompanyName(company)}`}
+                                onClick={() =>
+                                  runConfirmedAction("unblock", company)
+                                }
+                                disabled={busy}
+                                className="rounded-lg border border-violet-200 p-2 text-violet-700 transition hover:bg-violet-50 disabled:opacity-50"
                               >
-                                <BadgeCheck size={15} />
-                                Verify
+                                {isActionBusy("unblock", company) ? (
+                                  <LoaderCircle
+                                    size={16}
+                                    className="animate-spin"
+                                  />
+                                ) : (
+                                  <ShieldCheck size={16} />
+                                )}
                               </button>
+                            ) : (
+                              companyStatus === "active" && (
+                                <button
+                                  type="button"
+                                  title="Block company"
+                                  aria-label={`Block ${getCompanyName(company)}`}
+                                  onClick={() =>
+                                    runConfirmedAction("block", company)
+                                  }
+                                  disabled={busy}
+                                  className="rounded-lg border border-orange-200 p-2 text-orange-700 transition hover:bg-orange-50 disabled:opacity-50"
+                                >
+                                  {isActionBusy("block", company) ? (
+                                    <LoaderCircle
+                                      size={16}
+                                      className="animate-spin"
+                                    />
+                                  ) : (
+                                    <Ban size={16} />
+                                  )}
+                                </button>
+                              )
                             )}
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                requestAction(status === "blocked" ? "unblock" : "block", company)
-                              }
-                              className={cn(
-                                "inline-flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold",
-                                status === "blocked"
-                                  ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                                  : "border-red-200 text-red-700 hover:bg-red-50"
-                              )}
-                            >
-                              {status === "blocked" ? <CheckCircle size={15} /> : <Ban size={15} />}
-                              {status === "blocked" ? "Unblock" : "Block"}
-                            </button>
+                            {companyStatus !== "deleted" && (
+                              <button
+                                type="button"
+                                title="Soft-delete company"
+                                aria-label={`Delete ${getCompanyName(company)}`}
+                                onClick={() =>
+                                  runConfirmedAction("delete", company)
+                                }
+                                disabled={busy}
+                                className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-50"
+                              >
+                                {isActionBusy("delete", company) ? (
+                                  <LoaderCircle
+                                    size={16}
+                                    className="animate-spin"
+                                  />
+                                ) : (
+                                  <Trash2 size={16} />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
 
-                            <button
-                              type="button"
-                              onClick={() => requestAction("delete", company)}
-                              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 px-3 py-2.5 text-xs font-semibold text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 size={15} />
-                              Delete
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
+          {/* Pagination */}
+          <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-slate-500">
+              Page{" "}
+              <span className="font-bold text-slate-800">{currentPage}</span>{" "}
+              of{" "}
+              <span className="font-bold text-slate-800">{totalPages}</span>
+              <span className="mx-2 text-slate-300">|</span>
+              <span className="font-bold text-slate-800">{total}</span>{" "}
+              total companies
+            </p>
 
-              <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-                <p className="text-sm text-slate-500">
-                  Showing{" "}
-                  <span className="font-semibold text-slate-800">
-                    {showingStart}–{showingEnd}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-semibold text-slate-800">
-                    {pagination.total}
-                  </span>{" "}
-                  companies
-                </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={loading || currentPage <= 1}
+                className="inline-flex h-9 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronLeft size={16} />
+                Previous
+              </button>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                    disabled={safePage <= 1 || initialLoading}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <ChevronLeft size={16} />
-                    Previous
-                  </button>
-
-                  <span className="px-2 text-sm font-medium text-slate-600">
-                    {safePage} / {totalPages}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-                    disabled={safePage >= totalPages || initialLoading}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    Next
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
+              <button
+                type="button"
+                onClick={() =>
+                  setPage((current) => Math.min(totalPages, current + 1))
+                }
+                disabled={loading || currentPage >= totalPages}
+                className="inline-flex h-9 items-center gap-1 rounded-lg bg-violet-700 px-3 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
         </section>
-
-        <p className="px-1 text-xs leading-5 text-slate-400">
-          Verified, pending, and blocked counts are calculated from the
-          companies currently loaded from the API. Global counts require
-          statistics from the backend.
-        </p>
       </div>
 
-      {selected && (
-        <CompanyDetailsModal
-          company={selected}
-          onClose={closeDetails}
-          onAction={requestAction}
-          busy={actionLoading}
-        />
-      )}
-
-      {confirmAction && (
-        <ConfirmModal
-          action={confirmAction.type}
-          company={confirmAction.company}
-          loading={actionLoading}
-          onCancel={() => {
-            if (!actionLoading) setConfirmAction(null);
+      {/* Company details drawer */}
+      {(selected || detailsLoading) && (
+        <div
+          className="fixed inset-0 z-[100] flex justify-end bg-slate-950/40 backdrop-blur-[2px]"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !detailsLoading) {
+              setSelected(null);
+            }
           }}
-          onConfirm={runConfirmedAction}
-        />
-      )}
+        >
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-label="Company details"
+            className="flex h-full w-full max-w-xl flex-col overflow-hidden bg-white shadow-2xl"
+          >
+            <div className="flex items-start justify-between border-b border-slate-100 px-5 py-5 sm:px-6">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-violet-700">
+                  Company profile
+                </p>
+                <h2 className="mt-1 text-xl font-bold text-slate-900">
+                  Company details
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Review the company's registered information.
+                </p>
+              </div>
 
-      {detailsLoading && selected && (
-        <div className="fixed bottom-5 right-5 z-[70] flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-lg">
-          <LoaderCircle size={17} className="animate-spin text-violet-600" />
-          Loading full company details...
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                disabled={detailsLoading}
+                aria-label="Close company details"
+                className="rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100 disabled:opacity-50"
+              >
+                <X size={19} />
+              </button>
+            </div>
+
+            {detailsLoading ? (
+              <div className="flex flex-1 flex-col items-center justify-center">
+                <LoaderCircle
+                  size={32}
+                  className="animate-spin text-violet-700"
+                />
+                <p className="mt-3 text-sm font-semibold text-slate-700">
+                  Loading company details...
+                </p>
+              </div>
+            ) : selected ? (
+              <>
+                <div className="flex-1 space-y-6 overflow-y-auto px-5 py-6 sm:px-6">
+                  <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-5">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white bg-white text-violet-700 shadow-sm">
+                        {(
+                          selected?.logo?.url ||
+                          selected?.logoUrl ||
+                          selected?.companyLogo
+                        ) ? (
+                          <img
+                            src={
+                              selected?.logo?.url ||
+                              selected?.logoUrl ||
+                              selected?.companyLogo
+                            }
+                            alt={`${getCompanyName(selected)} logo`}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <Building2 size={28} />
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="break-words text-lg font-bold text-slate-900">
+                          {getCompanyName(selected)}
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {selected?.industry ||
+                            selected?.category ||
+                            "Industry not specified"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <StatusBadge
+                        status={getVerificationStatus(selected)}
+                      />
+                      <StatusBadge status={getCompanyStatus(selected)} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="mb-2 text-sm font-bold text-slate-900">
+                      Contact information
+                    </h3>
+                    <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 px-4">
+                      <DetailRow
+                        icon={Mail}
+                        label="Email"
+                        value={
+                          selected?.email ||
+                          selected?.contactEmail ||
+                          selected?.recruiter?.email ||
+                          selected?.owner?.email
+                        }
+                      />
+                      <DetailRow
+                        icon={Phone}
+                        label="Phone"
+                        value={
+                          selected?.phone ||
+                          selected?.contactNumber ||
+                          selected?.mobile
+                        }
+                      />
+                      <DetailRow
+                        icon={Globe}
+                        label="Website"
+                        value={selected?.website || selected?.websiteUrl}
+                        href={
+                          selected?.website || selected?.websiteUrl
+                            ? /^https?:\/\//i.test(
+                                selected.website || selected.websiteUrl
+                              )
+                              ? selected.website || selected.websiteUrl
+                              : `https://${selected.website || selected.websiteUrl}`
+                            : undefined
+                        }
+                      />
+                      <DetailRow
+                        icon={MapPin}
+                        label="Location"
+                        value={[
+                          selected?.address,
+                          selected?.city,
+                          selected?.state,
+                          selected?.country,
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="mb-2 text-sm font-bold text-slate-900">
+                      Company information
+                    </h3>
+                    <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 px-4">
+                      <DetailRow
+                        icon={BriefcaseBusiness}
+                        label="Industry"
+                        value={selected?.industry || selected?.category}
+                      />
+                      <DetailRow
+                        icon={Users}
+                        label="Company size"
+                        value={formatCompanySize(
+                          selected?.companySize || selected?.size
+                        )}
+                      />
+                      <DetailRow
+                        icon={CalendarDays}
+                        label="Registration date"
+                        value={formatDate(
+                          selected?.createdAt || selected?.registeredAt
+                        )}
+                      />
+                      <DetailRow
+                        icon={ShieldCheck}
+                        label="Company ID"
+                        value={getCompanyId(selected)}
+                      />
+                    </div>
+                  </div>
+
+                  {(selected?.description || selected?.about) && (
+                    <div>
+                      <h3 className="mb-2 text-sm font-bold text-slate-900">
+                        About the company
+                      </h3>
+                      <p className="whitespace-pre-wrap rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+                        {selected.description || selected.about}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t border-slate-100 bg-white p-4 sm:px-6">
+                  <div className="flex flex-wrap gap-2">
+                    {getVerificationStatus(selected) !== "verified" &&
+                      getCompanyStatus(selected) !== "deleted" && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            runConfirmedAction("verify", selected)
+                          }
+                          disabled={Boolean(actionLoading)}
+                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                        >
+                          <CheckCircle2 size={16} />
+                          Verify company
+                        </button>
+                      )}
+
+                    {getCompanyStatus(selected) === "blocked" ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          runConfirmedAction("unblock", selected)
+                        }
+                        disabled={Boolean(actionLoading)}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:opacity-50"
+                      >
+                        <ShieldCheck size={16} />
+                        Unblock
+                      </button>
+                    ) : (
+                      getCompanyStatus(selected) === "active" && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            runConfirmedAction("block", selected)
+                          }
+                          disabled={Boolean(actionLoading)}
+                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm font-semibold text-orange-700 transition hover:bg-orange-100 disabled:opacity-50"
+                        >
+                          <Ban size={16} />
+                          Block
+                        </button>
+                      )
+                    )}
+
+                    {getCompanyStatus(selected) !== "deleted" && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          runConfirmedAction("delete", selected)
+                        }
+                        disabled={Boolean(actionLoading)}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"
+                      >
+                        <Trash2 size={16} />
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : null}
+          </aside>
         </div>
       )}
     </div>
