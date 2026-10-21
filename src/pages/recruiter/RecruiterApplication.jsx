@@ -1,12 +1,11 @@
 
 import React, {
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
 } from "react";
-import { useApplication } from "../../hooks/Hook"
+import { useApplication } from "../../hooks/Hook";
 import {
   Search,
   SlidersHorizontal,
@@ -109,6 +108,7 @@ const formatDate = (value) => {
   if (!value) return "—";
 
   const date = new Date(value);
+
   if (Number.isNaN(date.getTime())) return "—";
 
   return date.toLocaleDateString("en-IN", {
@@ -122,12 +122,17 @@ const formatRelativeDate = (value) => {
   if (!value) return "Date unavailable";
 
   const date = new Date(value);
+
   if (Number.isNaN(date.getTime())) return "Date unavailable";
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const appliedDate = new Date(date);
+  appliedDate.setHours(0, 0, 0, 0);
+
   const days = Math.floor(
-    (new Date().setHours(0, 0, 0, 0) -
-      new Date(date).setHours(0, 0, 0, 0)) /
-      86400000
+    (today.getTime() - appliedDate.getTime()) / 86400000
   );
 
   if (days <= 0) return "Today";
@@ -143,8 +148,13 @@ const getId = (value) => {
   return value._id || value.id || "";
 };
 
-const getName = (candidate) =>
-  candidate?.name || candidate?.fullName || "Unknown candidate";
+const getName = (candidate) => {
+  if (!candidate || typeof candidate !== "object") {
+    return "Unknown candidate";
+  }
+
+  return candidate.name || candidate.fullName || "Unknown candidate";
+};
 
 const getInitials = (name = "") =>
   name
@@ -155,36 +165,61 @@ const getInitials = (name = "") =>
     .map((part) => part[0].toUpperCase())
     .join("") || "U";
 
+const getReference = (primary, fallback) => {
+  if (primary && typeof primary === "object") return primary;
+  if (fallback && typeof fallback === "object") return fallback;
+  return primary || fallback || {};
+};
+
 /*
- * Supports both populated Mongoose fields and the legacy demo-shaped fields.
- * Expected backend fields:
- * candidateId, jobId, resumeId, atsScore, createdAt.
+ * Supports populated MongoDB references and legacy field names.
+ *
+ * Expected application fields:
+ * candidateId, jobId, companyId, resumeId, status, createdAt.
+ *
+ * This component also supports candidate/job/resume fields when
+ * those references are populated by Mongoose.
  */
 const normalizeApplication = (raw = {}) => {
-  const candidate = raw.candidateId || raw.candidate || {};
-  const job = raw.jobId || raw.job || {};
-  const resume = raw.resumeId || raw.resume || {};
-  const profile = candidate?.profile || raw.profile || {};
+  const candidate = getReference(raw.candidateId, raw.candidate);
+  const job = getReference(raw.jobId, raw.job);
+  const resume = getReference(raw.resumeId, raw.resume);
+
+  const profile =
+    candidate?.profile && typeof candidate.profile === "object"
+      ? candidate.profile
+      : raw.profile || {};
 
   const skills = Array.isArray(profile.skills)
-    ? profile.skills.map((skill) =>
-        typeof skill === "string" ? skill : skill?.name
-      ).filter(Boolean)
-    : Array.isArray(candidate.skills)
+    ? profile.skills
+        .map((skill) =>
+          typeof skill === "string" ? skill : skill?.name
+        )
+        .filter(Boolean)
+    : Array.isArray(candidate?.skills)
       ? candidate.skills
+          .map((skill) =>
+            typeof skill === "string" ? skill : skill?.name
+          )
+          .filter(Boolean)
       : [];
 
   const education = Array.isArray(profile.education)
     ? profile.education
-    : candidate.education
-      ? [{ degree: candidate.education, institute: candidate.university }]
+    : candidate?.education
+      ? [
+          {
+            degree: candidate.education,
+            institute: candidate.university || "",
+          },
+        ]
       : [];
 
-  const experienceItems = Array.isArray(profile.experience)
+  const experience = Array.isArray(profile.experience)
     ? profile.experience
     : [];
 
-  const latestExperience = experienceItems[0];
+  const latestExperience = experience[0] || {};
 
   const score =
     typeof raw.atsScore === "number"
@@ -193,24 +228,35 @@ const normalizeApplication = (raw = {}) => {
         ? raw.score
         : null;
 
+  const jobTitle =
+    typeof job === "string"
+      ? job
+      : job?.title || job?.jobTitle || "Job unavailable";
+
   return {
     ...raw,
-    _id: raw._id,
+
+    _id: raw._id || raw.applicationId || "",
+
     candidate,
     candidateName: getName(candidate),
-    candidateEmail: candidate?.email || "",
-    candidatePhone: candidate?.phoneNo || candidate?.phone || "",
+    candidateEmail:
+      typeof candidate === "object" ? candidate?.email || "" : "",
+    candidatePhone:
+      typeof candidate === "object"
+        ? candidate?.phoneNo || candidate?.phone || ""
+        : "",
     candidateAvatar:
       candidate?.avatar?.url ||
       (typeof candidate?.avatar === "string" ? candidate.avatar : ""),
     candidateLocation:
-      profile.location?.city ||
-      profile.location?.name ||
-      profile.location ||
+      profile?.location?.city ||
+      profile?.location?.name ||
+      (typeof profile?.location === "string" ? profile.location : "") ||
       candidate?.location ||
       "",
     candidateRole:
-      profile.headline ||
+      profile?.headline ||
       latestExperience?.position ||
       latestExperience?.role ||
       candidate?.currentRole ||
@@ -219,17 +265,20 @@ const normalizeApplication = (raw = {}) => {
     candidateEducation: education,
     candidateProfile: profile,
     candidatePortfolio:
-      profile.socialLinks?.portfolio ||
-      profile.socialLinks?.github ||
+      profile?.socialLinks?.portfolio ||
+      profile?.socialLinks?.github ||
       candidate?.portfolio ||
       "",
+
     job,
-    jobTitle:
-      typeof job === "string"
-        ? job
-        : job?.title || job?.jobTitle || "Job unavailable",
+    jobId: getId(raw.jobId || raw.job),
+    jobTitle,
     jobDepartment:
-      job?.department || job?.category || job?.employmentType || "",
+      job?.department ||
+      job?.category ||
+      job?.employmentType ||
+      "",
+
     resume,
     resumeTitle:
       resume?.title ||
@@ -238,13 +287,27 @@ const normalizeApplication = (raw = {}) => {
       resume?.fileName ||
       "Resume",
     resumeUrl:
-      resume?.resume?.url || resume?.url || resume?.fileUrl || "",
+      resume?.resume?.url ||
+      resume?.url ||
+      resume?.fileUrl ||
+      "",
+
     score,
     appliedAt: raw.createdAt || raw.appliedAt || raw.updatedAt,
     recruiterNotes: raw.recruiterNotes || "",
     messageToRecruiter: raw.messageToRecruiter || "",
     status: raw.status || "applied",
   };
+};
+
+const getApplicationFromResponse = (result) => {
+  if (!result) return null;
+
+  if (result.application) return result.application;
+  if (result.data?.application) return result.data.application;
+  if (result.data && !Array.isArray(result.data)) return result.data;
+
+  return result;
 };
 
 function StatusBadge({ status }) {
@@ -277,10 +340,12 @@ function MetricCard({ title, value, description, icon: Icon, tone }) {
             {value}
           </p>
         </div>
+
         <div className={`rounded-xl p-3 ${tones[tone] || tones.violet}`}>
           <Icon size={21} />
         </div>
       </div>
+
       <p className="mt-4 text-xs text-slate-500">{description}</p>
     </div>
   );
@@ -288,6 +353,7 @@ function MetricCard({ title, value, description, icon: Icon, tone }) {
 
 function CandidateAvatar({ candidate, size = "normal" }) {
   const name = getName(candidate);
+
   const avatar =
     candidate?.avatar?.url ||
     (typeof candidate?.avatar === "string" ? candidate.avatar : "");
@@ -318,7 +384,9 @@ function CandidateAvatar({ candidate, size = "normal" }) {
 }
 
 function DetailField({ icon: Icon, children }) {
-  if (!children) return null;
+  if (children === undefined || children === null || children === "") {
+    return null;
+  }
 
   return (
     <div className="flex min-w-0 items-center gap-2 text-sm text-slate-600">
@@ -341,7 +409,9 @@ function ApplicationDrawer({
     [rawApplication]
   );
 
-  const [notes, setNotes] = useState(application.recruiterNotes);
+  const [notes, setNotes] = useState(
+    application.recruiterNotes || ""
+  );
 
   useEffect(() => {
     setNotes(application.recruiterNotes || "");
@@ -350,16 +420,12 @@ function ApplicationDrawer({
   const education = application.candidateEducation || [];
   const skills = application.candidateSkills || [];
 
-  const canShortlist = ![
+  const isTerminal = [
     "selected",
     "rejected",
     "withdrawn",
     "closed",
   ].includes(application.status);
-
-  const canReject = !["selected", "rejected", "withdrawn", "closed"].includes(
-    application.status
-  );
 
   const saveNotes = async () => {
     await onNotesSave(application._id, notes);
@@ -381,7 +447,7 @@ function ApplicationDrawer({
               Application details
             </p>
             <p className="mt-1 truncate text-xs text-slate-500">
-              ID: {application._id}
+              ID: {application._id || "Unavailable"}
             </p>
           </div>
 
@@ -407,9 +473,11 @@ function ApplicationDrawer({
                 <h2 className="break-words text-xl font-bold text-slate-950">
                   {application.candidateName}
                 </h2>
+
                 <p className="mt-1 text-sm text-slate-600">
                   {application.candidateRole || "Role not provided"}
                 </p>
+
                 <div className="mt-3">
                   <StatusBadge status={application.status} />
                 </div>
@@ -429,12 +497,15 @@ function ApplicationDrawer({
               <DetailField icon={Mail}>
                 {application.candidateEmail}
               </DetailField>
+
               <DetailField icon={Phone}>
                 {application.candidatePhone}
               </DetailField>
+
               <DetailField icon={MapPin}>
                 {application.candidateLocation}
               </DetailField>
+
               <DetailField icon={BriefcaseBusiness}>
                 {application.candidateRole}
               </DetailField>
@@ -458,14 +529,20 @@ function ApplicationDrawer({
               <h3 className="font-semibold text-slate-950">
                 Application status
               </h3>
-              <span className="text-xs text-slate-400">Saved to server</span>
+              <span className="text-xs text-slate-400">
+                Saved to server
+              </span>
             </div>
 
-            <label className="mb-2 block text-xs font-medium text-slate-500">
+            <label
+              htmlFor="application-status"
+              className="mb-2 block text-xs font-medium text-slate-500"
+            >
               Update candidate stage
             </label>
 
             <select
+              id="application-status"
               value={application.status}
               disabled={busyStatus}
               onChange={(event) =>
@@ -481,10 +558,12 @@ function ApplicationDrawer({
             </select>
 
             <div className="mt-3 flex flex-wrap gap-2">
-              {canShortlist && (
+              {!isTerminal && (
                 <button
                   type="button"
-                  disabled={busyStatus || application.status === "shortlisted"}
+                  disabled={
+                    busyStatus || application.status === "shortlisted"
+                  }
                   onClick={() =>
                     onStatusChange(application._id, "shortlisted")
                   }
@@ -495,11 +574,13 @@ function ApplicationDrawer({
                 </button>
               )}
 
-              {canReject && (
+              {!isTerminal && (
                 <button
                   type="button"
                   disabled={busyStatus}
-                  onClick={() => onStatusChange(application._id, "rejected")}
+                  onClick={() =>
+                    onStatusChange(application._id, "rejected")
+                  }
                   className="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
                 >
                   <XCircle size={16} />
@@ -513,15 +594,18 @@ function ApplicationDrawer({
             <h3 className="mb-3 font-semibold text-slate-950">
               Position applied for
             </h3>
+
             <div className="rounded-xl border border-slate-200 p-4">
               <p className="break-words font-semibold text-slate-900">
                 {application.jobTitle}
               </p>
+
               {application.jobDepartment && (
                 <p className="mt-1 text-sm text-slate-500">
                   {application.jobDepartment}
                 </p>
               )}
+
               <p className="mt-2 text-xs text-slate-500">
                 Applied {formatDate(application.appliedAt)}
               </p>
@@ -570,16 +654,20 @@ function ApplicationDrawer({
                         .filter(Boolean)
                         .join(" · ") || "Education"}
                     </p>
+
                     {item.institute && (
                       <p className="mt-1 text-sm text-slate-600">
                         {item.institute}
                       </p>
                     )}
+
                     {(item.startYear || item.endYear) && (
                       <p className="mt-2 text-xs text-slate-500">
-                        {item.startYear || "—"} – {item.endYear || "Present"}
+                        {item.startYear || "—"} –{" "}
+                        {item.endYear || "Present"}
                       </p>
                     )}
+
                     {item.grade && (
                       <p className="mt-1 text-xs text-slate-500">
                         Grade: {item.grade}
@@ -599,6 +687,7 @@ function ApplicationDrawer({
             <h3 className="mb-3 font-semibold text-slate-950">
               Candidate message
             </h3>
+
             <div className="whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
               {application.messageToRecruiter || "No message provided."}
             </div>
@@ -647,7 +736,9 @@ function ApplicationDrawer({
           </section>
 
           <section>
-            <h3 className="mb-3 font-semibold text-slate-950">Resume</h3>
+            <h3 className="mb-3 font-semibold text-slate-950">
+              Resume
+            </h3>
 
             <div className="flex items-center gap-3 rounded-xl border border-slate-200 p-4">
               <div className="rounded-xl bg-rose-50 p-3 text-rose-600">
@@ -686,6 +777,7 @@ function ApplicationDrawer({
           <span className="text-xs text-slate-500">
             Applied {formatRelativeDate(application.appliedAt)}
           </span>
+
           <button
             type="button"
             onClick={onClose}
@@ -713,39 +805,58 @@ export default function RecruiterApplication() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [jobFilter, setJobFilter] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [view, setView] = useState("table");
+
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [busyStatus, setBusyStatus] = useState(false);
   const [busyNotes, setBusyNotes] = useState(false);
+
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   const items = useMemo(
-    () => applications.map(normalizeApplication),
+    () =>
+      Array.isArray(applications)
+        ? applications.map(normalizeApplication)
+        : [],
     [applications]
   );
 
   const notify = useCallback((message) => {
     setToast(message);
-    window.setTimeout(() => setToast(""), 2800);
   }, []);
+
+  useEffect(() => {
+    if (!toast) return undefined;
+
+    const timer = window.setTimeout(() => setToast(""), 2800);
+
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   const fetchApplications = useCallback(
     async ({ silent = false } = {}) => {
-      if (!handleGetRecruiterApplications) {
-        setError("Recruiter applications handler is missing from ApplicationContext.");
+      if (typeof handleGetRecruiterApplications !== "function") {
+        setError(
+          "Recruiter applications handler is missing from ApplicationContext."
+        );
         setLoading(false);
+        setRefreshing(false);
         return;
       }
 
-      if (silent) setRefreshing(true);
-      else setLoading(true);
+      if (silent) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
 
       setError("");
 
@@ -757,6 +868,7 @@ export default function RecruiterApplication() {
           status: statusFilter === "all" ? "" : statusFilter,
           jobId: jobFilter,
           sortBy,
+          includeDeleted: false,
         });
       } catch (err) {
         setError(err?.message || "Unable to load applications.");
@@ -778,7 +890,7 @@ export default function RecruiterApplication() {
 
   useEffect(() => {
     fetchApplications();
-  }, [fetchApplications]);
+  }, []);
 
   const totalItems =
     myApplicationPagination?.total ??
@@ -788,56 +900,82 @@ export default function RecruiterApplication() {
 
   const totalPages = Math.max(
     1,
-    myApplicationPagination?.totalPages ??
-      Math.ceil(totalItems / pageSize)
+    Number(
+      myApplicationPagination?.totalPages ??
+        Math.ceil(totalItems / pageSize)
+    ) || 1
   );
 
   const safePage = Math.min(page, totalPages);
 
   useEffect(() => {
-    if (page !== safePage) setPage(safePage);
+    if (page !== safePage) {
+      setPage(safePage);
+    }
   }, [page, safePage]);
 
-  const stats = useMemo(() => {
-    return {
+  const stats = useMemo(
+    () => ({
       total: items.length,
       review: items.filter((item) =>
         ["applied", "screening"].includes(item.status)
       ).length,
-      shortlisted: items.filter((item) => item.status === "shortlisted").length,
+      shortlisted: items.filter(
+        (item) => item.status === "shortlisted"
+      ).length,
       interviews: items.filter((item) =>
-        ["interview_scheduled", "interview_completed"].includes(item.status)
+        ["interview_scheduled", "interview_completed"].includes(
+          item.status
+        )
       ).length,
       selected: items.filter((item) => item.status === "selected").length,
-    };
-  }, [items]);
+    }),
+    [items]
+  );
 
   const jobOptions = useMemo(() => {
     const options = new Map();
 
     items.forEach((item) => {
-      const id = getId(item.job);
-      if (id && item.jobTitle) options.set(id, item.jobTitle);
+      const id = getId(item.job) || item.jobId;
+
+      if (id && item.jobTitle) {
+        options.set(id, item.jobTitle);
+      }
     });
 
     if (jobFilter && !options.has(jobFilter)) {
       options.set(jobFilter, "Selected job");
     }
 
-    return [...options.entries()].map(([id, title]) => ({ id, title }));
+    return [...options.entries()].map(([id, title]) => ({
+      id,
+      title,
+    }));
   }, [items, jobFilter]);
 
   const openApplication = async (applicationId) => {
-    if (!applicationId) return;
+    if (!applicationId) {
+      notify("This application does not have a valid ID.");
+      return;
+    }
+
+    if (typeof handleGetApplicationById !== "function") {
+      setError("Application details handler is missing from ApplicationContext.");
+      return;
+    }
 
     setError("");
 
     try {
-      const detail = await handleGetApplicationById({ applicationId });
-      if (!detail) {
+      const result = await handleGetApplicationById({ applicationId });
+      const detail = getApplicationFromResponse(result);
+
+      if (!detail || typeof detail !== "object" || !detail._id) {
         notify("Application details could not be loaded.");
         return;
       }
+
       setSelectedApplication(detail);
     } catch (err) {
       setError(err?.message || "Unable to load application details.");
@@ -846,21 +984,33 @@ export default function RecruiterApplication() {
 
   const updateStatus = async (applicationId, status) => {
     const current = items.find((item) => item._id === applicationId);
+
     if (!current || current.status === status) return;
+
+    if (typeof handleUpdateApplicationStatus !== "function") {
+      setError("Application status handler is missing from ApplicationContext.");
+      return;
+    }
 
     setBusyStatus(true);
     setError("");
 
     try {
-      await handleUpdateApplicationStatus({ applicationId, status });
+      await handleUpdateApplicationStatus({
+        applicationId,
+        status,
+      });
 
-      if (selectedApplication?._id === applicationId) {
-        setSelectedApplication((previous) =>
-          previous ? { ...previous, status } : previous
-        );
-      }
+      setSelectedApplication((previous) =>
+        previous?._id === applicationId
+          ? { ...previous, status }
+          : previous
+      );
 
-      notify(`Status updated to ${STATUS_META[status]?.label || status}.`);
+      notify(
+        `Status updated to ${STATUS_META[status]?.label || status}.`
+      );
+
       await fetchApplications({ silent: true });
     } catch (err) {
       setError(err?.message || "Unable to update application status.");
@@ -871,11 +1021,19 @@ export default function RecruiterApplication() {
   };
 
   const saveNotes = async (applicationId, recruiterNotes) => {
+    if (typeof handleUpdateRecruiterNotes !== "function") {
+      setError("Recruiter notes handler is missing from ApplicationContext.");
+      return;
+    }
+
     setBusyNotes(true);
     setError("");
 
     try {
-      await handleUpdateRecruiterNotes({ applicationId, recruiterNotes });
+      await handleUpdateRecruiterNotes({
+        applicationId,
+        recruiterNotes,
+      });
 
       setSelectedApplication((previous) =>
         previous?._id === applicationId
@@ -884,6 +1042,7 @@ export default function RecruiterApplication() {
       );
 
       notify("Recruiter notes saved.");
+
       await fetchApplications({ silent: true });
     } catch (err) {
       setError(err?.message || "Unable to save recruiter notes.");
@@ -901,7 +1060,17 @@ export default function RecruiterApplication() {
     setPage(1);
   };
 
+  const changeFilter = (setter, value) => {
+    setter(value);
+    setPage(1);
+  };
+
   const exportCsv = () => {
+    if (items.length === 0) {
+      notify("There are no applications to export.");
+      return;
+    }
+
     const headers = [
       "Application ID",
       "Candidate",
@@ -937,23 +1106,23 @@ export default function RecruiterApplication() {
 
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
+
     link.href = url;
-    link.download = `peer-hiring-applications-page-${page}.csv`;
+    link.download = `peer-hiring-applications-page-${safePage}.csv`;
+
     document.body.appendChild(link);
     link.click();
     link.remove();
+
     URL.revokeObjectURL(url);
 
     setShowExportMenu(false);
     notify("Current page exported to CSV.");
   };
 
-  const changeFilter = (setter, value) => {
-    setter(value);
-    setPage(1);
-  };
+  const visibleRangeStart =
+    totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1;
 
-  const visibleRangeStart = totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1;
   const visibleRangeEnd = Math.min(
     (safePage - 1) * pageSize + items.length,
     totalItems
@@ -968,9 +1137,11 @@ export default function RecruiterApplication() {
               <Sparkles size={15} />
               Talent workspace
             </div>
+
             <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
               Applications
             </h1>
+
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
               Review real candidates, manage hiring stages, and keep your
               recruitment pipeline moving.
@@ -981,7 +1152,9 @@ export default function RecruiterApplication() {
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setShowExportMenu((previous) => !previous)}
+                onClick={() =>
+                  setShowExportMenu((previous) => !previous)
+                }
                 disabled={items.length === 0}
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
               >
@@ -1034,10 +1207,12 @@ export default function RecruiterApplication() {
             className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800"
           >
             <AlertCircle size={19} className="mt-0.5 shrink-0" />
+
             <div className="min-w-0 flex-1">
               <p className="font-semibold">Something went wrong</p>
               <p className="mt-1 break-words">{error}</p>
             </div>
+
             <button
               type="button"
               onClick={() => setError("")}
@@ -1057,6 +1232,7 @@ export default function RecruiterApplication() {
             icon={Users}
             tone="violet"
           />
+
           <MetricCard
             title="Needs review"
             value={loading ? "—" : stats.review}
@@ -1064,6 +1240,7 @@ export default function RecruiterApplication() {
             icon={Clock3}
             tone="amber"
           />
+
           <MetricCard
             title="Shortlisted"
             value={loading ? "—" : stats.shortlisted}
@@ -1071,6 +1248,7 @@ export default function RecruiterApplication() {
             icon={UserCheck}
             tone="blue"
           />
+
           <MetricCard
             title="Interviews"
             value={loading ? "—" : stats.interviews}
@@ -1083,7 +1261,9 @@ export default function RecruiterApplication() {
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col justify-between gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center">
             <div>
-              <h2 className="font-bold text-slate-950">Hiring pipeline</h2>
+              <h2 className="font-bold text-slate-950">
+                Hiring pipeline
+              </h2>
               <p className="mt-1 text-sm text-slate-500">
                 Manage applications returned by your recruiter account.
               </p>
@@ -1094,7 +1274,10 @@ export default function RecruiterApplication() {
                 { label: "New", value: "applied" },
                 { label: "Screening", value: "screening" },
                 { label: "Shortlisted", value: "shortlisted" },
-                { label: "Interview", value: "interview_scheduled" },
+                {
+                  label: "Interview",
+                  value: "interview_scheduled",
+                },
                 { label: "Selected", value: "selected" },
               ].map((stage) => {
                 const count = items.filter(
@@ -1185,7 +1368,9 @@ export default function RecruiterApplication() {
 
                 <button
                   type="button"
-                  onClick={() => setShowFilters((previous) => !previous)}
+                  onClick={() =>
+                    setShowFilters((previous) => !previous)
+                  }
                   className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
                     showFilters || statusFilter !== "all"
                       ? "border-violet-200 bg-violet-50 text-violet-700"
@@ -1196,7 +1381,11 @@ export default function RecruiterApplication() {
                   Filters
                   <ChevronDown
                     size={14}
-                    className={showFilters ? "rotate-180 transition" : "transition"}
+                    className={
+                      showFilters
+                        ? "rotate-180 transition"
+                        : "transition"
+                    }
                   />
                 </button>
 
@@ -1214,6 +1403,7 @@ export default function RecruiterApplication() {
                   >
                     <List size={18} />
                   </button>
+
                   <button
                     type="button"
                     onClick={() => setView("grid")}
@@ -1234,10 +1424,15 @@ export default function RecruiterApplication() {
             {showFilters && (
               <div className="grid gap-3 rounded-xl border border-violet-100 bg-violet-50/40 p-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                  <label
+                    htmlFor="status-filter"
+                    className="mb-1.5 block text-xs font-semibold text-slate-600"
+                  >
                     Application status
                   </label>
+
                   <select
+                    id="status-filter"
                     value={statusFilter}
                     onChange={(event) =>
                       changeFilter(setStatusFilter, event.target.value)
@@ -1254,10 +1449,15 @@ export default function RecruiterApplication() {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                  <label
+                    htmlFor="application-sort"
+                    className="mb-1.5 block text-xs font-semibold text-slate-600"
+                  >
                     Sort applications
                   </label>
+
                   <select
+                    id="application-sort"
                     value={sortBy}
                     onChange={(event) =>
                       changeFilter(setSortBy, event.target.value)
@@ -1289,7 +1489,9 @@ export default function RecruiterApplication() {
               <p>
                 Showing{" "}
                 <span className="font-semibold text-slate-800">
-                  {loading ? "—" : `${visibleRangeStart}–${visibleRangeEnd}`}
+                  {loading
+                    ? "—"
+                    : `${visibleRangeStart}–${visibleRangeEnd}`}
                 </span>{" "}
                 of{" "}
                 <span className="font-semibold text-slate-800">
@@ -1329,13 +1531,16 @@ export default function RecruiterApplication() {
               <div className="rounded-2xl bg-violet-50 p-4 text-violet-700">
                 <Search size={27} />
               </div>
+
               <h3 className="mt-4 text-base font-bold text-slate-900">
                 No applications found
               </h3>
+
               <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
                 There are no applications matching these filters. Try a
                 different search or clear your filters.
               </p>
+
               <button
                 type="button"
                 onClick={resetFilters}
@@ -1374,19 +1579,26 @@ export default function RecruiterApplication() {
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-3">
                               <CandidateAvatar candidate={item.candidate} />
+
                               <div className="min-w-0">
                                 <button
                                   type="button"
-                                  onClick={() => openApplication(item._id)}
+                                  onClick={() =>
+                                    openApplication(item._id)
+                                  }
                                   className="block max-w-[220px] truncate text-sm font-semibold text-slate-900 hover:text-violet-700"
                                 >
                                   {item.candidateName}
                                 </button>
+
                                 <p className="mt-1 max-w-[220px] truncate text-xs text-slate-500">
-                                  {item.candidateEmail || "No email available"}
+                                  {item.candidateEmail ||
+                                    "No email available"}
                                 </p>
+
                                 <p className="mt-1 max-w-[220px] truncate text-xs text-slate-400">
-                                  {item.candidateRole || "Role not provided"}
+                                  {item.candidateRole ||
+                                    "Role not provided"}
                                 </p>
                               </div>
                             </div>
@@ -1416,10 +1628,12 @@ export default function RecruiterApplication() {
                                       }}
                                     />
                                   </div>
+
                                   <span className="text-sm font-bold text-slate-800">
                                     {item.score}%
                                   </span>
                                 </div>
+
                                 <p className="mt-1 text-[10px] text-slate-400">
                                   ATS score
                                 </p>
@@ -1443,11 +1657,15 @@ export default function RecruiterApplication() {
                           <td className="px-5 py-4">
                             <div className="flex flex-col items-start gap-2">
                               <StatusBadge status={item.status} />
+
                               <select
                                 value={item.status}
                                 disabled={busyStatus}
                                 onChange={(event) =>
-                                  updateStatus(item._id, event.target.value)
+                                  updateStatus(
+                                    item._id,
+                                    event.target.value
+                                  )
                                 }
                                 aria-label={`Update status for ${item.candidateName}`}
                                 className="max-w-[190px] cursor-pointer rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium outline-none focus:border-violet-500 disabled:opacity-50"
@@ -1468,25 +1686,33 @@ export default function RecruiterApplication() {
                             <div className="flex items-center justify-end gap-1">
                               <button
                                 type="button"
-                                onClick={() => openApplication(item._id)}
+                                onClick={() =>
+                                  openApplication(item._id)
+                                }
                                 title="View application"
                                 aria-label="View application"
                                 className="rounded-lg p-2 text-slate-500 transition hover:bg-violet-100 hover:text-violet-700"
                               >
                                 <Eye size={17} />
                               </button>
+
                               <button
                                 type="button"
-                                onClick={() => openApplication(item._id)}
+                                onClick={() =>
+                                  openApplication(item._id)
+                                }
                                 title="Recruiter notes"
                                 aria-label="Open recruiter notes"
                                 className="rounded-lg p-2 text-slate-500 transition hover:bg-violet-100 hover:text-violet-700"
                               >
                                 <MessageSquareText size={17} />
                               </button>
+
                               <button
                                 type="button"
-                                onClick={() => openApplication(item._id)}
+                                onClick={() =>
+                                  openApplication(item._id)
+                                }
                                 title="More details"
                                 aria-label="More details"
                                 className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
@@ -1518,9 +1744,11 @@ export default function RecruiterApplication() {
                       <h3 className="mt-4 break-words font-bold text-slate-950">
                         {item.candidateName}
                       </h3>
+
                       <p className="mt-1 truncate text-sm text-slate-500">
                         {item.candidateRole || "Role not provided"}
                       </p>
+
                       <p className="mt-1 truncate text-xs text-slate-400">
                         {item.candidateEmail}
                       </p>
@@ -1535,9 +1763,13 @@ export default function RecruiterApplication() {
                       </div>
 
                       <div className="mt-4 flex items-center justify-between">
-                        <span className="text-xs text-slate-500">ATS score</span>
+                        <span className="text-xs text-slate-500">
+                          ATS score
+                        </span>
                         <span className="text-sm font-bold text-violet-700">
-                          {item.score === null ? "Not scored" : `${item.score}%`}
+                          {item.score === null
+                            ? "Not scored"
+                            : `${item.score}%`}
                         </span>
                       </div>
 
@@ -1561,14 +1793,17 @@ export default function RecruiterApplication() {
 
                       {item.candidateSkills.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-1.5">
-                          {item.candidateSkills.slice(0, 4).map((skill, i) => (
-                            <span
-                              key={`${skill}-${i}`}
-                              className="rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600"
-                            >
-                              {skill}
-                            </span>
-                          ))}
+                          {item.candidateSkills.slice(0, 4).map(
+                            (skill, index) => (
+                              <span
+                                key={`${skill}-${index}`}
+                                className="rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600"
+                              >
+                                {skill}
+                              </span>
+                            )
+                          )}
+
                           {item.candidateSkills.length > 4 && (
                             <span className="rounded-lg bg-slate-100 px-2 py-1 text-[11px] text-slate-500">
                               +{item.candidateSkills.length - 4}
@@ -1585,6 +1820,7 @@ export default function RecruiterApplication() {
                         >
                           View application
                         </button>
+
                         <select
                           value={item.status}
                           disabled={busyStatus}
@@ -1595,7 +1831,10 @@ export default function RecruiterApplication() {
                           className="max-w-[145px] rounded-xl border border-slate-200 bg-white px-2 text-xs font-medium outline-none focus:border-violet-500 disabled:opacity-50"
                         >
                           {STATUS_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
+                            <option
+                              key={option.value}
+                              value={option.value}
+                            >
                               {option.label}
                             </option>
                           ))}
@@ -1609,6 +1848,7 @@ export default function RecruiterApplication() {
               <footer className="flex flex-col justify-between gap-4 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center">
                 <div className="flex items-center gap-3">
                   <p className="text-xs text-slate-500">Rows per page</p>
+
                   <select
                     value={pageSize}
                     onChange={(event) => {
@@ -1622,6 +1862,7 @@ export default function RecruiterApplication() {
                     <option value={20}>20</option>
                     <option value={50}>50</option>
                   </select>
+
                   <span className="hidden text-xs text-slate-400 sm:inline">
                     {totalItems} total results
                   </span>
@@ -1631,6 +1872,7 @@ export default function RecruiterApplication() {
                   <p className="text-xs font-medium text-slate-500">
                     Page {safePage} of {totalPages}
                   </p>
+
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
@@ -1658,8 +1900,11 @@ export default function RecruiterApplication() {
                         <React.Fragment key={number}>
                           {index > 0 &&
                             number - array[index - 1] > 1 && (
-                              <span className="px-1 text-slate-400">…</span>
+                              <span className="px-1 text-slate-400">
+                                …
+                              </span>
                             )}
+
                           <button
                             type="button"
                             disabled={loading}
@@ -1697,6 +1942,7 @@ export default function RecruiterApplication() {
 
         <div className="flex flex-col justify-between gap-2 pb-2 text-xs text-slate-400 sm:flex-row sm:items-center">
           <p>Peer.Hiring · Recruiter workspace</p>
+
           <p className="inline-flex items-center gap-1.5">
             <CircleDot size={12} className="text-emerald-500" />
             Connected to recruiter application API
@@ -1721,8 +1967,13 @@ export default function RecruiterApplication() {
           role="status"
           className="fixed bottom-5 right-5 z-[70] flex max-w-[calc(100vw-2.5rem)] items-center gap-3 rounded-xl bg-slate-950 px-4 py-3 text-sm font-medium text-white shadow-2xl"
         >
-          <CheckCircle2 size={18} className="shrink-0 text-emerald-400" />
+          <CheckCircle2
+            size={18}
+            className="shrink-0 text-emerald-400"
+          />
+
           <span>{toast}</span>
+
           <button
             type="button"
             onClick={() => setToast("")}
