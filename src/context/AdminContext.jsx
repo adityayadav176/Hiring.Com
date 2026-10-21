@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 
 export const AdminContext = createContext(null);
 
@@ -597,6 +597,44 @@ const handleVerifyCompany = useCallback(
   [API_URL, handleResponse]
 );
 
+const handleRestoreCompany = async (companyId) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/admin/companies/${companyId}/restore`,
+      {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.message || "Failed to restore company"
+      );
+    }
+
+    setCompanies(result.data);
+
+    return {
+      success: true,
+      data: result.data,
+      message: result.message || "Company restored successfully",
+    };
+  } catch (error) {
+    console.error("Restore company error:", error);
+
+    return {
+      success: false,
+      message: error.message || "Failed to restore company",
+    };
+  }
+};
+
 const handleRejectCompany = useCallback(
   async (companyId) => {
     if (!companyId) {
@@ -1153,6 +1191,8 @@ const handleUnlockJob = useCallback(async (jobId) => {
     []
   );
 
+  const navigate = useNavigate();
+
   const adminLogout = async () => {
   try {
     const response = await fetch(
@@ -1172,6 +1212,7 @@ const handleUnlockJob = useCallback(async (jobId) => {
       throw new Error(result.message || "Admin logout failed");
     }
     setAdminProfile(null);
+    navigate("/login");
 
     return result;
   } catch (error) {
@@ -1232,7 +1273,8 @@ const handleUnlockJob = useCallback(async (jobId) => {
       updateAdminAvatar,
       fetchAdminProfile,
       setAdminProfile,
-      avatarLoading
+      avatarLoading,
+      handleRestoreCompany,
     }),
     [
       setAdminProfile,
@@ -1247,6 +1289,7 @@ const handleUnlockJob = useCallback(async (jobId) => {
       usersPagination,
       companies,
       selectedCompany,
+      handleRestoreCompany,
       companiesPagination,
       jobs,
       job,

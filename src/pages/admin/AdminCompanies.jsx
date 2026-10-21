@@ -35,7 +35,7 @@ import {
   BriefcaseBusiness,
 } from "lucide-react";
 
-import { useAdmin } from "../../hooks/Hook";
+import { useAdmin, useCompany } from "../../hooks/Hook";
 
 const PAGE_SIZE = 8;
 
@@ -307,6 +307,7 @@ export default function AdminCompanies() {
     handleBlockCompany,
     handleUnblockCompany,
     handleSoftDeleteCompany,
+    handleRestoreCompany
   } = useAdmin();
 
   const [search, setSearch] = useState("");
@@ -515,6 +516,12 @@ export default function AdminCompanies() {
         success: "Company moved to deleted status.",
         missing: "Company deletion is not available.",
       },
+      restore: {
+        handler: handleRestoreCompany,
+        confirm: `Restore ${companyName}?`,
+        success: "Company restored successfully.",
+        missing: "Company restoration is not available.",
+      },
     };
 
     const config = actionConfig[type];
@@ -534,7 +541,11 @@ export default function AdminCompanies() {
     setActionLoading(`${type}:${companyId}`);
 
     try {
-      const result = await config.handler(companyId);
+     const result = await config.handler(companyId);
+
+if (result?.success === false) {
+  throw new Error(result.message || `Unable to ${type} company.`);
+}
 
       const message =
         result?.message ||
@@ -1008,27 +1019,39 @@ export default function AdminCompanies() {
                               )
                             )}
 
-                            {companyStatus !== "deleted" && (
-                              <button
-                                type="button"
-                                title="Soft-delete company"
-                                aria-label={`Delete ${getCompanyName(company)}`}
-                                onClick={() =>
-                                  runConfirmedAction("delete", company)
-                                }
-                                disabled={busy}
-                                className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-50"
-                              >
-                                {isActionBusy("delete", company) ? (
-                                  <LoaderCircle
-                                    size={16}
-                                    className="animate-spin"
-                                  />
-                                ) : (
-                                  <Trash2 size={16} />
-                                )}
-                              </button>
-                            )}
+                            
+{companyStatus === "deleted" ? (
+  <button
+    type="button"
+    title="Restore company"
+    aria-label={`Restore ${getCompanyName(company)}`}
+    onClick={() => runConfirmedAction("restore", company)}
+    disabled={busy}
+    className="rounded-lg border border-emerald-200 p-2 text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+  >
+    {isActionBusy("restore", company) ? (
+      <LoaderCircle size={16} className="animate-spin" />
+    ) : (
+      <RotateCcw size={16} />
+    )}
+  </button>
+) : (
+  <button
+    type="button"
+    title="Soft-delete company"
+    aria-label={`Delete ${getCompanyName(company)}`}
+    onClick={() => runConfirmedAction("delete", company)}
+    disabled={busy}
+    className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-50"
+  >
+    {isActionBusy("delete", company) ? (
+      <LoaderCircle size={16} className="animate-spin" />
+    ) : (
+      <Trash2 size={16} />
+    )}
+  </button>
+)}
+
                           </div>
                         </td>
                       </tr>

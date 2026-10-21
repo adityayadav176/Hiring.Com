@@ -96,6 +96,7 @@ const CompanyProvider = ({ children }) => {
     }
   }, [API_URL]);
 
+
   const handleGetCompanyById = useCallback(async ({ companyId }) => {
     try {
       if (!companyId) {

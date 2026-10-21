@@ -1139,8 +1139,7 @@ export default function AdminUsers() {
 
     try {
       if (type === "delete") {
-        // Matches the handleDeleteUser({ userId }) context signature.
-        await handleDeleteUser({ userId });
+        await handleDeleteUser( userId );
 
         setSelected(null);
         setSelectedUser?.(null);
