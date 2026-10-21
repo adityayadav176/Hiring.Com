@@ -313,7 +313,7 @@ const ApplicationProvider = ({ children }) => {
     }
   };
 
-const handleGetRecruiterApplications = async (filters = {}) => {
+const handleGetRecruiterApplications = useCallback(async (filters = {}) => {
   try {
     const query = new URLSearchParams();
 
@@ -390,8 +390,9 @@ const handleGetRecruiterApplications = async (filters = {}) => {
     console.error("handleGetRecruiterApplications:", error);
     throw error;
   }
-};
-
+},
+[]
+)
 
   // Withdraw a candidate's application
   const handleWithdrawApplication = async ({ applicationId }) => {

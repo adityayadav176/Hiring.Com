@@ -890,7 +890,7 @@ export default function RecruiterApplication() {
 
   useEffect(() => {
     fetchApplications();
-  }, []);
+  }, [fetchApplications]);
 
   const totalItems =
     myApplicationPagination?.total ??
@@ -983,14 +983,20 @@ export default function RecruiterApplication() {
   };
 
   const updateStatus = async (applicationId, status) => {
-    const current = items.find((item) => item._id === applicationId);
+  const current = items.find(
+    (item) => item._id === applicationId
+  );
 
-    if (!current || current.status === status) return;
+  if (!current || current.status === status) return;
 
-    if (typeof handleUpdateApplicationStatus !== "function") {
-      setError("Application status handler is missing from ApplicationContext.");
-      return;
-    }
+  if (TERMINAL_STATUSES.has(current.status)) {
+    notify(
+      `Applications with status "${STATUS_META[current.status]?.label || current.status}" cannot be changed.`
+    );
+    return;
+  }
+
+  // Keep the rest of your existing updateStatus function here.
 
     setBusyStatus(true);
     setError("");

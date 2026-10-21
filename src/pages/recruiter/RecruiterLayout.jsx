@@ -12,6 +12,7 @@ import RecruiterCompanies from './RecruiterCompanies';
 
 export default function () {
     const {recruiterActivePage} = useHome();
+     console.log("Current recruiter page:", recruiterActivePage);
   return (
     <div className='h-screen overflow-hidden flex'>
         <Sidebar/>

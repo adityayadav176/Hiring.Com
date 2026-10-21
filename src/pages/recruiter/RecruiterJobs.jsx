@@ -1,8 +1,8 @@
-
 import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -23,7 +23,6 @@ import {
   CircleCheck,
   CirclePause,
   X,
-  Copy,
   Pencil,
   CircleDollarSign,
   SlidersHorizontal,
@@ -34,12 +33,10 @@ import {
   Trash2,
   Save,
   Check,
-  Filter,
   RotateCcw,
   Building2,
-ExternalLink,
-Globe2,
-Hash,
+  LockKeyhole,
+  ExternalLink,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useJob } from "../../hooks/Hook";
@@ -90,6 +87,16 @@ const SORT_OPTIONS = [
   { label: "Most views", value: "views" },
 ];
 
+const SORT_PARAMS = {
+  recent: ["createdAt", "desc"],
+  oldest: ["createdAt", "asc"],
+  title: ["title", "asc"],
+  salaryHigh: ["salary.max", "desc"],
+  salaryLow: ["salary.min", "asc"],
+  applicants: ["applicantsCount", "desc"],
+  views: ["views", "desc"],
+};
+
 const EMPTY_FILTERS = {
   search: "",
   status: "",
@@ -130,7 +137,7 @@ const STATUS_STYLES = {
   OPEN: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   DRAFT: "bg-violet-50 text-violet-700 ring-violet-200",
   PAUSED: "bg-amber-50 text-amber-700 ring-amber-200",
-  CLOSED: "bg-slate-100 text-slate-600 ring-slate-200",
+  CLOSED: "bg-slate-100 text-slate-700 ring-slate-200",
   EXPIRED: "bg-rose-50 text-rose-700 ring-rose-200",
 };
 
@@ -142,28 +149,18 @@ const ACCENTS = [
   "bg-emerald-100 text-emerald-700",
 ];
 
-const SORT_PARAMS = {
-  recent: ["createdAt", "desc"],
-  oldest: ["createdAt", "asc"],
-  title: ["title", "asc"],
-  salaryHigh: ["salary.max", "desc"],
-  salaryLow: ["salary.min", "asc"],
-  applicants: ["applicantsCount", "desc"],
-  views: ["views", "desc"],
-};
-
 function getJobId(job) {
   const id = job?._id ?? job?.id ?? job?.jobId;
-
   if (id == null) return "";
 
-  const normalizedId = String(id).trim();
+  const value = String(id).trim();
 
-  if (!normalizedId || normalizedId === "[object Object]") {
-    return "";
-  }
+  if (!value || value === "[object Object]") return "";
+  return value;
+}
 
-  return normalizedId;
+function isValidMongoId(id) {
+  return /^[a-f\d]{24}$/i.test(String(id || ""));
 }
 
 function getTitle(job) {
@@ -177,13 +174,15 @@ function getRawStatus(job) {
 function getStatusLabel(job) {
   const status = getRawStatus(job);
 
-  return {
-    OPEN: "Open",
-    DRAFT: "Draft",
-    PAUSED: "Paused",
-    CLOSED: "Closed",
-    EXPIRED: "Expired",
-  }[status] || status;
+  return (
+    {
+      OPEN: "Open",
+      DRAFT: "Draft",
+      PAUSED: "Paused",
+      CLOSED: "Closed",
+      EXPIRED: "Expired",
+    }[status] || status
+  );
 }
 
 function formatEnum(value) {
@@ -199,7 +198,6 @@ function formatDate(value) {
   if (!value) return "Not set";
 
   const date = new Date(value);
-
   if (Number.isNaN(date.getTime())) return "Not set";
 
   return date.toLocaleDateString("en-IN", {
@@ -209,11 +207,24 @@ function formatDate(value) {
   });
 }
 
+function getDateInputValue(value) {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  // Use local calendar date so the date input doesn't shift a day in UTC.
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 function getTimeAgo(value) {
   if (!value) return "Not available";
 
   const timestamp = new Date(value).getTime();
-
   if (Number.isNaN(timestamp)) return "Not available";
 
   const days = Math.max(
@@ -234,15 +245,15 @@ function getLocation(job) {
   const location = job?.location;
 
   if (typeof location === "string") {
-    return location || "Location not specified";
+    return location.trim() || "Location not specified";
   }
 
   if (location && typeof location === "object") {
-    return [
-      location.city,
-      location.state,
-      location.country,
-    ].filter(Boolean).join(", ") || "Location not specified";
+    return (
+      [location.city, location.state, location.country]
+        .filter(Boolean)
+        .join(", ") || "Location not specified"
+    );
   }
 
   return "Location not specified";
@@ -254,7 +265,7 @@ function getSalaryText(job) {
   const min = salary.min;
   const max = salary.max;
 
-  if (salary.isNegotiable && !min && !max) {
+  if (salary.isNegotiable && !Number(min) && !Number(max)) {
     return "Negotiable";
   }
 
@@ -277,17 +288,19 @@ function getSalaryText(job) {
 }
 
 function getApplicants(job) {
-  return Number(job?.applicantsCount) || 0;
+  return Number(job?.applicantsCount ?? job?.applicants) || 0;
 }
 
 function getInitials(title) {
-  return String(title || "JB")
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase();
+  return (
+    String(title || "JB")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase() || "JB"
+  );
 }
 
 function normalizeJob(job) {
@@ -313,22 +326,11 @@ function arrayToTextarea(value) {
 }
 
 function createFormFromJob(job) {
-  const location = job?.location || {};
+  const location =
+    job?.location && typeof job.location === "object"
+      ? job.location
+      : {};
   const salary = job?.salary || {};
-
-  let deadline = "";
-
-  if (job?.applicationDeadline) {
-    const date = new Date(job.applicationDeadline);
-
-    if (!Number.isNaN(date.getTime())) {
-      deadline = [
-        date.getFullYear(),
-        String(date.getMonth() + 1).padStart(2, "0"),
-        String(date.getDate()).padStart(2, "0"),
-      ].join("-");
-    }
-  }
 
   return {
     ...EMPTY_FORM,
@@ -340,18 +342,18 @@ function createFormFromJob(job) {
     employmentType: job?.employmentType || "FULL_TIME",
     workSpaceType: job?.workSpaceType || "ONSITE",
     experienceLevel: job?.experienceLevel || "FRESHER",
-    city: location?.city || "",
-    state: location?.state || "",
-    country: location?.country || "India",
-    salaryMin: salary?.min ?? "",
-    salaryMax: salary?.max ?? "",
-    currency: salary?.currency || "INR",
-    isNegotiable: Boolean(salary?.isNegotiable),
+    city: location.city || "",
+    state: location.state || "",
+    country: location.country || "India",
+    salaryMin: salary.min ?? "",
+    salaryMax: salary.max ?? "",
+    currency: salary.currency || "INR",
+    isNegotiable: Boolean(salary.isNegotiable),
     skills: Array.isArray(job?.skills)
       ? job.skills.join(", ")
       : "",
     openings: String(job?.openings ?? 1),
-    applicationDeadline: deadline,
+    applicationDeadline: getDateInputValue(job?.applicationDeadline),
     status: getRawStatus(job),
   };
 }
@@ -368,32 +370,26 @@ function buildJobPayload(form) {
     title: form.title.trim(),
     description: form.description.trim(),
     category: form.category.trim(),
-
     requirements: splitLines(form.requirements),
     responsibilities: splitLines(form.responsibilities),
-
     employmentType: form.employmentType,
     workSpaceType: form.workSpaceType,
     experienceLevel: form.experienceLevel,
-
     location: {
       city: form.city.trim(),
       state: form.state.trim(),
       country: form.country.trim(),
     },
-
     salary: {
       min: form.salaryMin === "" ? 0 : Number(form.salaryMin),
       max: form.salaryMax === "" ? 0 : Number(form.salaryMax),
       currency: form.currency,
       isNegotiable: Boolean(form.isNegotiable),
     },
-
     skills: form.skills
       .split(",")
-      .map((skill) => skill.trim())
+      .map((skill) => skill.trim().toLowerCase())
       .filter(Boolean),
-
     openings: Number(form.openings),
     applicationDeadline: form.applicationDeadline || null,
     status: form.status,
@@ -418,21 +414,18 @@ function Field({ label, required, error, children, className = "" }) {
   );
 }
 
+const inputClass =
+  "mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100";
+
 function TextInput({ className = "", ...props }) {
   return (
-    <input
-      {...props}
-      className={`mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 ${className}`}
-    />
+    <input {...props} className={`${inputClass} ${className}`} />
   );
 }
 
 function SelectInput({ children, className = "", ...props }) {
   return (
-    <select
-      {...props}
-      className={`mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100 ${className}`}
-    >
+    <select {...props} className={`${inputClass} ${className}`}>
       {children}
     </select>
   );
@@ -442,7 +435,7 @@ function TextArea({ className = "", ...props }) {
   return (
     <textarea
       {...props}
-      className={`mt-1.5 w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 ${className}`}
+      className={`${inputClass} resize-y ${className}`}
     />
   );
 }
@@ -512,9 +505,16 @@ function JobFormModal({
 
     if (
       form.applicationDeadline &&
-      Number.isNaN(new Date(form.applicationDeadline).getTime())
+      Number.isNaN(new Date(`${form.applicationDeadline}T00:00:00`).getTime())
     ) {
       next.applicationDeadline = "Enter a valid deadline.";
+    }
+
+    if (
+      form.applicationDeadline &&
+      form.applicationDeadline < getDateInputValue(new Date())
+    ) {
+      next.applicationDeadline = "Deadline cannot be in the past.";
     }
 
     setErrors(next);
@@ -523,11 +523,15 @@ function JobFormModal({
 
   const submit = async (event) => {
     event.preventDefault();
-
     if (!validate()) return;
-
     await onSubmit(buildJobPayload(form));
   };
+
+  const sections = [
+    "Job information",
+    "Description & qualifications",
+    "Location & compensation",
+  ];
 
   return (
     <div
@@ -540,13 +544,13 @@ function JobFormModal({
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-7">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">
-              Peer.Hiring · Job management
+              Peer.Hiring · Recruiter workspace
             </p>
             <h2 className="mt-1 text-xl font-bold text-slate-950">
               {mode === "edit" ? "Edit job listing" : "Create a job listing"}
             </h2>
             <p className="mt-1 text-xs text-slate-500">
-              Complete the job information below. Required fields are marked.
+              Keep your role information clear and accurate.
             </p>
           </div>
 
@@ -563,7 +567,21 @@ function JobFormModal({
 
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
           <div className="overflow-y-auto px-5 py-5 sm:px-7">
-            <div className="mb-6 flex items-center gap-2 text-sm font-bold text-slate-900">
+            <div className="grid gap-2 sm:grid-cols-3">
+              {sections.map((section, index) => (
+                <div
+                  key={section}
+                  className="rounded-xl bg-violet-50 px-3 py-2.5 text-xs font-semibold text-violet-800"
+                >
+                  <span className="mr-2 text-violet-400">
+                    0{index + 1}
+                  </span>
+                  {section}
+                </div>
+              ))}
+            </div>
+
+            <div className="mb-4 mt-6 flex items-center gap-2 text-sm font-bold text-slate-900">
               <BriefcaseBusiness size={18} className="text-violet-700" />
               Basic job information
             </div>
@@ -587,7 +605,7 @@ function JobFormModal({
                 <TextInput
                   value={form.category}
                   onChange={(e) => update("category", e.target.value)}
-                  placeholder="e.g. Engineering, Design, Marketing"
+                  placeholder="Engineering, Design, Marketing"
                   maxLength={100}
                 />
               </Field>
@@ -599,15 +617,10 @@ function JobFormModal({
                   step="1"
                   value={form.openings}
                   onChange={(e) => update("openings", e.target.value)}
-                  placeholder="1"
                 />
               </Field>
 
-              <Field
-                label="Employment type"
-                required
-                error={errors.employmentType}
-              >
+              <Field label="Employment type" required error={errors.employmentType}>
                 <SelectInput
                   value={form.employmentType}
                   onChange={(e) => update("employmentType", e.target.value)}
@@ -633,11 +646,7 @@ function JobFormModal({
                 </SelectInput>
               </Field>
 
-              <Field
-                label="Experience level"
-                required
-                error={errors.experienceLevel}
-              >
+              <Field label="Experience level" required error={errors.experienceLevel}>
                 <SelectInput
                   value={form.experienceLevel}
                   onChange={(e) => update("experienceLevel", e.target.value)}
@@ -650,7 +659,7 @@ function JobFormModal({
                 </SelectInput>
               </Field>
 
-              <Field label="Job status">
+              <Field label="Listing status">
                 <SelectInput
                   value={form.status}
                   onChange={(e) => update("status", e.target.value)}
@@ -664,7 +673,7 @@ function JobFormModal({
               </Field>
 
               <div className="sm:col-span-2">
-                <div className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
+                <div className="mb-2 mt-2 flex items-center gap-2 text-sm font-bold text-slate-900">
                   <FileText size={18} className="text-violet-700" />
                   Job description and qualifications
                 </div>
@@ -677,7 +686,7 @@ function JobFormModal({
                 className="sm:col-span-2"
               >
                 <TextArea
-                  rows={6}
+                  rows={5}
                   value={form.description}
                   onChange={(e) => update("description", e.target.value)}
                   placeholder="Describe the role, team, objectives, and expectations..."
@@ -686,7 +695,7 @@ function JobFormModal({
 
               <Field label="Requirements" className="sm:col-span-2">
                 <TextArea
-                  rows={4}
+                  rows={3}
                   value={form.requirements}
                   onChange={(e) => update("requirements", e.target.value)}
                   placeholder={"Enter one requirement per line\nStrong JavaScript fundamentals\nExperience with REST APIs"}
@@ -698,10 +707,10 @@ function JobFormModal({
 
               <Field label="Responsibilities" className="sm:col-span-2">
                 <TextArea
-                  rows={4}
+                  rows={3}
                   value={form.responsibilities}
                   onChange={(e) => update("responsibilities", e.target.value)}
-                  placeholder={"Enter one responsibility per line\nBuild and maintain APIs\nCollaborate with the development team"}
+                  placeholder={"Enter one responsibility per line\nBuild and maintain APIs\nCollaborate with the team"}
                 />
               </Field>
 
@@ -712,12 +721,12 @@ function JobFormModal({
                   placeholder="React, Node.js, MongoDB, SQL"
                 />
                 <p className="mt-1 text-xs text-slate-400">
-                  Separate skills with commas. They will be stored in lowercase.
+                  Separate skills with commas.
                 </p>
               </Field>
 
               <div className="sm:col-span-2">
-                <div className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
+                <div className="mb-2 mt-2 flex items-center gap-2 text-sm font-bold text-slate-900">
                   <MapPin size={18} className="text-violet-700" />
                   Job location
                 </div>
@@ -748,7 +757,7 @@ function JobFormModal({
               </Field>
 
               <div className="sm:col-span-2">
-                <div className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
+                <div className="mb-2 mt-2 flex items-center gap-2 text-sm font-bold text-slate-900">
                   <CircleDollarSign size={18} className="text-violet-700" />
                   Compensation
                 </div>
@@ -758,6 +767,7 @@ function JobFormModal({
                 <TextInput
                   type="number"
                   min="0"
+                  step="any"
                   value={form.salaryMin}
                   onChange={(e) => update("salaryMin", e.target.value)}
                   placeholder="e.g. 400000"
@@ -768,6 +778,7 @@ function JobFormModal({
                 <TextInput
                   type="number"
                   min="0"
+                  step="any"
                   value={form.salaryMax}
                   onChange={(e) => update("salaryMax", e.target.value)}
                   placeholder="e.g. 800000"
@@ -798,16 +809,11 @@ function JobFormModal({
                 </label>
               </div>
 
-              <Field
-                label="Application deadline"
-                error={errors.applicationDeadline}
-              >
+              <Field label="Application deadline" error={errors.applicationDeadline}>
                 <TextInput
                   type="date"
                   value={form.applicationDeadline}
-                  onChange={(e) =>
-                    update("applicationDeadline", e.target.value)
-                  }
+                  onChange={(e) => update("applicationDeadline", e.target.value)}
                 />
               </Field>
             </div>
@@ -822,7 +828,6 @@ function JobFormModal({
             >
               Cancel
             </button>
-
             <button
               type="submit"
               disabled={saving}
@@ -870,7 +875,9 @@ function StatBox({ label, value }) {
   return (
     <div className="rounded-xl bg-slate-50 p-3">
       <p className="text-[11px] font-medium text-slate-500">{label}</p>
-      <p className="mt-1.5 text-xl font-bold text-slate-900">{value}</p>
+      <p className="mt-1.5 break-words text-lg font-bold text-slate-900">
+        {value}
+      </p>
     </div>
   );
 }
@@ -914,9 +921,13 @@ function Notice({ notice, onClose }) {
         failed ? "border-red-200" : "border-violet-100"
       }`}
     >
-      <div className={`mt-0.5 rounded-full p-1.5 ${
-        failed ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
-      }`}>
+      <div
+        className={`mt-0.5 rounded-full p-1.5 ${
+          failed
+            ? "bg-red-50 text-red-600"
+            : "bg-emerald-50 text-emerald-600"
+        }`}
+      >
         {failed ? <AlertCircle size={17} /> : <Check size={17} />}
       </div>
       <div className="min-w-0 flex-1">
@@ -928,6 +939,7 @@ function Notice({ notice, onClose }) {
         </p>
       </div>
       <button
+        type="button"
         onClick={onClose}
         aria-label="Dismiss notification"
         className="rounded-md p-1 text-slate-400 hover:bg-slate-100"
@@ -938,15 +950,42 @@ function Notice({ notice, onClose }) {
   );
 }
 
-function JobCard({ job, view, onAction, onApplicants, onView, busy }) {
+function MenuButton({
+  icon: Icon,
+  children,
+  onClick,
+  danger = false,
+  disabled = false,
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm disabled:cursor-not-allowed disabled:opacity-40 ${
+        danger
+          ? "text-red-600 hover:bg-red-50"
+          : "text-slate-700 hover:bg-violet-50"
+      }`}
+    >
+      <Icon size={15} />
+      {children}
+    </button>
+  );
+}
+
+function JobCard({ job, view, onAction, busy }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const accent = ACCENTS[
-    [...String(job.title)].reduce(
-      (sum, character) => sum + character.charCodeAt(0),
-      0
-    ) % ACCENTS.length
-  ];
+  const accent =
+    ACCENTS[
+      [...String(job.title)].reduce(
+        (sum, character) => sum + character.charCodeAt(0),
+        0
+      ) % ACCENTS.length
+    ];
+
+  const isClosed = ["CLOSED", "EXPIRED"].includes(job.status);
 
   return (
     <article
@@ -956,19 +995,21 @@ function JobCard({ job, view, onAction, onApplicants, onView, busy }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3.5">
-          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold ${accent}`}>
+          <div
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold ${accent}`}
+          >
             {job.initials}
           </div>
-
           <div className="min-w-0">
             <button
-              onClick={() => onView(job)}
+              type="button"
+              onClick={() => onAction("view", job)}
               className="text-left text-base font-bold leading-6 text-slate-900 hover:text-violet-700"
             >
               {job.title}
             </button>
             <p className="mt-1 text-xs font-medium text-slate-400">
-              {String(job._id).slice(-8)}
+              ID: {String(job._id).slice(-8)}
               <span className="mx-1.5">·</span>
               {job.category || "General"}
             </p>
@@ -984,9 +1025,11 @@ function JobCard({ job, view, onAction, onApplicants, onView, busy }) {
 
         <div className="relative">
           <button
+            type="button"
             disabled={busy}
             onClick={() => setMenuOpen((open) => !open)}
             aria-label="Job actions"
+            aria-expanded={menuOpen}
             className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-40"
           >
             <MoreHorizontal size={21} />
@@ -995,6 +1038,7 @@ function JobCard({ job, view, onAction, onApplicants, onView, busy }) {
           {menuOpen && (
             <>
               <button
+                type="button"
                 className="fixed inset-0 z-10 cursor-default"
                 aria-label="Close action menu"
                 onClick={() => setMenuOpen(false)}
@@ -1004,7 +1048,7 @@ function JobCard({ job, view, onAction, onApplicants, onView, busy }) {
                   icon={Eye}
                   onClick={() => {
                     setMenuOpen(false);
-                    onView(job);
+                    onAction("view", job);
                   }}
                 >
                   View details
@@ -1019,7 +1063,7 @@ function JobCard({ job, view, onAction, onApplicants, onView, busy }) {
                   Edit job
                 </MenuButton>
                 <MenuButton
-                  icon={Copy}
+                  icon={ExternalLink}
                   onClick={() => {
                     setMenuOpen(false);
                     onAction("duplicate", job);
@@ -1027,23 +1071,63 @@ function JobCard({ job, view, onAction, onApplicants, onView, busy }) {
                 >
                   Duplicate
                 </MenuButton>
-                {job.status !== "CLOSED" && job.status !== "EXPIRED" && (
+
+                {job.status === "PAUSED" && (
                   <MenuButton
-                    icon={job.status === "PAUSED" ? CircleCheck : CirclePause}
+                    icon={CircleCheck}
+                    disabled={busy}
                     onClick={() => {
                       setMenuOpen(false);
-                      onAction(
-                        job.status === "PAUSED" ? "activate" : "pause",
-                        job
-                      );
+                      onAction("activate", job);
                     }}
                   >
-                    {job.status === "PAUSED" ? "Activate job" : "Pause job"}
+                    Reopen job
                   </MenuButton>
                 )}
+
+                {job.status === "CLOSED" && (
+                  <MenuButton
+                    icon={CircleCheck}
+                    disabled={busy}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onAction("activate", job);
+                    }}
+                  >
+                    Reopen closed job
+                  </MenuButton>
+                )}
+
+                {!isClosed && job.status !== "PAUSED" && (
+                  <MenuButton
+                    icon={CirclePause}
+                    disabled={busy}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onAction("pause", job);
+                    }}
+                  >
+                    Pause job
+                  </MenuButton>
+                )}
+
+                {!isClosed && (
+                  <MenuButton
+                    icon={LockKeyhole}
+                    disabled={busy}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onAction("close", job);
+                    }}
+                  >
+                    Close job
+                  </MenuButton>
+                )}
+
                 <MenuButton
                   icon={Trash2}
                   danger
+                  disabled={busy}
                   onClick={() => {
                     setMenuOpen(false);
                     onAction("delete", job);
@@ -1059,13 +1143,16 @@ function JobCard({ job, view, onAction, onApplicants, onView, busy }) {
 
       <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs font-medium text-slate-500">
         <span className="inline-flex items-center gap-1.5">
-          <MapPin size={14} /> {job.locationLabel}
+          <MapPin size={14} />
+          {job.locationLabel}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <BriefcaseBusiness size={14} /> {formatEnum(job.employmentType)}
+          <BriefcaseBusiness size={14} />
+          {formatEnum(job.employmentType)}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <CircleDollarSign size={14} /> {job.salaryLabel}
+          <CircleDollarSign size={14} />
+          {job.salaryLabel}
         </span>
       </div>
 
@@ -1080,15 +1167,18 @@ function JobCard({ job, view, onAction, onApplicants, onView, busy }) {
       <div className="mt-5 flex items-center justify-between gap-3">
         <div className="min-w-0 text-xs text-slate-500">
           <p className="flex items-center gap-1.5">
-            <Clock3 size={13} /> Posted {job.postedLabel}
+            <Clock3 size={13} />
+            Posted {job.postedLabel}
           </p>
           <p className="mt-1.5 flex items-center gap-1.5 truncate">
-            <CalendarDays size={13} /> Deadline: {job.deadlineLabel}
+            <CalendarDays size={13} />
+            Deadline: {job.deadlineLabel}
           </p>
         </div>
 
         <button
-          onClick={() => onApplicants(job)}
+          type="button"
+          onClick={() => onAction("applicants", job)}
           className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-violet-50 px-3 py-2.5 text-xs font-bold text-violet-700 hover:bg-violet-100"
         >
           Applicants <Users size={14} />
@@ -1098,30 +1188,35 @@ function JobCard({ job, view, onAction, onApplicants, onView, busy }) {
   );
 }
 
-function MenuButton({ icon: Icon, children, onClick, danger = false }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm ${
-        danger
-          ? "text-red-600 hover:bg-red-50"
-          : "text-slate-700 hover:bg-violet-50"
-      }`}
-    >
-      <Icon size={15} />
-      {children}
-    </button>
-  );
-}
-
 function DetailRow({ label, value }) {
   return (
     <div className="border-b border-slate-100 py-3 last:border-b-0">
       <p className="text-xs font-medium text-slate-400">{label}</p>
-      <p className="mt-1 break-words whitespace-pre-wrap text-sm font-medium text-slate-800">
+      <p className="mt-1 break-words whitespace-pre-wrap text-sm font-medium leading-6 text-slate-800">
         {value || "Not specified"}
       </p>
     </div>
+  );
+}
+
+function FilterSelect({ label, value, onChange, options }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-semibold text-slate-500">
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+      >
+        {options.map((option) => (
+          <option key={option.value || "all"} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -1155,8 +1250,11 @@ export default function RecruiterJobs() {
   const [editingJob, setEditingJob] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
 
+  // Prevent an older request from replacing newer filter results.
+  const requestSequence = useRef(0);
+
   const rawJobs = useMemo(
-    () => Array.isArray(recruiterJobs) ? recruiterJobs : [],
+    () => (Array.isArray(recruiterJobs) ? recruiterJobs : []),
     [recruiterJobs]
   );
 
@@ -1164,12 +1262,13 @@ export default function RecruiterJobs() {
     () => rawJobs.map(normalizeJob),
     [rawJobs]
   );
-  
+
   const hasActiveFilters = useMemo(
-    () => Object.entries(filters).some(([key, value]) => {
-      if (key === "sortBy") return value !== "recent";
-      return Boolean(value);
-    }),
+    () =>
+      Object.entries(filters).some(([key, value]) => {
+        if (key === "sortBy") return value !== "recent";
+        return Boolean(value);
+      }),
     [filters]
   );
 
@@ -1178,8 +1277,14 @@ export default function RecruiterJobs() {
     setFilters((current) => ({ ...current, [key]: value }));
   }, []);
 
+  const showNotice = useCallback((message, type = "success") => {
+    setNotice({ message, type });
+  }, []);
+
   const loadJobs = useCallback(
     async ({ silent = false } = {}) => {
+      const requestId = ++requestSequence.current;
+
       if (silent) setRefreshing(true);
       else setLoading(true);
 
@@ -1191,42 +1296,42 @@ export default function RecruiterJobs() {
         params.set("page", String(page));
         params.set("limit", String(PAGE_SIZE));
 
+        if (
+  filters.minSalary !== "" &&
+  filters.maxSalary !== "" &&
+  Number(filters.minSalary) > Number(filters.maxSalary)
+) {
+  setError("Minimum salary cannot exceed maximum salary.");
+  return;
+}
+
         if (filters.search.trim()) {
           params.set("search", filters.search.trim());
         }
-
         if (filters.status) {
           params.set("status", filters.status);
         }
-
         if (filters.employmentType) {
           params.set("employmentType", filters.employmentType);
         }
-
         if (filters.workSpaceType) {
           params.set("workSpaceType", filters.workSpaceType);
         }
-
         if (filters.experienceLevel) {
           params.set("experienceLevel", filters.experienceLevel);
         }
-
         if (filters.location.trim()) {
           params.set("location", filters.location.trim());
         }
-
         if (filters.skills.trim()) {
           params.set("skills", filters.skills.trim());
         }
-
         if (filters.minSalary !== "") {
           params.set("minSalary", filters.minSalary);
         }
-
         if (filters.maxSalary !== "") {
           params.set("maxSalary", filters.maxSalary);
         }
-
         if (filters.postedWithin) {
           params.set("postedWithin", filters.postedWithin);
         }
@@ -1243,53 +1348,52 @@ export default function RecruiterJobs() {
           query: `?${params.toString()}`,
         });
       } catch (requestError) {
-        console.error("Failed to load recruiter jobs:", requestError);
-        setError(
-          requestError?.message ||
-          "Unable to load jobs. Please try again."
-        );
+        if (requestId === requestSequence.current) {
+          console.error("Failed to load recruiter jobs:", requestError);
+          setError(
+            requestError?.message || "Unable to load jobs. Please try again."
+          );
+        }
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (requestId === requestSequence.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
-    [
-      page,
-      filters,
-      handleGetRecruiterJobs,
-    ]
+    [page, filters, handleGetRecruiterJobs]
   );
 
   useEffect(() => {
-  const timer = setTimeout(
-    () => loadJobs(),
-    filters.search.trim() ? 350 : 0
-  );
+    const timer = setTimeout(
+      () => loadJobs(),
+      filters.search.trim() ? 350 : 0
+    );
 
-  return () => clearTimeout(timer);
-}, [loadJobs, filters.search]);
+    return () => clearTimeout(timer);
+  }, [loadJobs, filters.search]);
 
-  const totalJobs = Number(
-    recruiterJobPagination?.totalJobs ??
-    recruiterJobPagination?.total ??
-    recruiterJobPagination?.totalDocs
-  ) || jobs.length;
+  const totalJobs =
+    Number(
+      recruiterJobPagination?.totalJobs ??
+        recruiterJobPagination?.total ??
+        recruiterJobPagination?.totalDocs
+    ) || jobs.length;
 
   const totalPages = Math.max(
     1,
     Number(recruiterJobPagination?.totalPages) || 1
   );
 
-  const metrics = useMemo(() => ({
-    total: totalJobs,
-    open: jobs.filter((job) => job.status === "OPEN").length,
-    applicants: jobs.reduce((sum, job) => sum + job.applicants, 0),
-    views: jobs.reduce((sum, job) => sum + job.views, 0),
-  }), [jobs, totalJobs]);
-
-  const showNotice = useCallback((message, type = "success") => {
-    setNotice({ message, type });
-  }, []);
+  const metrics = useMemo(
+    () => ({
+      total: totalJobs,
+      open: jobs.filter((job) => job.status === "OPEN").length,
+      applicants: jobs.reduce((sum, job) => sum + job.applicants, 0),
+      views: jobs.reduce((sum, job) => sum + job.views, 0),
+    }),
+    [jobs, totalJobs]
+  );
 
   const openCreate = () => {
     setEditingJob(null);
@@ -1310,168 +1414,169 @@ export default function RecruiterJobs() {
   };
 
   const submitJob = async (payload) => {
-  setSaving(true);
+    setSaving(true);
 
-  try {
-    if (modalMode === "edit") {
-      const JobId = getJobId(editingJob);
+    try {
+      if (modalMode === "edit") {
+        const JobId = getJobId(editingJob);
 
-      if (!/^[a-fA-F0-9]{24}$/.test(JobId)) {
-        throw new Error("Invalid job ID. Please refresh the jobs list.");
+        if (!isValidMongoId(JobId)) {
+          throw new Error("Invalid job ID. Please refresh the jobs list.");
+        }
+
+        await handleUpdateJob({ JobId, jobData: payload });
+        showNotice("Job updated successfully.");
+      } else {
+        await handleCreateJob({ jobData: payload });
+        showNotice("Job created successfully.");
+        setPage(1);
       }
 
-      await handleUpdateJob({ JobId, jobData: payload });
-      showNotice("Job updated successfully.");
-    } else {
-      await handleCreateJob({ jobData: payload });
-      showNotice("Job created successfully.");
-      setPage(1);
+      setModalOpen(false);
+      setEditingJob(null);
+      await loadJobs({ silent: true });
+    } catch (requestError) {
+      console.error("Save job error:", requestError);
+      showNotice(requestError?.message || "Unable to save the job.", "error");
+    } finally {
+      setSaving(false);
     }
-
-    setModalOpen(false);
-    setEditingJob(null);
-
-    await loadJobs({ silent: true });
-  } catch (requestError) {
-    console.error("Save job error:", requestError);
-
-    showNotice(
-      requestError?.message || "Unable to save the job.",
-      "error"
-    );
-  } finally {
-    setSaving(false);
-  }
-};
+  };
 
   const handleAction = async (action, job) => {
-  const JobId = getJobId(job);
+    const JobId = getJobId(job);
 
-  if (!/^[a-fA-F0-9]{24}$/.test(JobId)) {
-    console.error("Job object without a valid MongoDB ID:", job);
-
-    showNotice(
-      "Invalid job ID. Please refresh the jobs list.",
-      "error"
-    );
-    return;
-  }
-
-  if (action === "view") {
-    setSelectedJob(job);
-    return;
-  }
-
-  if (action === "edit") {
-    setEditingJob(job);
-    setModalMode("edit");
-    setModalOpen(true);
-    setSelectedJob(null);
-    return;
-  }
-
-  if (action === "applicants") {
-    navigate(
-      `/recruiter/applications?jobId=${encodeURIComponent(JobId)}`
-    );
-    return;
-  }
-
-  if (action === "delete") {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${getTitle(job)}"?`
-    );
-
-    if (!confirmed) return;
-  }
-
-  setActionBusy(true);
-
-  try {
-    if (action === "pause" || action === "activate") {
-      const status = action === "pause" ? "PAUSED" : "OPEN";
-
-      await handleChangeJobStatus({ JobId, status });
-
-      showNotice(
-        action === "pause"
-          ? "Job paused successfully."
-          : "Job reopened successfully."
-      );
-
-      setSelectedJob(null);
-    } else if (action === "delete") {
-      await handleDeleteJob({ JobId });
-
-      setSelectedJob(null);
-      showNotice("Job deleted successfully.");
-    } else if (action === "duplicate") {
-      const {
-        _id,
-        id,
-        jobId,
-        __v,
-        createdAt,
-        updatedAt,
-        recruiterId,
-        companyId,
-        views,
-        applicantsCount,
-        isBlocked,
-        isDeleted,
-        statusLabel,
-        locationLabel,
-        salaryLabel,
-        applicants,
-        postedLabel,
-        deadlineLabel,
-        initials,
-        ...copy
-      } = job;
-
-      // Remove derived UI values and send only actual job fields.
-      await handleCreateJob({
-        jobData: {
-          title: `${getTitle(job)} (Copy)`,
-          description: copy.description || "",
-          category: copy.category || "",
-          requirements: Array.isArray(copy.requirements)
-            ? copy.requirements
-            : [],
-          responsibilities: Array.isArray(copy.responsibilities)
-            ? copy.responsibilities
-            : [],
-          employmentType: copy.employmentType,
-          workSpaceType: copy.workSpaceType,
-          experienceLevel: copy.experienceLevel,
-          location: copy.location,
-          salary: copy.salary,
-          skills: Array.isArray(copy.skills) ? copy.skills : [],
-          openings: Number(copy.openings) || 1,
-          applicationDeadline: copy.applicationDeadline || null,
-          status: "DRAFT",
-        },
-      });
-
-      showNotice("Job duplicated as a draft.");
+    if (!isValidMongoId(JobId)) {
+      showNotice("Invalid job ID. Please refresh the jobs list.", "error");
+      return;
     }
 
-    await loadJobs({ silent: true });
-  } catch (requestError) {
-    console.error("Job action failed:", requestError);
+    if (action === "view") {
+      setSelectedJob(job);
+      return;
+    }
 
-    showNotice(
-      requestError?.message || "Unable to complete this action.",
-      "error"
-    );
-  } finally {
-    setActionBusy(false);
-  }
-};
+    if (action === "edit") {
+      openEdit(job);
+      return;
+    }
+
+    if (action === "applicants") {
+      navigate(
+        `/recruiter/applications?jobId=${encodeURIComponent(JobId)}`
+      );
+      return;
+    }
+
+    const actionMessages = {
+      pause: "Pause",
+      activate: "reopen",
+      close: "close",
+      delete: "delete",
+      duplicate: "duplicate",
+    };
+
+    if (action === "close") {
+      const confirmed = window.confirm(
+        `Close "${getTitle(job)}"? Candidates may no longer be able to apply.`
+      );
+      if (!confirmed) return;
+    }
+
+    if (action === "delete") {
+      const confirmed = window.confirm(
+        `Permanently delete "${getTitle(job)}"? This action cannot be undone.`
+      );
+      if (!confirmed) return;
+    }
+
+    setActionBusy(true);
+
+    try {
+      if (["pause", "activate", "close"].includes(action)) {
+        const status =
+          action === "pause"
+            ? "PAUSED"
+            : action === "close"
+              ? "CLOSED"
+              : "OPEN";
+
+        await handleChangeJobStatus({ JobId, status });
+
+        const message =
+          action === "pause"
+            ? "Job paused successfully."
+            : action === "close"
+              ? "Job closed successfully."
+              : "Job reopened successfully.";
+
+        showNotice(message);
+        setSelectedJob(null);
+      } else if (action === "delete") {
+        await handleDeleteJob({ JobId });
+        setSelectedJob(null);
+        showNotice("Job deleted successfully.");
+      } else if (action === "duplicate") {
+        // Build a clean payload instead of spreading UI-derived properties.
+        const copyPayload = {
+          title: `${getTitle(job)} (Copy)`,
+          description: job.description || "",
+          category: job.category || "",
+          requirements: Array.isArray(job.requirements)
+            ? job.requirements
+            : [],
+          responsibilities: Array.isArray(job.responsibilities)
+            ? job.responsibilities
+            : [],
+          employmentType: job.employmentType || "FULL_TIME",
+          workSpaceType: job.workSpaceType || "ONSITE",
+          experienceLevel: job.experienceLevel || "FRESHER",
+          location:
+            job.location && typeof job.location === "object"
+              ? {
+                  city: job.location.city || "",
+                  state: job.location.state || "",
+                  country: job.location.country || "India",
+                }
+              : { city: "", state: "", country: "India" },
+          salary: {
+            min: Number(job.salary?.min) || 0,
+            max: Number(job.salary?.max) || 0,
+            currency: job.salary?.currency || "INR",
+            isNegotiable: Boolean(job.salary?.isNegotiable),
+          },
+          skills: Array.isArray(job.skills) ? job.skills : [],
+          openings: Number(job.openings) || 1,
+          applicationDeadline: job.applicationDeadline || null,
+          status: "DRAFT",
+        };
+
+        await handleCreateJob({ jobData: copyPayload });
+        showNotice("Job duplicated as a draft.");
+      }
+
+      await loadJobs({ silent: true });
+    } catch (requestError) {
+      console.error("Job action failed:", requestError);
+      showNotice(
+        requestError?.message || "Unable to complete this action.",
+        "error"
+      );
+    } finally {
+      setActionBusy(false);
+    }
+  };
 
   const currentSelectedJob = selectedJob
     ? normalizeJob(selectedJob)
     : null;
+
+  const setMinSalary = (value) => {
+    updateFilter("minSalary", value);
+    if (value !== "" && filters.maxSalary !== "" && Number(value) > Number(filters.maxSalary)) {
+      setFilters((current) => ({ ...current, minSalary: value }));
+    }
+  };
 
   return (
     <main className="min-h-screen bg-[#F7F8FC] px-4 py-5 text-slate-900 sm:px-6 lg:px-8 lg:py-8">
@@ -1492,6 +1597,7 @@ export default function RecruiterJobs() {
 
           <div className="flex flex-wrap gap-2">
             <button
+              type="button"
               onClick={() => loadJobs({ silent: true })}
               disabled={loading || refreshing}
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:border-violet-200 hover:text-violet-700 disabled:opacity-50"
@@ -1502,8 +1608,8 @@ export default function RecruiterJobs() {
               />
               Refresh
             </button>
-
             <button
+              type="button"
               onClick={openCreate}
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-200 hover:bg-violet-800"
             >
@@ -1550,7 +1656,7 @@ export default function RecruiterJobs() {
               Your job listings
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Search and combine filters to find the exact job you need.
+              Search, filter, and manage your active and closed roles.
             </p>
           </div>
 
@@ -1624,12 +1730,14 @@ export default function RecruiterJobs() {
                 value={filters.location}
                 onChange={(e) => updateFilter("location", e.target.value)}
                 placeholder="City, state, or country"
+                aria-label="Filter by location"
                 className="h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
               />
               <input
                 value={filters.skills}
                 onChange={(e) => updateFilter("skills", e.target.value)}
                 placeholder="Skills (e.g. react, node)"
+                aria-label="Filter by skills"
                 className="h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
               />
               <FilterSelect
@@ -1645,13 +1753,14 @@ export default function RecruiterJobs() {
                   { label: "Last 90 days", value: "90" },
                 ]}
               />
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <input
                   type="number"
                   min="0"
                   value={filters.minSalary}
                   onChange={(e) => updateFilter("minSalary", e.target.value)}
                   placeholder="Min salary"
+                  aria-label="Minimum salary filter"
                   className="h-11 min-w-0 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                 />
                 <input
@@ -1660,10 +1769,20 @@ export default function RecruiterJobs() {
                   value={filters.maxSalary}
                   onChange={(e) => updateFilter("maxSalary", e.target.value)}
                   placeholder="Max salary"
+                  aria-label="Maximum salary filter"
                   className="h-11 min-w-0 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                 />
               </div>
             </div>
+
+            {filters.minSalary !== "" &&
+              filters.maxSalary !== "" &&
+              Number(filters.minSalary) > Number(filters.maxSalary) && (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-red-600">
+                  <AlertCircle size={14} />
+                  Minimum salary cannot exceed maximum salary.
+                </p>
+              )}
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
               <p className="text-xs text-slate-500">
@@ -1675,6 +1794,7 @@ export default function RecruiterJobs() {
               <div className="flex items-center gap-3">
                 {hasActiveFilters && (
                   <button
+                    type="button"
                     onClick={resetFilters}
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-violet-700"
                   >
@@ -1685,6 +1805,7 @@ export default function RecruiterJobs() {
 
                 <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
                   <button
+                    type="button"
                     onClick={() => setView("grid")}
                     aria-label="Grid view"
                     aria-pressed={view === "grid"}
@@ -1697,6 +1818,7 @@ export default function RecruiterJobs() {
                     <LayoutGrid size={17} />
                   </button>
                   <button
+                    type="button"
                     onClick={() => setView("list")}
                     aria-label="List view"
                     aria-pressed={view === "list"}
@@ -1725,6 +1847,7 @@ export default function RecruiterJobs() {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => loadJobs()}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 hover:bg-red-100"
               >
@@ -1735,11 +1858,13 @@ export default function RecruiterJobs() {
           )}
 
           {loading ? (
-            <div className={
-              view === "grid"
-                ? "grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3"
-                : "flex flex-col gap-3"
-            }>
+            <div
+              className={
+                view === "grid"
+                  ? "grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3"
+                  : "flex flex-col gap-3"
+              }
+            >
               {Array.from({ length: 6 }, (_, index) => (
                 <JobSkeleton key={index} />
               ))}
@@ -1759,6 +1884,7 @@ export default function RecruiterJobs() {
               </p>
               {hasActiveFilters ? (
                 <button
+                  type="button"
                   onClick={resetFilters}
                   className="mt-5 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50"
                 >
@@ -1766,6 +1892,7 @@ export default function RecruiterJobs() {
                 </button>
               ) : (
                 <button
+                  type="button"
                   onClick={openCreate}
                   className="mt-5 inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-violet-800"
                 >
@@ -1775,11 +1902,13 @@ export default function RecruiterJobs() {
               )}
             </div>
           ) : !error && jobs.length > 0 ? (
-            <div className={
-              view === "grid"
-                ? "grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3"
-                : "flex flex-col gap-3"
-            }>
+            <div
+              className={
+                view === "grid"
+                  ? "grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3"
+                  : "flex flex-col gap-3"
+              }
+            >
               {jobs.map((job) => (
                 <JobCard
                   key={job._id}
@@ -1787,8 +1916,6 @@ export default function RecruiterJobs() {
                   view={view}
                   busy={actionBusy}
                   onAction={handleAction}
-                  onApplicants={(item) => handleAction("applicants", item)}
-                  onView={(item) => handleAction("view", item)}
                 />
               ))}
             </div>
@@ -1809,6 +1936,7 @@ export default function RecruiterJobs() {
 
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   disabled={page <= 1 || refreshing}
                   onClick={() => setPage((current) => Math.max(1, current - 1))}
                   className="flex h-9 items-center gap-1 rounded-lg border border-slate-200 px-3 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40"
@@ -1816,14 +1944,15 @@ export default function RecruiterJobs() {
                   <ChevronLeft size={15} />
                   Previous
                 </button>
-
                 <span className="flex h-9 min-w-9 items-center justify-center rounded-lg bg-violet-700 px-3 text-xs font-bold text-white">
                   {page}
                 </span>
-
                 <button
+                  type="button"
                   disabled={page >= totalPages || refreshing}
-                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                  onClick={() =>
+                    setPage((current) => Math.min(totalPages, current + 1))
+                  }
                   className="flex h-9 items-center gap-1 rounded-lg border border-slate-200 px-3 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next
@@ -1856,12 +1985,18 @@ export default function RecruiterJobs() {
             if (event.target === event.currentTarget) setSelectedJob(null);
           }}
         >
-          <aside className="h-full w-full max-w-lg overflow-y-auto bg-white p-6 shadow-2xl sm:p-8">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-widest text-violet-700">
-                Job details
-              </span>
+          <aside className="h-full w-full max-w-lg overflow-y-auto bg-white shadow-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:px-7">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-violet-700">
+                  Job overview
+                </p>
+                <p className="mt-1 text-xs text-slate-400">
+                  ID: {currentSelectedJob._id}
+                </p>
+              </div>
               <button
+                type="button"
                 onClick={() => setSelectedJob(null)}
                 aria-label="Close details"
                 className="rounded-xl p-2 text-slate-500 hover:bg-slate-100"
@@ -1870,155 +2005,167 @@ export default function RecruiterJobs() {
               </button>
             </div>
 
-            <div className="mt-7 flex items-start gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-sm font-bold text-violet-700">
-                {currentSelectedJob.initials}
+            <div className="p-5 sm:p-7">
+              <div className="flex items-start gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-sm font-bold text-violet-700">
+                  {currentSelectedJob.initials}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-xl font-bold leading-7 text-slate-950">
+                    {currentSelectedJob.title}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {currentSelectedJob.category || "General"}
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${
+                        STATUS_STYLES[currentSelectedJob.status] ||
+                        STATUS_STYLES.DRAFT
+                      }`}
+                    >
+                      {currentSelectedJob.statusLabel}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      Posted {currentSelectedJob.postedLabel}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h2 className="text-2xl font-bold text-slate-950">
-                  {currentSelectedJob.title}
-                </h2>
-                <p className="mt-2 text-sm text-slate-500">
+
+              <div className="mt-5 rounded-2xl border border-violet-100 bg-violet-50/70 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">
+                  Salary range
+                </p>
+                <p className="mt-1.5 text-lg font-bold text-slate-900">
+                  {currentSelectedJob.salaryLabel}
+                </p>
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-600">
+                  <MapPin size={14} />
                   {currentSelectedJob.locationLabel}
                 </p>
-                <span className={`mt-3 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${
-                  STATUS_STYLES[currentSelectedJob.status] || STATUS_STYLES.DRAFT
-                }`}>
-                  {currentSelectedJob.statusLabel}
-                </span>
               </div>
-            </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <StatBox label="Applicants" value={currentSelectedJob.applicants} />
-              <StatBox label="Views" value={currentSelectedJob.views} />
-              <StatBox label="Openings" value={currentSelectedJob.openings ?? 1} />
-              <StatBox label="Salary" value={currentSelectedJob.salaryLabel} />
-            </div>
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                <StatBox label="Applicants" value={currentSelectedJob.applicants} />
+                <StatBox label="Openings" value={currentSelectedJob.openings ?? 1} />
+                <StatBox label="Views" value={currentSelectedJob.views} />
+              </div>
 
-            <div className="mt-6">
-              <DetailRow label="Category" value={currentSelectedJob.category} />
-              <DetailRow
-                label="Employment type"
-                value={formatEnum(currentSelectedJob.employmentType)}
-              />
-              <DetailRow
-                label="Workspace"
-                value={formatEnum(currentSelectedJob.workSpaceType)}
-              />
-              <DetailRow
-                label="Experience"
-                value={formatEnum(currentSelectedJob.experienceLevel)}
-              />
-              <DetailRow label="Posted" value={currentSelectedJob.postedLabel} />
-              <DetailRow
-                label="Application deadline"
-                value={currentSelectedJob.deadlineLabel}
-              />
-              <DetailRow
-                label="Description"
-                value={currentSelectedJob.description}
-              />
-              <DetailRow
-                label="Requirements"
-                value={arrayToTextarea(currentSelectedJob.requirements)}
-              />
-              <DetailRow
-                label="Responsibilities"
-                value={arrayToTextarea(currentSelectedJob.responsibilities)}
-              />
-              <DetailRow
-                label="Skills"
-                value={Array.isArray(currentSelectedJob.skills)
-                  ? currentSelectedJob.skills.join(", ")
-                  : ""}
-              />
-            </div>
+              <div className="mt-5">
+                <DetailRow
+                  label="Employment type"
+                  value={formatEnum(currentSelectedJob.employmentType)}
+                />
+                <DetailRow
+                  label="Work arrangement"
+                  value={formatEnum(currentSelectedJob.workSpaceType)}
+                />
+                <DetailRow
+                  label="Experience level"
+                  value={formatEnum(currentSelectedJob.experienceLevel)}
+                />
+                <DetailRow
+                  label="Application deadline"
+                  value={currentSelectedJob.deadlineLabel}
+                />
+                <DetailRow
+                  label="Description"
+                  value={currentSelectedJob.description}
+                />
+                <DetailRow
+                  label="Requirements"
+                  value={arrayToTextarea(currentSelectedJob.requirements)}
+                />
+                <DetailRow
+                  label="Responsibilities"
+                  value={arrayToTextarea(currentSelectedJob.responsibilities)}
+                />
+                <DetailRow
+                  label="Skills"
+                  value={
+                    Array.isArray(currentSelectedJob.skills)
+                      ? currentSelectedJob.skills.join(", ")
+                      : ""
+                  }
+                />
+              </div>
 
-            <div className="mt-8 grid gap-3">
-              {currentSelectedJob.status !== "CLOSED" &&
-                currentSelectedJob.status !== "EXPIRED" && (
+              <div className="mt-7 grid gap-2.5">
+                {currentSelectedJob.status === "PAUSED" ||
+                currentSelectedJob.status === "CLOSED" ? (
                   <button
+                    type="button"
                     disabled={actionBusy}
-                    onClick={() =>
-                      handleAction(
-                        currentSelectedJob.status === "PAUSED"
-                          ? "activate"
-                          : "pause",
-                        selectedJob
-                      )
-                    }
+                    onClick={() => handleAction("activate", selectedJob)}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-3 text-sm font-bold text-white hover:bg-violet-800 disabled:opacity-50"
                   >
                     {actionBusy ? (
                       <LoaderCircle size={17} className="animate-spin" />
-                    ) : currentSelectedJob.status === "PAUSED" ? (
-                      <CircleCheck size={17} />
                     ) : (
-                      <CirclePause size={17} />
+                      <CircleCheck size={17} />
                     )}
-                    {currentSelectedJob.status === "PAUSED"
-                      ? "Reopen job"
-                      : "Pause job"}
+                    Reopen job
                   </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      disabled={actionBusy}
+                      onClick={() => handleAction("pause", selectedJob)}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                    >
+                      <CirclePause size={16} />
+                      Pause job
+                    </button>
+                    <button
+                      type="button"
+                      disabled={actionBusy}
+                      onClick={() => handleAction("close", selectedJob)}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      <LockKeyhole size={16} />
+                      Close job
+                    </button>
+                  </>
                 )}
 
-              <button
-                disabled={actionBusy}
-                onClick={() => handleAction("edit", selectedJob)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                <Pencil size={16} />
-                Edit job
-              </button>
+                <button
+                  type="button"
+                  disabled={actionBusy}
+                  onClick={() => handleAction("edit", selectedJob)}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  <Pencil size={16} />
+                  Edit job
+                </button>
 
-              <button
-                disabled={actionBusy}
-                onClick={() => handleAction("applicants", selectedJob)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 px-4 py-3 text-sm font-bold text-violet-700 hover:bg-violet-50 disabled:opacity-50"
-              >
-                <Users size={16} />
-                View applicants
-              </button>
+                <button
+                  type="button"
+                  disabled={actionBusy}
+                  onClick={() => handleAction("applicants", selectedJob)}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 px-4 py-3 text-sm font-bold text-violet-700 hover:bg-violet-50 disabled:opacity-50"
+                >
+                  <Users size={16} />
+                  View applicants
+                </button>
 
-              <button
-                disabled={actionBusy}
-                onClick={() => handleAction("delete", selectedJob)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
-              >
-                <Trash2 size={16} />
-                Delete job
-              </button>
+                <button
+                  type="button"
+                  disabled={actionBusy}
+                  onClick={() => handleAction("delete", selectedJob)}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                >
+                  <Trash2 size={16} />
+                  Delete job
+                </button>
+              </div>
             </div>
           </aside>
         </div>
       )}
 
-      <Notice
-        notice={notice}
-        onClose={() => setNotice(null)}
-      />
+      <Notice notice={notice} onClose={() => setNotice(null)} />
     </main>
-  );
-}
-
-function FilterSelect({ label, value, onChange, options }) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-xs font-semibold text-slate-500">
-        {label}
-      </span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-      >
-        {options.map((option) => (
-          <option key={option.value || "all"} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }

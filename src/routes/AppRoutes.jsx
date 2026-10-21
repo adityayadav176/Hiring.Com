@@ -9,7 +9,6 @@ import ProtectedRoutes from "./ProtectedRoutes";
 import NotFound from "../pages/NotFound";
 import RecruiterLayout from '../pages/recruiter/RecruiterLayout';
 import CandidateProfile from "../components/CandidateProfile";
-import RecruiterDashboard from "../components/RecruiterDashboard";
 import RecruiterProfileS from "../components/RecruiterProfile";
 import RecruiterProfile from "../components/RecruiterProfile";
 const AppRoutes = () => {
@@ -22,7 +21,6 @@ const AppRoutes = () => {
             <Route path="/profile" element={<CandidateProfile/>}/>
             <Route path="rp" element={<RecruiterProfileS/>}/>
             <Route path="/recruiterP" element={<RecruiterProfile/>}/>
-            <Route path="/dashboard" element={<RecruiterDashboard/>}/>
 
             <Route element={<ProtectedRoutes allowedType="admin" />}>
             <Route path="/admin" element={<ADashboard/>}/>
