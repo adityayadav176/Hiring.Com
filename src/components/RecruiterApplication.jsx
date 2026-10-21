@@ -1,5 +1,12 @@
 
-import React, { useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useApplication } from "../hooks/Hook"
 import {
   Search,
   SlidersHorizontal,
@@ -19,235 +26,24 @@ import {
   MapPin,
   Mail,
   Phone,
-  ExternalLink,
   ArrowUpDown,
   X,
   Check,
   Sparkles,
   MoreHorizontal,
   FileText,
-  CircleHelp,
   RotateCcw,
-  Plus,
   LayoutGrid,
   List,
-  Send,
   ShieldCheck,
-  TrendingUp,
-  Bookmark,
   CircleDot,
+  LoaderCircle,
+  AlertCircle,
+  ExternalLink,
+  GraduationCap,
+  Code2,
+  RefreshCw,
 } from "lucide-react";
-
-const INITIAL_APPLICATIONS = [
-  {
-    _id: "app-101",
-    candidate: {
-      name: "Aarav Sharma",
-      email: "aarav.sharma@example.com",
-      phone: "+91 98765 43210",
-      location: "Bengaluru, India",
-      avatar: "AS",
-      color: "bg-violet-100 text-violet-700",
-      experience: "3 years",
-      currentRole: "Frontend Developer",
-      skills: ["React", "TypeScript", "Tailwind CSS", "Next.js"],
-      education: "B.Tech, Computer Science",
-      university: "Manipal Institute of Technology",
-      portfolio: "https://github.com/",
-    },
-    job: "Senior Frontend Developer",
-    department: "Engineering",
-    resume: "Aarav_Sharma_Resume.pdf",
-    appliedAt: "2026-10-18T10:30:00",
-    status: "screening",
-    score: 92,
-    recruiterNotes: "Strong React experience. Review system design knowledge.",
-    messageToRecruiter:
-      "I enjoy building accessible, high-performance interfaces and would love to contribute to your product.",
-  },
-  {
-    _id: "app-102",
-    candidate: {
-      name: "Priya Verma",
-      email: "priya.verma@example.com",
-      phone: "+91 98123 45678",
-      location: "Delhi, India",
-      avatar: "PV",
-      color: "bg-pink-100 text-pink-700",
-      experience: "5 years",
-      currentRole: "Full Stack Engineer",
-      skills: ["Node.js", "React", "MongoDB", "AWS"],
-      education: "MCA",
-      university: "Delhi University",
-      portfolio: "https://github.com/",
-    },
-    job: "Full Stack Developer",
-    department: "Engineering",
-    resume: "Priya_Verma_CV.pdf",
-    appliedAt: "2026-10-17T14:15:00",
-    status: "shortlisted",
-    score: 96,
-    recruiterNotes: "Excellent full-stack profile. Prioritize interview scheduling.",
-    messageToRecruiter:
-      "My recent projects include scalable APIs and React dashboards used by real customers.",
-  },
-  {
-    _id: "app-103",
-    candidate: {
-      name: "Rohan Gupta",
-      email: "rohan.gupta@example.com",
-      phone: "+91 98989 12345",
-      location: "Pune, India",
-      avatar: "RG",
-      color: "bg-blue-100 text-blue-700",
-      experience: "2 years",
-      currentRole: "Backend Developer",
-      skills: ["Node.js", "Express", "PostgreSQL", "Redis"],
-      education: "B.Tech, IT",
-      university: "Pune Institute of Computer Technology",
-      portfolio: "https://github.com/",
-    },
-    job: "Backend Engineer",
-    department: "Engineering",
-    resume: "Rohan_Gupta_Resume.pdf",
-    appliedAt: "2026-10-17T09:20:00",
-    status: "applied",
-    score: 84,
-    recruiterNotes: "",
-    messageToRecruiter:
-      "I focus on reliable backend services, API design, and database performance.",
-  },
-  {
-    _id: "app-104",
-    candidate: {
-      name: "Sneha Patel",
-      email: "sneha.patel@example.com",
-      phone: "+91 97654 32109",
-      location: "Mumbai, India",
-      avatar: "SP",
-      color: "bg-amber-100 text-amber-700",
-      experience: "4 years",
-      currentRole: "Product Designer",
-      skills: ["Figma", "Prototyping", "Design Systems", "UX Research"],
-      education: "B.Des, Communication Design",
-      university: "NID Ahmedabad",
-      portfolio: "https://www.behance.net/",
-    },
-    job: "UI/UX Designer",
-    department: "Design",
-    resume: "Sneha_Patel_Portfolio.pdf",
-    appliedAt: "2026-10-16T16:45:00",
-    status: "interview_scheduled",
-    score: 89,
-    recruiterNotes: "Portfolio looks strong. Discuss design systems and collaboration.",
-    messageToRecruiter:
-      "I combine user research and design systems to create clear, useful product experiences.",
-  },
-  {
-    _id: "app-105",
-    candidate: {
-      name: "Kabir Singh",
-      email: "kabir.singh@example.com",
-      phone: "+91 99887 66554",
-      location: "Hyderabad, India",
-      avatar: "KS",
-      color: "bg-emerald-100 text-emerald-700",
-      experience: "1 year",
-      currentRole: "Junior Software Engineer",
-      skills: ["JavaScript", "React", "Git", "REST APIs"],
-      education: "BCA",
-      university: "Osmania University",
-      portfolio: "https://github.com/",
-    },
-    job: "Frontend Developer",
-    department: "Engineering",
-    resume: "Kabir_Singh_Resume.pdf",
-    appliedAt: "2026-10-16T11:10:00",
-    status: "applied",
-    score: 76,
-    recruiterNotes: "",
-    messageToRecruiter:
-      "I am eager to grow as an engineer and contribute to a collaborative team.",
-  },
-  {
-    _id: "app-106",
-    candidate: {
-      name: "Ananya Mehta",
-      email: "ananya.mehta@example.com",
-      phone: "+91 98712 34567",
-      location: "Jaipur, India",
-      avatar: "AM",
-      color: "bg-fuchsia-100 text-fuchsia-700",
-      experience: "6 years",
-      currentRole: "Engineering Lead",
-      skills: ["System Design", "TypeScript", "AWS", "Team Leadership"],
-      education: "M.Tech, Computer Science",
-      university: "BITS Pilani",
-      portfolio: "https://github.com/",
-    },
-    job: "Senior Frontend Developer",
-    department: "Engineering",
-    resume: "Ananya_Mehta_CV.pdf",
-    appliedAt: "2026-10-15T13:25:00",
-    status: "selected",
-    score: 98,
-    recruiterNotes: "Great leadership experience and strong technical depth.",
-    messageToRecruiter:
-      "I enjoy mentoring engineers while building maintainable, high-quality software.",
-  },
-  {
-    _id: "app-107",
-    candidate: {
-      name: "Ishaan Kapoor",
-      email: "ishaan.kapoor@example.com",
-      phone: "+91 98901 23456",
-      location: "Noida, India",
-      avatar: "IK",
-      color: "bg-cyan-100 text-cyan-700",
-      experience: "2 years",
-      currentRole: "Software Developer",
-      skills: ["Python", "Django", "SQL", "Docker"],
-      education: "B.Tech, Computer Science",
-      university: "Amity University",
-      portfolio: "https://github.com/",
-    },
-    job: "Backend Engineer",
-    department: "Engineering",
-    resume: "Ishaan_Kapoor_Resume.pdf",
-    appliedAt: "2026-10-14T10:00:00",
-    status: "rejected",
-    score: 68,
-    recruiterNotes: "Experience did not align with current role requirements.",
-    messageToRecruiter:
-      "I have built backend applications and enjoy solving practical engineering problems.",
-  },
-  {
-    _id: "app-108",
-    candidate: {
-      name: "Meera Joshi",
-      email: "meera.joshi@example.com",
-      phone: "+91 98222 45678",
-      location: "Chennai, India",
-      avatar: "MJ",
-      color: "bg-rose-100 text-rose-700",
-      experience: "3 years",
-      currentRole: "UI Engineer",
-      skills: ["React", "CSS", "Accessibility", "Storybook"],
-      education: "B.Tech, Information Technology",
-      university: "Anna University",
-      portfolio: "https://github.com/",
-    },
-    job: "Frontend Developer",
-    department: "Engineering",
-    resume: "Meera_Joshi_Resume.pdf",
-    appliedAt: "2026-10-13T15:30:00",
-    status: "interview_completed",
-    score: 87,
-    recruiterNotes: "Interview completed. Team feedback pending.",
-    messageToRecruiter:
-      "I care about frontend quality, accessibility, and reusable UI components.",
-  },
-];
 
 const STATUS_OPTIONS = [
   { value: "applied", label: "New application" },
@@ -257,6 +53,8 @@ const STATUS_OPTIONS = [
   { value: "interview_completed", label: "Interview completed" },
   { value: "selected", label: "Selected" },
   { value: "rejected", label: "Rejected" },
+  { value: "withdrawn", label: "Withdrawn" },
+  { value: "closed", label: "Closed" },
 ];
 
 const STATUS_META = {
@@ -307,29 +105,146 @@ const STATUS_META = {
   },
 };
 
-const JOB_OPTIONS = [
-  "All jobs",
-  ...new Set(INITIAL_APPLICATIONS.map((item) => item.job)),
-];
+const formatDate = (value) => {
+  if (!value) return "—";
 
-const formatDate = (value) =>
-  new Date(value).toLocaleDateString("en-IN", {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleDateString("en-IN", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
+};
 
 const formatRelativeDate = (value) => {
+  if (!value) return "Date unavailable";
+
   const date = new Date(value);
-  const now = new Date();
-  const diff = Math.max(
-    0,
-    Math.floor((now.getTime() - date.getTime()) / 86400000)
+  if (Number.isNaN(date.getTime())) return "Date unavailable";
+
+  const days = Math.floor(
+    (new Date().setHours(0, 0, 0, 0) -
+      new Date(date).setHours(0, 0, 0, 0)) /
+      86400000
   );
 
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Yesterday";
-  return `${diff} days ago`;
+  if (days <= 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 30) return `${days} days ago`;
+
+  return formatDate(value);
+};
+
+const getId = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  return value._id || value.id || "";
+};
+
+const getName = (candidate) =>
+  candidate?.name || candidate?.fullName || "Unknown candidate";
+
+const getInitials = (name = "") =>
+  name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join("") || "U";
+
+/*
+ * Supports both populated Mongoose fields and the legacy demo-shaped fields.
+ * Expected backend fields:
+ * candidateId, jobId, resumeId, atsScore, createdAt.
+ */
+const normalizeApplication = (raw = {}) => {
+  const candidate = raw.candidateId || raw.candidate || {};
+  const job = raw.jobId || raw.job || {};
+  const resume = raw.resumeId || raw.resume || {};
+  const profile = candidate?.profile || raw.profile || {};
+
+  const skills = Array.isArray(profile.skills)
+    ? profile.skills.map((skill) =>
+        typeof skill === "string" ? skill : skill?.name
+      ).filter(Boolean)
+    : Array.isArray(candidate.skills)
+      ? candidate.skills
+      : [];
+
+  const education = Array.isArray(profile.education)
+    ? profile.education
+    : candidate.education
+      ? [{ degree: candidate.education, institute: candidate.university }]
+      : [];
+
+  const experienceItems = Array.isArray(profile.experience)
+    ? profile.experience
+    : [];
+
+  const latestExperience = experienceItems[0];
+
+  const score =
+    typeof raw.atsScore === "number"
+      ? raw.atsScore
+      : typeof raw.score === "number"
+        ? raw.score
+        : null;
+
+  return {
+    ...raw,
+    _id: raw._id,
+    candidate,
+    candidateName: getName(candidate),
+    candidateEmail: candidate?.email || "",
+    candidatePhone: candidate?.phoneNo || candidate?.phone || "",
+    candidateAvatar:
+      candidate?.avatar?.url ||
+      (typeof candidate?.avatar === "string" ? candidate.avatar : ""),
+    candidateLocation:
+      profile.location?.city ||
+      profile.location?.name ||
+      profile.location ||
+      candidate?.location ||
+      "",
+    candidateRole:
+      profile.headline ||
+      latestExperience?.position ||
+      latestExperience?.role ||
+      candidate?.currentRole ||
+      "",
+    candidateSkills: skills,
+    candidateEducation: education,
+    candidateProfile: profile,
+    candidatePortfolio:
+      profile.socialLinks?.portfolio ||
+      profile.socialLinks?.github ||
+      candidate?.portfolio ||
+      "",
+    job,
+    jobTitle:
+      typeof job === "string"
+        ? job
+        : job?.title || job?.jobTitle || "Job unavailable",
+    jobDepartment:
+      job?.department || job?.category || job?.employmentType || "",
+    resume,
+    resumeTitle:
+      resume?.title ||
+      resume?.resume?.originalName ||
+      resume?.originalName ||
+      resume?.fileName ||
+      "Resume",
+    resumeUrl:
+      resume?.resume?.url || resume?.url || resume?.fileUrl || "",
+    score,
+    appliedAt: raw.createdAt || raw.appliedAt || raw.updatedAt,
+    recruiterNotes: raw.recruiterNotes || "",
+    messageToRecruiter: raw.messageToRecruiter || "",
+    status: raw.status || "applied",
+  };
 };
 
 function StatusBadge({ status }) {
@@ -356,13 +271,13 @@ function MetricCard({ title, value, description, icon: Icon, tone }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm font-medium text-slate-500">{title}</p>
           <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
             {value}
           </p>
         </div>
-        <div className={`rounded-xl p-3 ${tones[tone]}`}>
+        <div className={`rounded-xl p-3 ${tones[tone] || tones.violet}`}>
           <Icon size={21} />
         </div>
       </div>
@@ -372,55 +287,68 @@ function MetricCard({ title, value, description, icon: Icon, tone }) {
 }
 
 function CandidateAvatar({ candidate, size = "normal" }) {
+  const name = getName(candidate);
+  const avatar =
+    candidate?.avatar?.url ||
+    (typeof candidate?.avatar === "string" ? candidate.avatar : "");
+
   const sizes =
     size === "large"
       ? "h-14 w-14 rounded-2xl text-lg"
       : "h-10 w-10 rounded-xl text-sm";
 
+  if (avatar) {
+    return (
+      <img
+        src={avatar}
+        alt={name}
+        className={`${sizes} shrink-0 object-cover ring-1 ring-black/5`}
+        loading="lazy"
+      />
+    );
+  }
+
   return (
     <div
-      className={`${sizes} ${candidate.color} flex shrink-0 items-center justify-center font-bold ring-1 ring-black/5`}
+      className={`${sizes} flex shrink-0 items-center justify-center bg-violet-100 font-bold text-violet-700 ring-1 ring-black/5`}
     >
-      {candidate.avatar}
+      {getInitials(name)}
     </div>
   );
 }
 
 function DetailField({ icon: Icon, children }) {
+  if (!children) return null;
+
   return (
     <div className="flex min-w-0 items-center gap-2 text-sm text-slate-600">
       <Icon size={16} className="shrink-0 text-slate-400" />
-      <span className="truncate">{children}</span>
+      <span className="min-w-0 break-words">{children}</span>
     </div>
   );
 }
 
 function ApplicationDrawer({
-  application,
+  application: rawApplication,
   onClose,
   onStatusChange,
   onNotesSave,
-  onToast,
+  busyStatus,
+  busyNotes,
 }) {
-  const [notes, setNotes] = useState(application.recruiterNotes || "");
-  const [savingNotes, setSavingNotes] = useState(false);
+  const application = useMemo(
+    () => normalizeApplication(rawApplication),
+    [rawApplication]
+  );
 
-  React.useEffect(() => {
+  const [notes, setNotes] = useState(application.recruiterNotes);
+
+  useEffect(() => {
     setNotes(application.recruiterNotes || "");
   }, [application._id, application.recruiterNotes]);
 
-  const changeStatus = (status) => {
-    onStatusChange(application._id, status);
-    onToast(`Status updated to ${STATUS_META[status]?.label || status}`);
-  };
-
-  const saveNotes = async () => {
-    setSavingNotes(true);
-    await Promise.resolve();
-    onNotesSave(application._id, notes);
-    setSavingNotes(false);
-    onToast("Recruiter notes saved");
-  };
+  const education = application.candidateEducation || [];
+  const skills = application.candidateSkills || [];
 
   const canShortlist = ![
     "selected",
@@ -428,6 +356,14 @@ function ApplicationDrawer({
     "withdrawn",
     "closed",
   ].includes(application.status);
+
+  const canReject = !["selected", "rejected", "withdrawn", "closed"].includes(
+    application.status
+  );
+
+  const saveNotes = async () => {
+    await onNotesSave(application._id, notes);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -439,16 +375,18 @@ function ApplicationDrawer({
       />
 
       <aside className="relative flex h-full w-full max-w-xl flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <div>
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-700">
               Application details
             </p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 truncate text-xs text-slate-500">
               ID: {application._id}
             </p>
           </div>
+
           <button
+            type="button"
             onClick={onClose}
             className="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
             aria-label="Close"
@@ -457,60 +395,83 @@ function ApplicationDrawer({
           </button>
         </div>
 
-        <div className="flex-1 space-y-6 overflow-y-auto p-6">
+        <div className="flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
           <section className="rounded-2xl border border-slate-200 bg-gradient-to-br from-violet-50 via-white to-white p-5">
             <div className="flex items-start gap-4">
-              <CandidateAvatar candidate={application.candidate} size="large" />
+              <CandidateAvatar
+                candidate={application.candidate}
+                size="large"
+              />
+
               <div className="min-w-0 flex-1">
-                <h2 className="text-xl font-bold text-slate-950">
-                  {application.candidate.name}
+                <h2 className="break-words text-xl font-bold text-slate-950">
+                  {application.candidateName}
                 </h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  {application.candidate.currentRole}
+                  {application.candidateRole || "Role not provided"}
                 </p>
                 <div className="mt-3">
                   <StatusBadge status={application.status} />
                 </div>
               </div>
-              <div className="rounded-xl border border-violet-100 bg-white px-3 py-2 text-center">
+
+              <div className="shrink-0 rounded-xl border border-violet-100 bg-white px-3 py-2 text-center">
                 <p className="text-2xl font-bold text-violet-700">
-                  {application.score}
+                  {application.score ?? "—"}
                 </p>
                 <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                  Match
+                  ATS score
                 </p>
               </div>
             </div>
 
             <div className="mt-5 grid gap-3 border-t border-violet-100 pt-4">
               <DetailField icon={Mail}>
-                {application.candidate.email}
+                {application.candidateEmail}
               </DetailField>
               <DetailField icon={Phone}>
-                {application.candidate.phone}
+                {application.candidatePhone}
               </DetailField>
               <DetailField icon={MapPin}>
-                {application.candidate.location}
+                {application.candidateLocation}
               </DetailField>
               <DetailField icon={BriefcaseBusiness}>
-                {application.candidate.experience} experience
+                {application.candidateRole}
               </DetailField>
             </div>
+
+            {application.candidatePortfolio && (
+              <a
+                href={application.candidatePortfolio}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-violet-700 hover:text-violet-900"
+              >
+                View candidate portfolio
+                <ExternalLink size={15} />
+              </a>
+            )}
           </section>
 
           <section>
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-semibold text-slate-950">Application status</h3>
-              <span className="text-xs text-slate-400">Editable</span>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h3 className="font-semibold text-slate-950">
+                Application status
+              </h3>
+              <span className="text-xs text-slate-400">Saved to server</span>
             </div>
 
             <label className="mb-2 block text-xs font-medium text-slate-500">
               Update candidate stage
             </label>
+
             <select
               value={application.status}
-              onChange={(event) => changeStatus(event.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-medium text-slate-800 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+              disabled={busyStatus}
+              onChange={(event) =>
+                onStatusChange(application._id, event.target.value)
+              }
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-medium text-slate-800 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100 disabled:opacity-60"
             >
               {STATUS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -522,17 +483,24 @@ function ApplicationDrawer({
             <div className="mt-3 flex flex-wrap gap-2">
               {canShortlist && (
                 <button
-                  onClick={() => changeStatus("shortlisted")}
-                  className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-800"
+                  type="button"
+                  disabled={busyStatus || application.status === "shortlisted"}
+                  onClick={() =>
+                    onStatusChange(application._id, "shortlisted")
+                  }
+                  className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <UserCheck size={16} />
                   Shortlist
                 </button>
               )}
-              {!["selected", "rejected"].includes(application.status) && (
+
+              {canReject && (
                 <button
-                  onClick={() => changeStatus("rejected")}
-                  className="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+                  type="button"
+                  disabled={busyStatus}
+                  onClick={() => onStatusChange(application._id, "rejected")}
+                  className="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
                 >
                   <XCircle size={16} />
                   Reject
@@ -546,46 +514,92 @@ function ApplicationDrawer({
               Position applied for
             </h3>
             <div className="rounded-xl border border-slate-200 p-4">
-              <p className="font-semibold text-slate-900">{application.job}</p>
-              <p className="mt-1 text-sm text-slate-500">
-                {application.department} · Applied {formatDate(application.appliedAt)}
+              <p className="break-words font-semibold text-slate-900">
+                {application.jobTitle}
+              </p>
+              {application.jobDepartment && (
+                <p className="mt-1 text-sm text-slate-500">
+                  {application.jobDepartment}
+                </p>
+              )}
+              <p className="mt-2 text-xs text-slate-500">
+                Applied {formatDate(application.appliedAt)}
               </p>
             </div>
           </section>
 
           <section>
-            <h3 className="mb-3 font-semibold text-slate-950">Skills</h3>
-            <div className="flex flex-wrap gap-2">
-              {application.candidate.skills.map((skill) => (
-                <span
-                  key={skill}
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-slate-950">
+              <Code2 size={17} className="text-violet-600" />
+              Skills
+            </h3>
+
+            {skills.length ? (
+              <div className="flex flex-wrap gap-2">
+                {skills.map((skill, index) => (
+                  <span
+                    key={`${skill}-${index}`}
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                No skills have been added to the candidate profile.
+              </p>
+            )}
           </section>
 
           <section>
-            <h3 className="mb-3 font-semibold text-slate-950">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-slate-950">
+              <GraduationCap size={18} className="text-violet-600" />
               Education
             </h3>
-            <div className="rounded-xl border border-slate-200 p-4">
-              <p className="font-medium text-slate-900">
-                {application.candidate.education}
+
+            {education.length ? (
+              <div className="space-y-3">
+                {education.map((item, index) => (
+                  <div
+                    key={item._id || `${item.institute}-${index}`}
+                    className="rounded-xl border border-slate-200 p-4"
+                  >
+                    <p className="font-semibold text-slate-900">
+                      {[item.degree, item.field]
+                        .filter(Boolean)
+                        .join(" · ") || "Education"}
+                    </p>
+                    {item.institute && (
+                      <p className="mt-1 text-sm text-slate-600">
+                        {item.institute}
+                      </p>
+                    )}
+                    {(item.startYear || item.endYear) && (
+                      <p className="mt-2 text-xs text-slate-500">
+                        {item.startYear || "—"} – {item.endYear || "Present"}
+                      </p>
+                    )}
+                    {item.grade && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        Grade: {item.grade}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                No education details are available.
               </p>
-              <p className="mt-1 text-sm text-slate-500">
-                {application.candidate.university}
-              </p>
-            </div>
+            )}
           </section>
 
           <section>
             <h3 className="mb-3 font-semibold text-slate-950">
               Candidate message
             </h3>
-            <div className="rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+            <div className="whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
               {application.messageToRecruiter || "No message provided."}
             </div>
           </section>
@@ -597,9 +611,11 @@ function ApplicationDrawer({
               </h3>
               <ShieldCheck size={17} className="text-violet-600" />
             </div>
+
             <p className="mb-3 text-xs text-slate-500">
-              Visible to your recruiting team only.
+              Visible to authorized recruiting team members only.
             </p>
+
             <textarea
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
@@ -608,52 +624,70 @@ function ApplicationDrawer({
               placeholder="Add interview feedback, observations, or follow-up reminders..."
               className="w-full resize-y rounded-xl border border-slate-200 p-3 text-sm leading-6 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
             />
+
             <div className="mt-2 flex items-center justify-between gap-3">
               <span className="text-xs text-slate-400">
                 {notes.length}/5000 characters
               </span>
+
               <button
+                type="button"
                 onClick={saveNotes}
-                disabled={savingNotes || notes.length > 5000}
+                disabled={busyNotes || notes.length > 5000}
                 className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <Check size={16} />
-                {savingNotes ? "Saving..." : "Save notes"}
+                {busyNotes ? (
+                  <LoaderCircle size={16} className="animate-spin" />
+                ) : (
+                  <Check size={16} />
+                )}
+                {busyNotes ? "Saving..." : "Save notes"}
               </button>
             </div>
           </section>
 
           <section>
-            <h3 className="mb-3 font-semibold text-slate-950">
-              Resume
-            </h3>
+            <h3 className="mb-3 font-semibold text-slate-950">Resume</h3>
+
             <div className="flex items-center gap-3 rounded-xl border border-slate-200 p-4">
               <div className="rounded-xl bg-rose-50 p-3 text-rose-600">
                 <FileText size={22} />
               </div>
+
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-800">
-                  {application.resume}
+                <p className="break-words text-sm font-semibold text-slate-800">
+                  {application.resumeTitle}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  Resume attached to application
+                  Resume attached to this application
                 </p>
               </div>
-              <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-500">
-                PDF
-              </span>
+
+              {application.resumeUrl ? (
+                <a
+                  href={application.resumeUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-100"
+                >
+                  Open
+                  <ExternalLink size={13} />
+                </a>
+              ) : (
+                <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-500">
+                  Unavailable
+                </span>
+              )}
             </div>
-            <p className="mt-2 text-xs leading-5 text-slate-400">
-              Demo mode: the filename is mock data, not a downloadable resume.
-            </p>
           </section>
         </div>
 
-        <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-4">
+        <div className="flex items-center justify-between border-t border-slate-200 bg-white px-5 py-4 sm:px-6">
           <span className="text-xs text-slate-500">
-            Last applied {formatRelativeDate(application.appliedAt)}
+            Applied {formatRelativeDate(application.appliedAt)}
           </span>
           <button
+            type="button"
             onClick={onClose}
             className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
           >
@@ -666,28 +700,105 @@ function ApplicationDrawer({
 }
 
 export default function RecruiterApplication() {
-  const [items, setItems] = useState(INITIAL_APPLICATIONS);
+  const {
+    applications = [],
+    myApplicationPagination,
+    handleGetRecruiterApplications,
+    handleGetApplicationById,
+    handleUpdateApplicationStatus,
+    handleUpdateRecruiterNotes,
+  } = useApplication();
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [jobFilter, setJobFilter] = useState("All jobs");
+  const [jobFilter, setJobFilter] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(6);
+  const [pageSize, setPageSize] = useState(10);
   const [view, setView] = useState("table");
-  const [selectedId, setSelectedId] = useState(null);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [busyStatus, setBusyStatus] = useState(false);
+  const [busyNotes, setBusyNotes] = useState(false);
+  const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
-  const selectedApplication = items.find(
-    (item) => item._id === selectedId
+  const items = useMemo(
+    () => applications.map(normalizeApplication),
+    [applications]
   );
 
-  const stats = useMemo(() => {
-    const active = items.filter(
-      (item) => !["rejected", "withdrawn", "closed"].includes(item.status)
-    );
+  const notify = useCallback((message) => {
+    setToast(message);
+    window.setTimeout(() => setToast(""), 2800);
+  }, []);
 
+  const fetchApplications = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!handleGetRecruiterApplications) {
+        setError("Recruiter applications handler is missing from ApplicationContext.");
+        setLoading(false);
+        return;
+      }
+
+      if (silent) setRefreshing(true);
+      else setLoading(true);
+
+      setError("");
+
+      try {
+        await handleGetRecruiterApplications({
+          page,
+          limit: pageSize,
+          search: search.trim(),
+          status: statusFilter === "all" ? "" : statusFilter,
+          jobId: jobFilter,
+          sortBy,
+        });
+      } catch (err) {
+        setError(err?.message || "Unable to load applications.");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [
+      handleGetRecruiterApplications,
+      page,
+      pageSize,
+      search,
+      statusFilter,
+      jobFilter,
+      sortBy,
+    ]
+  );
+
+  useEffect(() => {
+    fetchApplications();
+  }, [fetchApplications]);
+
+  const totalItems =
+    myApplicationPagination?.total ??
+    myApplicationPagination?.totalApplications ??
+    myApplicationPagination?.totalDocs ??
+    items.length;
+
+  const totalPages = Math.max(
+    1,
+    myApplicationPagination?.totalPages ??
+      Math.ceil(totalItems / pageSize)
+  );
+
+  const safePage = Math.min(page, totalPages);
+
+  useEffect(() => {
+    if (page !== safePage) setPage(safePage);
+  }, [page, safePage]);
+
+  const stats = useMemo(() => {
     return {
       total: items.length,
       review: items.filter((item) =>
@@ -698,92 +809,94 @@ export default function RecruiterApplication() {
         ["interview_scheduled", "interview_completed"].includes(item.status)
       ).length,
       selected: items.filter((item) => item.status === "selected").length,
-      active: active.length,
     };
   }, [items]);
 
-  const filteredApplications = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
+  const jobOptions = useMemo(() => {
+    const options = new Map();
 
-    let result = items.filter((item) => {
-      const matchesSearch =
-        !normalizedSearch ||
-        [
-          item.candidate.name,
-          item.candidate.email,
-          item.candidate.currentRole,
-          item.job,
-          item._id,
-          ...item.candidate.skills,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(normalizedSearch);
-
-      const matchesStatus =
-        statusFilter === "all" || item.status === statusFilter;
-
-      const matchesJob =
-        jobFilter === "All jobs" || item.job === jobFilter;
-
-      return matchesSearch && matchesStatus && matchesJob;
+    items.forEach((item) => {
+      const id = getId(item.job);
+      if (id && item.jobTitle) options.set(id, item.jobTitle);
     });
 
-    result = [...result].sort((a, b) => {
-      if (sortBy === "oldest") {
-        return new Date(a.appliedAt) - new Date(b.appliedAt);
+    if (jobFilter && !options.has(jobFilter)) {
+      options.set(jobFilter, "Selected job");
+    }
+
+    return [...options.entries()].map(([id, title]) => ({ id, title }));
+  }, [items, jobFilter]);
+
+  const openApplication = async (applicationId) => {
+    if (!applicationId) return;
+
+    setError("");
+
+    try {
+      const detail = await handleGetApplicationById({ applicationId });
+      if (!detail) {
+        notify("Application details could not be loaded.");
+        return;
       }
-      if (sortBy === "name") {
-        return a.candidate.name.localeCompare(b.candidate.name);
-      }
-      if (sortBy === "score") {
-        return b.score - a.score;
-      }
-      return new Date(b.appliedAt) - new Date(a.appliedAt);
-    });
-
-    return result;
-  }, [items, search, statusFilter, jobFilter, sortBy]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredApplications.length / pageSize)
-  );
-
-  const safePage = Math.min(page, totalPages);
-
-  const visibleApplications = filteredApplications.slice(
-    (safePage - 1) * pageSize,
-    safePage * pageSize
-  );
-
-  const notify = (message) => {
-    setToast(message);
-    window.setTimeout(() => setToast(""), 2600);
+      setSelectedApplication(detail);
+    } catch (err) {
+      setError(err?.message || "Unable to load application details.");
+    }
   };
 
-  const updateStatus = (applicationId, status) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item._id === applicationId ? { ...item, status } : item
-      )
-    );
+  const updateStatus = async (applicationId, status) => {
+    const current = items.find((item) => item._id === applicationId);
+    if (!current || current.status === status) return;
+
+    setBusyStatus(true);
+    setError("");
+
+    try {
+      await handleUpdateApplicationStatus({ applicationId, status });
+
+      if (selectedApplication?._id === applicationId) {
+        setSelectedApplication((previous) =>
+          previous ? { ...previous, status } : previous
+        );
+      }
+
+      notify(`Status updated to ${STATUS_META[status]?.label || status}.`);
+      await fetchApplications({ silent: true });
+    } catch (err) {
+      setError(err?.message || "Unable to update application status.");
+      notify("Status update failed.");
+    } finally {
+      setBusyStatus(false);
+    }
   };
 
-  const saveNotes = (applicationId, recruiterNotes) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item._id === applicationId
-          ? { ...item, recruiterNotes }
-          : item
-      )
-    );
+  const saveNotes = async (applicationId, recruiterNotes) => {
+    setBusyNotes(true);
+    setError("");
+
+    try {
+      await handleUpdateRecruiterNotes({ applicationId, recruiterNotes });
+
+      setSelectedApplication((previous) =>
+        previous?._id === applicationId
+          ? { ...previous, recruiterNotes }
+          : previous
+      );
+
+      notify("Recruiter notes saved.");
+      await fetchApplications({ silent: true });
+    } catch (err) {
+      setError(err?.message || "Unable to save recruiter notes.");
+      notify("Saving recruiter notes failed.");
+    } finally {
+      setBusyNotes(false);
+    }
   };
 
   const resetFilters = () => {
     setSearch("");
     setStatusFilter("all");
-    setJobFilter("All jobs");
+    setJobFilter("");
     setSortBy("newest");
     setPage(1);
   };
@@ -795,20 +908,18 @@ export default function RecruiterApplication() {
       "Email",
       "Position",
       "Status",
-      "Match Score",
-      "Experience",
+      "ATS Score",
       "Applied Date",
       "Recruiter Notes",
     ];
 
-    const rows = filteredApplications.map((item) => [
+    const rows = items.map((item) => [
       item._id,
-      item.candidate.name,
-      item.candidate.email,
-      item.job,
+      item.candidateName,
+      item.candidateEmail,
+      item.jobTitle,
       STATUS_META[item.status]?.label || item.status,
-      item.score,
-      item.candidate.experience,
+      item.score ?? "",
       formatDate(item.appliedAt),
       item.recruiterNotes,
     ]);
@@ -823,21 +934,34 @@ export default function RecruiterApplication() {
     const blob = new Blob(["\uFEFF", csv], {
       type: "text/csv;charset=utf-8;",
     });
+
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "peer-hiring-applications.csv";
+    link.download = `peer-hiring-applications-page-${page}.csv`;
+    document.body.appendChild(link);
     link.click();
+    link.remove();
     URL.revokeObjectURL(url);
 
     setShowExportMenu(false);
-    notify("CSV exported successfully");
+    notify("Current page exported to CSV.");
   };
+
+  const changeFilter = (setter, value) => {
+    setter(value);
+    setPage(1);
+  };
+
+  const visibleRangeStart = totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1;
+  const visibleRangeEnd = Math.min(
+    (safePage - 1) * pageSize + items.length,
+    totalItems
+  );
 
   return (
     <div className="min-h-screen bg-[#F7F8FC] text-slate-900">
       <main className="mx-auto max-w-[1600px] space-y-6 p-4 sm:p-6 lg:p-8">
-        {/* Header */}
         <header className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
           <div>
             <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">
@@ -848,107 +972,123 @@ export default function RecruiterApplication() {
               Applications
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              Review candidates, manage hiring stages, and keep your recruitment
-              pipeline moving.
+              Review real candidates, manage hiring stages, and keep your
+              recruitment pipeline moving.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <button
-                onClick={() => setShowExportMenu((prev) => !prev)}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                type="button"
+                onClick={() => setShowExportMenu((previous) => !previous)}
+                disabled={items.length === 0}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
               >
                 <Download size={16} />
-                Export
+                Export current page
                 <ChevronDown size={15} />
               </button>
+
               {showExportMenu && (
-                <div className="absolute right-0 top-12 z-20 w-52 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+                <div className="absolute right-0 top-12 z-20 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
                   <button
+                    type="button"
                     onClick={exportCsv}
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-violet-50 hover:text-violet-700"
                   >
                     <FileText size={16} />
-                    Export filtered CSV
+                    Export this page as CSV
                   </button>
                 </div>
               )}
             </div>
 
             <button
-              onClick={() => {
-                resetFilters();
-                notify("Filters reset");
-              }}
+              type="button"
+              onClick={() => fetchApplications({ silent: true })}
+              disabled={refreshing || loading}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              <RefreshCw
+                size={16}
+                className={refreshing ? "animate-spin" : ""}
+              />
+              Refresh
+            </button>
+
+            <button
+              type="button"
+              onClick={resetFilters}
               className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800"
             >
               <RotateCcw size={16} />
-              Reset view
+              Reset filters
             </button>
           </div>
         </header>
 
-        {/* Demo notice */}
-        <div className="flex items-start gap-3 rounded-2xl border border-violet-100 bg-violet-50/70 px-4 py-3.5">
-          <div className="rounded-lg bg-white p-2 text-violet-700 shadow-sm">
-            <CircleHelp size={17} />
+        {error && (
+          <div
+            role="alert"
+            className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800"
+          >
+            <AlertCircle size={19} className="mt-0.5 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold">Something went wrong</p>
+              <p className="mt-1 break-words">{error}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setError("")}
+              className="rounded-md p-1 hover:bg-rose-100"
+              aria-label="Dismiss error"
+            >
+              <X size={16} />
+            </button>
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-violet-950">
-              Frontend demo mode
-            </p>
-            <p className="mt-1 text-xs leading-5 text-violet-800/80">
-              Candidate data is fictional. Status changes, notes, and filters
-              work locally in this page; they are not saved to your database.
-            </p>
-          </div>
-          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-violet-700 ring-1 ring-violet-200">
-            Mock data
-          </span>
-        </div>
+        )}
 
-        {/* Metric cards */}
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
-            title="Total applications"
-            value={stats.total}
-            description={`${stats.active} active candidates in the pipeline`}
+            title="Applications on page"
+            value={loading ? "—" : stats.total}
+            description={`${totalItems} matching application(s) across all pages`}
             icon={Users}
             tone="violet"
           />
           <MetricCard
             title="Needs review"
-            value={stats.review}
-            description="New applications and screening"
+            value={loading ? "—" : stats.review}
+            description="New applications and screening on this page"
             icon={Clock3}
             tone="amber"
           />
           <MetricCard
             title="Shortlisted"
-            value={stats.shortlisted}
-            description="Candidates ready for the next step"
+            value={loading ? "—" : stats.shortlisted}
+            description="Shortlisted candidates on this page"
             icon={UserCheck}
             tone="blue"
           />
           <MetricCard
             title="Interviews"
-            value={stats.interviews}
-            description={`${stats.selected} candidate(s) selected`}
+            value={loading ? "—" : stats.interviews}
+            description={`${stats.selected} selected on this page`}
             icon={CalendarDays}
             tone="emerald"
           />
         </section>
 
-        {/* Pipeline */}
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col justify-between gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center">
             <div>
               <h2 className="font-bold text-slate-950">Hiring pipeline</h2>
               <p className="mt-1 text-sm text-slate-500">
-                A live overview of the current demo dataset.
+                Manage applications returned by your recruiter account.
               </p>
             </div>
+
             <div className="flex flex-wrap items-center gap-2">
               {[
                 { label: "New", value: "applied" },
@@ -964,10 +1104,10 @@ export default function RecruiterApplication() {
                 return (
                   <button
                     key={stage.value}
-                    onClick={() => {
-                      setStatusFilter(stage.value);
-                      setPage(1);
-                    }}
+                    type="button"
+                    onClick={() =>
+                      changeFilter(setStatusFilter, stage.value)
+                    }
                     className={`rounded-xl border px-3 py-2 text-left transition ${
                       statusFilter === stage.value
                         ? "border-violet-300 bg-violet-50"
@@ -978,7 +1118,7 @@ export default function RecruiterApplication() {
                       {stage.label}
                     </span>
                     <span className="mt-0.5 block text-base font-bold text-slate-900">
-                      {count}
+                      {loading ? "—" : count}
                     </span>
                   </button>
                 );
@@ -986,7 +1126,6 @@ export default function RecruiterApplication() {
             </div>
           </div>
 
-          {/* Search and filters */}
           <div className="space-y-3 border-b border-slate-100 p-4 sm:p-5">
             <div className="flex flex-col gap-3 xl:flex-row">
               <div className="relative min-w-0 flex-1">
@@ -994,21 +1133,20 @@ export default function RecruiterApplication() {
                   size={18}
                   className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
                 />
+
                 <input
                   value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    setPage(1);
-                  }}
-                  placeholder="Search candidates, skills, emails, or positions..."
+                  onChange={(event) =>
+                    changeFilter(setSearch, event.target.value)
+                  }
+                  placeholder="Search candidates, email, skills, or applications..."
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-10 text-sm outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-100"
                 />
+
                 {search && (
                   <button
-                    onClick={() => {
-                      setSearch("");
-                      setPage(1);
-                    }}
+                    type="button"
+                    onClick={() => changeFilter(setSearch, "")}
                     className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
                     aria-label="Clear search"
                   >
@@ -1018,25 +1156,27 @@ export default function RecruiterApplication() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <div className="relative min-w-[170px] flex-1 sm:flex-none">
+                <div className="relative min-w-[180px] flex-1 sm:flex-none">
                   <BriefcaseBusiness
                     size={15}
                     className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                   />
+
                   <select
                     value={jobFilter}
-                    onChange={(event) => {
-                      setJobFilter(event.target.value);
-                      setPage(1);
-                    }}
+                    onChange={(event) =>
+                      changeFilter(setJobFilter, event.target.value)
+                    }
                     className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-3 pl-9 pr-9 text-sm font-medium text-slate-700 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                   >
-                    {JOB_OPTIONS.map((job) => (
-                      <option key={job} value={job}>
-                        {job}
+                    <option value="">All jobs</option>
+                    {jobOptions.map((job) => (
+                      <option key={job.id} value={job.id}>
+                        {job.title}
                       </option>
                     ))}
                   </select>
+
                   <ChevronDown
                     size={15}
                     className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -1044,7 +1184,8 @@ export default function RecruiterApplication() {
                 </div>
 
                 <button
-                  onClick={() => setShowFilters((prev) => !prev)}
+                  type="button"
+                  onClick={() => setShowFilters((previous) => !previous)}
                   className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
                     showFilters || statusFilter !== "all"
                       ? "border-violet-200 bg-violet-50 text-violet-700"
@@ -1061,8 +1202,10 @@ export default function RecruiterApplication() {
 
                 <div className="flex rounded-xl border border-slate-200 bg-white p-1">
                   <button
+                    type="button"
                     onClick={() => setView("table")}
                     title="Table view"
+                    aria-label="Table view"
                     className={`rounded-lg p-2 transition ${
                       view === "table"
                         ? "bg-violet-100 text-violet-700"
@@ -1072,8 +1215,10 @@ export default function RecruiterApplication() {
                     <List size={18} />
                   </button>
                   <button
+                    type="button"
                     onClick={() => setView("grid")}
                     title="Grid view"
+                    aria-label="Grid view"
                     className={`rounded-lg p-2 transition ${
                       view === "grid"
                         ? "bg-violet-100 text-violet-700"
@@ -1094,10 +1239,9 @@ export default function RecruiterApplication() {
                   </label>
                   <select
                     value={statusFilter}
-                    onChange={(event) => {
-                      setStatusFilter(event.target.value);
-                      setPage(1);
-                    }}
+                    onChange={(event) =>
+                      changeFilter(setStatusFilter, event.target.value)
+                    }
                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-violet-500"
                   >
                     <option value="all">All statuses</option>
@@ -1106,32 +1250,31 @@ export default function RecruiterApplication() {
                         {option.label}
                       </option>
                     ))}
-                    <option value="withdrawn">Withdrawn</option>
-                    <option value="closed">Closed</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                    Sort candidates
+                    Sort applications
                   </label>
                   <select
                     value={sortBy}
-                    onChange={(event) => {
-                      setSortBy(event.target.value);
-                      setPage(1);
-                    }}
+                    onChange={(event) =>
+                      changeFilter(setSortBy, event.target.value)
+                    }
                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-violet-500"
                   >
                     <option value="newest">Newest first</option>
                     <option value="oldest">Oldest first</option>
-                    <option value="name">Candidate name (A–Z)</option>
-                    <option value="score">Highest match score</option>
+                    <option value="updated">Recently updated</option>
+                    <option value="score_high">Highest ATS score</option>
+                    <option value="score_low">Lowest ATS score</option>
                   </select>
                 </div>
 
                 <div className="flex items-end">
                   <button
+                    type="button"
                     onClick={resetFilters}
                     className="inline-flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-violet-700 transition hover:bg-violet-100"
                   >
@@ -1146,251 +1289,42 @@ export default function RecruiterApplication() {
               <p>
                 Showing{" "}
                 <span className="font-semibold text-slate-800">
-                  {filteredApplications.length === 0
-                    ? 0
-                    : (safePage - 1) * pageSize + 1}
-                  {"–"}
-                  {Math.min(safePage * pageSize, filteredApplications.length)}
+                  {loading ? "—" : `${visibleRangeStart}–${visibleRangeEnd}`}
                 </span>{" "}
                 of{" "}
                 <span className="font-semibold text-slate-800">
-                  {filteredApplications.length}
+                  {loading ? "—" : totalItems}
                 </span>{" "}
-                applications
+                matching applications
               </p>
-              {(search || statusFilter !== "all" || jobFilter !== "All jobs") && (
+
+              {(search || statusFilter !== "all" || jobFilter) && (
                 <button
+                  type="button"
                   onClick={resetFilters}
                   className="inline-flex items-center gap-1 font-semibold text-violet-700 hover:text-violet-900"
                 >
-                  Clear active filters <X size={13} />
+                  Clear active filters
+                  <X size={13} />
                 </button>
               )}
             </div>
           </div>
 
-          {/* Table view */}
-          {view === "table" && (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1000px] border-collapse text-left">
-                <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    <th className="px-5 py-4">
-                      <span className="inline-flex items-center gap-2">
-                        Candidate <ArrowUpDown size={12} />
-                      </span>
-                    </th>
-                    <th className="px-5 py-4">Applied for</th>
-                    <th className="px-5 py-4">Match score</th>
-                    <th className="px-5 py-4">Applied date</th>
-                    <th className="px-5 py-4">Status</th>
-                    <th className="px-5 py-4 text-right">Action</th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-slate-100">
-                  {visibleApplications.map((item) => (
-                    <tr
-                      key={item._id}
-                      className="group transition hover:bg-violet-50/30"
-                    >
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <CandidateAvatar candidate={item.candidate} />
-                          <div className="min-w-0">
-                            <button
-                              onClick={() => setSelectedId(item._id)}
-                              className="block max-w-[210px] truncate text-sm font-semibold text-slate-900 hover:text-violet-700"
-                            >
-                              {item.candidate.name}
-                            </button>
-                            <p className="mt-1 max-w-[210px] truncate text-xs text-slate-500">
-                              {item.candidate.email}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-400">
-                              {item.candidate.experience} experience
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <p className="max-w-[210px] truncate text-sm font-medium text-slate-800">
-                          {item.job}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {item.department}
-                        </p>
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
-                            <div
-                              className="h-full rounded-full bg-violet-600"
-                              style={{ width: `${item.score}%` }}
-                            />
-                          </div>
-                          <span className="text-sm font-bold text-slate-800">
-                            {item.score}%
-                          </span>
-                        </div>
-                        <p className="mt-1 text-[10px] text-slate-400">
-                          Demo match score
-                        </p>
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <p className="text-sm font-medium text-slate-700">
-                          {formatDate(item.appliedAt)}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-400">
-                          {formatRelativeDate(item.appliedAt)}
-                        </p>
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <select
-                          value={item.status}
-                          onChange={(event) => {
-                            updateStatus(item._id, event.target.value);
-                            notify("Application status updated");
-                          }}
-                          aria-label={`Update status for ${item.candidate.name}`}
-                          className="max-w-[190px] cursor-pointer rounded-full border-0 bg-transparent py-1 pr-7 text-xs font-semibold outline-none ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-violet-500"
-                        >
-                          {STATUS_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => setSelectedId(item._id)}
-                            title="View application"
-                            className="rounded-lg p-2 text-slate-500 transition hover:bg-violet-100 hover:text-violet-700"
-                          >
-                            <Eye size={17} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedId(item._id);
-                            }}
-                            title="Recruiter notes and actions"
-                            className="rounded-lg p-2 text-slate-500 transition hover:bg-violet-100 hover:text-violet-700"
-                          >
-                            <MessageSquareText size={17} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedId(item._id);
-                            }}
-                            title="More details"
-                            className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-                          >
-                            <MoreHorizontal size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {loading ? (
+            <div className="flex min-h-72 flex-col items-center justify-center gap-3 p-8 text-center">
+              <LoaderCircle
+                size={32}
+                className="animate-spin text-violet-700"
+              />
+              <p className="text-sm font-semibold text-slate-700">
+                Loading applications...
+              </p>
+              <p className="text-xs text-slate-500">
+                Fetching your recruiter pipeline.
+              </p>
             </div>
-          )}
-
-          {/* Grid view */}
-          {view === "grid" && (
-            <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
-              {visibleApplications.map((item) => (
-                <article
-                  key={item._id}
-                  className="rounded-2xl border border-slate-200 p-5 transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <CandidateAvatar candidate={item.candidate} size="large" />
-                    <StatusBadge status={item.status} />
-                  </div>
-
-                  <h3 className="mt-4 font-bold text-slate-950">
-                    {item.candidate.name}
-                  </h3>
-                  <p className="mt-1 truncate text-sm text-slate-500">
-                    {item.candidate.currentRole}
-                  </p>
-
-                  <div className="mt-4 rounded-xl bg-slate-50 p-3">
-                    <p className="text-xs font-medium text-slate-500">
-                      Applied for
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-slate-800">
-                      {item.job}
-                    </p>
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-xs text-slate-500">Match score</span>
-                    <span className="text-sm font-bold text-violet-700">
-                      {item.score}%
-                    </span>
-                  </div>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className="h-full rounded-full bg-violet-600"
-                      style={{ width: `${item.score}%` }}
-                    />
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap gap-1.5">
-                    {item.candidate.skills.slice(0, 3).map((skill) => (
-                      <span
-                        key={skill}
-                        className="rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                    {item.candidate.skills.length > 3 && (
-                      <span className="rounded-lg bg-slate-100 px-2 py-1 text-[11px] text-slate-500">
-                        +{item.candidate.skills.length - 3}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-5 flex gap-2 border-t border-slate-100 pt-4">
-                    <button
-                      onClick={() => setSelectedId(item._id)}
-                      className="flex-1 rounded-xl bg-violet-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-800"
-                    >
-                      View application
-                    </button>
-                    <select
-                      value={item.status}
-                      onChange={(event) => {
-                        updateStatus(item._id, event.target.value);
-                        notify("Application status updated");
-                      }}
-                      aria-label={`Update status for ${item.candidate.name}`}
-                      className="max-w-[130px] rounded-xl border border-slate-200 bg-white px-2 text-xs font-medium outline-none focus:border-violet-500"
-                    >
-                      {STATUS_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-
-          {/* Empty state */}
-          {visibleApplications.length === 0 && (
+          ) : items.length === 0 ? (
             <div className="flex flex-col items-center px-5 py-16 text-center">
               <div className="rounded-2xl bg-violet-50 p-4 text-violet-700">
                 <Search size={27} />
@@ -1399,123 +1333,398 @@ export default function RecruiterApplication() {
                 No applications found
               </h3>
               <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
-                Try changing your search, job selection, or status filters to
-                find candidates.
+                There are no applications matching these filters. Try a
+                different search or clear your filters.
               </p>
               <button
+                type="button"
                 onClick={resetFilters}
                 className="mt-5 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-800"
               >
                 Clear filters
               </button>
             </div>
-          )}
+          ) : (
+            <>
+              {view === "table" ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[1000px] border-collapse text-left">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                        <th className="px-5 py-4">
+                          <span className="inline-flex items-center gap-2">
+                            Candidate
+                            <ArrowUpDown size={12} />
+                          </span>
+                        </th>
+                        <th className="px-5 py-4">Applied for</th>
+                        <th className="px-5 py-4">ATS score</th>
+                        <th className="px-5 py-4">Applied date</th>
+                        <th className="px-5 py-4">Status</th>
+                        <th className="px-5 py-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
 
-          {/* Pagination */}
-          <footer className="flex flex-col justify-between gap-4 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-3">
-              <p className="text-xs text-slate-500">Rows per page</p>
-              <select
-                value={pageSize}
-                onChange={(event) => {
-                  setPageSize(Number(event.target.value));
-                  setPage(1);
-                }}
-                className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-violet-500"
-              >
-                <option value={5}>5</option>
-                <option value={6}>6</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-              </select>
-              <span className="hidden text-xs text-slate-400 sm:inline">
-                {filteredApplications.length} total results
-              </span>
-            </div>
+                    <tbody className="divide-y divide-slate-100">
+                      {items.map((item) => (
+                        <tr
+                          key={item._id}
+                          className="group transition hover:bg-violet-50/30"
+                        >
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-3">
+                              <CandidateAvatar candidate={item.candidate} />
+                              <div className="min-w-0">
+                                <button
+                                  type="button"
+                                  onClick={() => openApplication(item._id)}
+                                  className="block max-w-[220px] truncate text-sm font-semibold text-slate-900 hover:text-violet-700"
+                                >
+                                  {item.candidateName}
+                                </button>
+                                <p className="mt-1 max-w-[220px] truncate text-xs text-slate-500">
+                                  {item.candidateEmail || "No email available"}
+                                </p>
+                                <p className="mt-1 max-w-[220px] truncate text-xs text-slate-400">
+                                  {item.candidateRole || "Role not provided"}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
 
-            <div className="flex items-center justify-between gap-3 sm:justify-end">
-              <p className="text-xs font-medium text-slate-500">
-                Page {safePage} of {totalPages}
-              </p>
-              <div className="flex items-center gap-1">
-                <button
-                  disabled={safePage <= 1}
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  aria-label="Previous page"
-                  className="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <ChevronLeft size={17} />
-                </button>
-                {Array.from({ length: totalPages }, (_, index) => index + 1)
-                  .filter(
-                    (number) =>
-                      number === 1 ||
-                      number === totalPages ||
-                      Math.abs(number - safePage) <= 1
-                  )
-                  .map((number, index, array) => (
-                    <React.Fragment key={number}>
-                      {index > 0 && number - array[index - 1] > 1 && (
-                        <span className="px-1 text-slate-400">…</span>
+                          <td className="px-5 py-4">
+                            <p className="max-w-[230px] truncate text-sm font-medium text-slate-800">
+                              {item.jobTitle}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {item.jobDepartment || "Position"}
+                            </p>
+                          </td>
+
+                          <td className="px-5 py-4">
+                            {item.score !== null ? (
+                              <>
+                                <div className="flex items-center gap-2">
+                                  <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
+                                    <div
+                                      className="h-full rounded-full bg-violet-600"
+                                      style={{
+                                        width: `${Math.min(
+                                          100,
+                                          Math.max(0, item.score)
+                                        )}%`,
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="text-sm font-bold text-slate-800">
+                                    {item.score}%
+                                  </span>
+                                </div>
+                                <p className="mt-1 text-[10px] text-slate-400">
+                                  ATS score
+                                </p>
+                              </>
+                            ) : (
+                              <span className="text-xs text-slate-400">
+                                Not scored
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <p className="text-sm font-medium text-slate-700">
+                              {formatDate(item.appliedAt)}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-400">
+                              {formatRelativeDate(item.appliedAt)}
+                            </p>
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <div className="flex flex-col items-start gap-2">
+                              <StatusBadge status={item.status} />
+                              <select
+                                value={item.status}
+                                disabled={busyStatus}
+                                onChange={(event) =>
+                                  updateStatus(item._id, event.target.value)
+                                }
+                                aria-label={`Update status for ${item.candidateName}`}
+                                className="max-w-[190px] cursor-pointer rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium outline-none focus:border-violet-500 disabled:opacity-50"
+                              >
+                                {STATUS_OPTIONS.map((option) => (
+                                  <option
+                                    key={option.value}
+                                    value={option.value}
+                                  >
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onClick={() => openApplication(item._id)}
+                                title="View application"
+                                aria-label="View application"
+                                className="rounded-lg p-2 text-slate-500 transition hover:bg-violet-100 hover:text-violet-700"
+                              >
+                                <Eye size={17} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => openApplication(item._id)}
+                                title="Recruiter notes"
+                                aria-label="Open recruiter notes"
+                                className="rounded-lg p-2 text-slate-500 transition hover:bg-violet-100 hover:text-violet-700"
+                              >
+                                <MessageSquareText size={17} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => openApplication(item._id)}
+                                title="More details"
+                                aria-label="More details"
+                                className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                              >
+                                <MoreHorizontal size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {items.map((item) => (
+                    <article
+                      key={item._id}
+                      className="rounded-2xl border border-slate-200 p-5 transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <CandidateAvatar
+                          candidate={item.candidate}
+                          size="large"
+                        />
+                        <StatusBadge status={item.status} />
+                      </div>
+
+                      <h3 className="mt-4 break-words font-bold text-slate-950">
+                        {item.candidateName}
+                      </h3>
+                      <p className="mt-1 truncate text-sm text-slate-500">
+                        {item.candidateRole || "Role not provided"}
+                      </p>
+                      <p className="mt-1 truncate text-xs text-slate-400">
+                        {item.candidateEmail}
+                      </p>
+
+                      <div className="mt-4 rounded-xl bg-slate-50 p-3">
+                        <p className="text-xs font-medium text-slate-500">
+                          Applied for
+                        </p>
+                        <p className="mt-1 break-words text-sm font-semibold text-slate-800">
+                          {item.jobTitle}
+                        </p>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between">
+                        <span className="text-xs text-slate-500">ATS score</span>
+                        <span className="text-sm font-bold text-violet-700">
+                          {item.score === null ? "Not scored" : `${item.score}%`}
+                        </span>
+                      </div>
+
+                      {item.score !== null && (
+                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                          <div
+                            className="h-full rounded-full bg-violet-600"
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                Math.max(0, item.score)
+                              )}%`,
+                            }}
+                          />
+                        </div>
                       )}
-                      <button
-                        onClick={() => setPage(number)}
-                        className={`min-w-9 rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                          number === safePage
-                            ? "bg-violet-700 text-white"
-                            : "text-slate-600 hover:bg-violet-50 hover:text-violet-700"
-                        }`}
-                      >
-                        {number}
-                      </button>
-                    </React.Fragment>
+
+                      <p className="mt-3 text-xs text-slate-500">
+                        Applied {formatDate(item.appliedAt)}
+                      </p>
+
+                      {item.candidateSkills.length > 0 && (
+                        <div className="mt-4 flex flex-wrap gap-1.5">
+                          {item.candidateSkills.slice(0, 4).map((skill, i) => (
+                            <span
+                              key={`${skill}-${i}`}
+                              className="rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                          {item.candidateSkills.length > 4 && (
+                            <span className="rounded-lg bg-slate-100 px-2 py-1 text-[11px] text-slate-500">
+                              +{item.candidateSkills.length - 4}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="mt-5 flex gap-2 border-t border-slate-100 pt-4">
+                        <button
+                          type="button"
+                          onClick={() => openApplication(item._id)}
+                          className="flex-1 rounded-xl bg-violet-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-800"
+                        >
+                          View application
+                        </button>
+                        <select
+                          value={item.status}
+                          disabled={busyStatus}
+                          onChange={(event) =>
+                            updateStatus(item._id, event.target.value)
+                          }
+                          aria-label={`Update status for ${item.candidateName}`}
+                          className="max-w-[145px] rounded-xl border border-slate-200 bg-white px-2 text-xs font-medium outline-none focus:border-violet-500 disabled:opacity-50"
+                        >
+                          {STATUS_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </article>
                   ))}
-                <button
-                  disabled={safePage >= totalPages}
-                  onClick={() =>
-                    setPage((prev) => Math.min(totalPages, prev + 1))
-                  }
-                  aria-label="Next page"
-                  className="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <ChevronRight size={17} />
-                </button>
-              </div>
-            </div>
-          </footer>
+                </div>
+              )}
+
+              <footer className="flex flex-col justify-between gap-4 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-3">
+                  <p className="text-xs text-slate-500">Rows per page</p>
+                  <select
+                    value={pageSize}
+                    onChange={(event) => {
+                      setPageSize(Number(event.target.value));
+                      setPage(1);
+                    }}
+                    className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-violet-500"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                  <span className="hidden text-xs text-slate-400 sm:inline">
+                    {totalItems} total results
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 sm:justify-end">
+                  <p className="text-xs font-medium text-slate-500">
+                    Page {safePage} of {totalPages}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={safePage <= 1 || loading}
+                      onClick={() =>
+                        setPage((previous) => Math.max(1, previous - 1))
+                      }
+                      aria-label="Previous page"
+                      className="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronLeft size={17} />
+                    </button>
+
+                    {Array.from(
+                      { length: totalPages },
+                      (_, index) => index + 1
+                    )
+                      .filter(
+                        (number) =>
+                          number === 1 ||
+                          number === totalPages ||
+                          Math.abs(number - safePage) <= 1
+                      )
+                      .map((number, index, array) => (
+                        <React.Fragment key={number}>
+                          {index > 0 &&
+                            number - array[index - 1] > 1 && (
+                              <span className="px-1 text-slate-400">…</span>
+                            )}
+                          <button
+                            type="button"
+                            disabled={loading}
+                            onClick={() => setPage(number)}
+                            className={`min-w-9 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                              number === safePage
+                                ? "bg-violet-700 text-white"
+                                : "text-slate-600 hover:bg-violet-50 hover:text-violet-700"
+                            }`}
+                          >
+                            {number}
+                          </button>
+                        </React.Fragment>
+                      ))}
+
+                    <button
+                      type="button"
+                      disabled={safePage >= totalPages || loading}
+                      onClick={() =>
+                        setPage((previous) =>
+                          Math.min(totalPages, previous + 1)
+                        )
+                      }
+                      aria-label="Next page"
+                      className="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronRight size={17} />
+                    </button>
+                  </div>
+                </div>
+              </footer>
+            </>
+          )}
         </section>
 
-        {/* Footer note */}
         <div className="flex flex-col justify-between gap-2 pb-2 text-xs text-slate-400 sm:flex-row sm:items-center">
           <p>Peer.Hiring · Recruiter workspace</p>
           <p className="inline-flex items-center gap-1.5">
             <CircleDot size={12} className="text-emerald-500" />
-            Local demo interactions enabled
+            Connected to recruiter application API
           </p>
         </div>
       </main>
 
-      {/* Application detail drawer */}
       {selectedApplication && (
         <ApplicationDrawer
           key={selectedApplication._id}
           application={selectedApplication}
-          onClose={() => setSelectedId(null)}
+          onClose={() => setSelectedApplication(null)}
           onStatusChange={updateStatus}
           onNotesSave={saveNotes}
-          onToast={notify}
+          busyStatus={busyStatus}
+          busyNotes={busyNotes}
         />
       )}
 
-      {/* Toast */}
       {toast && (
         <div
           role="status"
           className="fixed bottom-5 right-5 z-[70] flex max-w-[calc(100vw-2.5rem)] items-center gap-3 rounded-xl bg-slate-950 px-4 py-3 text-sm font-medium text-white shadow-2xl"
         >
           <CheckCircle2 size={18} className="shrink-0 text-emerald-400" />
-          {toast}
+          <span>{toast}</span>
           <button
+            type="button"
             onClick={() => setToast("")}
             className="ml-1 rounded-md p-1 text-slate-400 hover:bg-white/10 hover:text-white"
             aria-label="Dismiss notification"

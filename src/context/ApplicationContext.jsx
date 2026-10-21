@@ -313,6 +313,86 @@ const ApplicationProvider = ({ children }) => {
     }
   };
 
+const handleGetRecruiterApplications = async (filters = {}) => {
+  try {
+    const query = new URLSearchParams();
+
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      status = "",
+      atsStatus = "",
+      minAtsScore,
+      maxAtsScore,
+      jobId = "",
+      candidateId = "",
+      resumeId = "",
+      interview = "all",
+      from = "",
+      to = "",
+      sortBy = "newest",
+      includeDeleted = false,
+    } = filters;
+
+    query.set("page", String(page));
+    query.set("limit", String(limit));
+
+    if (search.trim()) query.set("search", search.trim());
+    if (status) query.set("status", status);
+    if (atsStatus) query.set("atsStatus", atsStatus);
+
+    if (minAtsScore !== undefined && minAtsScore !== "") {
+      query.set("minAtsScore", String(minAtsScore));
+    }
+
+    if (maxAtsScore !== undefined && maxAtsScore !== "") {
+      query.set("maxAtsScore", String(maxAtsScore));
+    }
+
+    if (jobId) query.set("jobId", jobId);
+    if (candidateId) query.set("candidateId", candidateId);
+    if (resumeId) query.set("resumeId", resumeId);
+    if (interview && interview !== "all") {
+      query.set("interview", interview);
+    }
+
+    if (from) query.set("from", from);
+    if (to) query.set("to", to);
+
+    query.set("sortBy", sortBy);
+
+    if (includeDeleted) {
+      query.set("includeDeleted", "true");
+    }
+
+    const response = await fetch(
+      `${APPLICATIONS_URL}/recruiter?${query.toString()}`,
+      {
+        method: "GET",
+        credentials: "include",
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.message || "Failed to fetch recruiter applications"
+      );
+    }
+
+    setApplications(result.data?.applications || []);
+    setMyApplicationPagination(result.data?.pagination || {});
+
+    return result.data;
+  } catch (error) {
+    console.error("handleGetRecruiterApplications:", error);
+    throw error;
+  }
+};
+
+
   // Withdraw a candidate's application
   const handleWithdrawApplication = async ({ applicationId }) => {
     try {
@@ -343,6 +423,8 @@ const ApplicationProvider = ({ children }) => {
     }
   };
 
+  
+
   return (
     <ApplicationContext.Provider
       value={{
@@ -364,6 +446,7 @@ const ApplicationProvider = ({ children }) => {
         handleDeleteApplication,
         handleUpdateApplicationStatus,
         handleWithdrawApplication,
+        handleGetRecruiterApplications,
       }}
     >
       {children}

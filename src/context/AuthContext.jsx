@@ -10,7 +10,7 @@ function AuthProvider({children}) {
     const [authLoading, setAuthLoading] = useState(true);
     const navigate = useNavigate();
 
-    const getUser = async () => {
+const getUser = async () => {
     try {
         let response = await fetch(
             "http://localhost:9000/api/v1/auth/fetchUser",

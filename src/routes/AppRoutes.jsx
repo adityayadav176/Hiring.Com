@@ -8,11 +8,10 @@ import ADashboard from "../pages/admin/ADashboard";
 import ProtectedRoutes from "./ProtectedRoutes";
 import NotFound from "../pages/NotFound";
 import RecruiterLayout from '../pages/recruiter/RecruiterLayout';
-import RecruiterApplication from "../components/RecruiterApplication";
-import RecruiterInterviews from "../components/RecruiterInterviews";
 import CandidateProfile from "../components/CandidateProfile";
-import RecruiterProfile from "../components/RecruiterProfile";
 import RecruiterDashboard from "../components/RecruiterDashboard";
+import RecruiterProfileS from "../components/RecruiterProfile";
+import RecruiterProfile from "../components/RecruiterProfile";
 const AppRoutes = () => {
     return (
         <Routes>
@@ -20,10 +19,9 @@ const AppRoutes = () => {
             <Route path="/forgetPassword" element={<ForgetPassword/>}/>
             <Route path="/login" element={<Login/>}/>
             <Route path="/signup" element={<Signup/>}/>
-            <Route path="/application" element={<RecruiterApplication/>}/>
-            <Route path="/interviews" element={<RecruiterInterviews/>}/>
             <Route path="/profile" element={<CandidateProfile/>}/>
-            <Route path="rp" element={<RecruiterProfile/>}/>
+            <Route path="rp" element={<RecruiterProfileS/>}/>
+            <Route path="/recruiterP" element={<RecruiterProfile/>}/>
             <Route path="/dashboard" element={<RecruiterDashboard/>}/>
 
             <Route element={<ProtectedRoutes allowedType="admin" />}>
