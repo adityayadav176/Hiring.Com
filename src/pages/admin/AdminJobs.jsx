@@ -143,15 +143,12 @@ const getRecruiterName = (job) => {
   const recruiter = job?.recruiterId || job?.recruiter;
 
   if (typeof recruiter === "object" && recruiter !== null) {
-    return (
-      recruiter.name ||
-      recruiter.fullName ||
-      recruiter.email ||
-      "Not specified"
-    );
+    return recruiter.name || "Not specified";
   }
 
-  return job?.recruiterName || "Not specified";
+  console.log(recruiter.name);
+
+  return "Not populated";
 };
 
 const getLocation = (job) => {
@@ -870,6 +867,8 @@ export default function AdminJobs() {
     handleUnlockJob,
     handleDeleteJob,
   } = useAdmin();
+
+  console.log(rawJobs);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");

@@ -521,11 +521,6 @@ const UserDetailsModal = ({
                 value={getPhone(user)}
               />
               <InfoCard
-                icon={UserRound}
-                label="Username"
-                value={user.username}
-              />
-              <InfoCard
                 icon={ShieldCheck}
                 label="Account role"
                 value={formatLabel(role)}

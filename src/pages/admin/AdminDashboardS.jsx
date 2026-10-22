@@ -21,7 +21,7 @@ import {
   Users,
 } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useAdmin } from "../../hooks/Hook";
+import { useAdmin, useHome } from "../../hooks/Hook";
 import DashboardCalendar from "../../components/DashboardCalendar";
 
 const getArray = (value) => {
@@ -149,6 +149,7 @@ function AdminDashboardS() {
     reports: rawReports = [],
     handleGetReports,
   } = useAdmin();
+  const {setAdminActivePage} = useHome();
   const [calendar, setCalendar] = useState(false);
 
   const [period, setPeriod] = useState("30days");
@@ -446,7 +447,7 @@ function AdminDashboardS() {
                   Platform account distribution
                 </p>
               </div>
-              <button className="flex items-center justify-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-700">
+              <button onClick={() => setAdminActivePage("users")} className="flex items-center cursor-pointer justify-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-700">
                 View All
                 <ArrowUpRight size={14} />
               </button>
@@ -559,8 +560,8 @@ function AdminDashboardS() {
                   Job lifecycle and hiring activity
                 </p>
               </div>
-              <button className="flex items-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-700">
-                View all
+              <button onClick={() => setAdminActivePage("admin/jobs")} className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-700">
+                View All
                 <ArrowUpRight size={14} />
               </button>
             </div>
@@ -685,7 +686,7 @@ function AdminDashboardS() {
                 From job posting to interview — platform conversion
               </p>
             </div>
-            <button className="flex items-center gap-1 text-xs font-semibold text-violet-600">
+            <button onClick={() => setAdminActivePage("admin/jobs")} className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-violet-600">
               Detailed report
               <ArrowUpRight size={14} />
             </button>

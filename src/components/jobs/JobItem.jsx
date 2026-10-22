@@ -9,7 +9,22 @@ import { useJob } from "../../hooks/Hook";
 
 function JobItem({job}) {
 
-const {setSelectedJobs, getTimeAgo, FormatEnumValue, FormatLocation, formatSalary} = useJob();
+const {
+  setSelectedJobs,
+  handleGetUserJobById,
+  getTimeAgo,
+  FormatEnumValue,
+  FormatLocation,
+  formatSalary,
+} = useJob();
+
+const handleViewJob = async () => {
+  if (!job?._id) return;
+
+  await handleGetUserJobById({ JobId: job._id });
+  setSelectedJobs(job);
+};
+
   return (
     <article
       className="
@@ -174,7 +189,7 @@ const {setSelectedJobs, getTimeAgo, FormatEnumValue, FormatLocation, formatSalar
 
             {/* View Job */}
             <button
-            onClick={() => setSelectedJobs(job)}
+            onClick={handleViewJob}
               type="button"
               className="
                 shrink-0
