@@ -9,6 +9,7 @@ import RecruiterDashboard from './RecruiterDashboard';
 import Settings from '../seeker/Settings';
 import RecruiterProfile from './RecruiterProfile';
 import RecruiterCompanies from './RecruiterCompanies';
+import CandidateProfile from "./CandidateProfile"
 
 export default function () {
     const {recruiterActivePage} = useHome();
@@ -27,6 +28,7 @@ export default function () {
                     {recruiterActivePage === "recruiter/settings" && <Settings/>}
                     {recruiterActivePage === "recruiter/profile" && <RecruiterProfile/>}
                     {recruiterActivePage === "recruiter/company" && <RecruiterCompanies/>}
+                    {recruiterActivePage === "/recruiter/candidate/profile" && <CandidateProfile/>}
             </main>
         </div>
     </div>

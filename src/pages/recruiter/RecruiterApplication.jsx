@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { useApplication } from "../../hooks/Hook";
+import { useApplication, useHome, useTitle } from "../../hooks/Hook";
 import {
   Search,
   SlidersHorizontal,
@@ -55,6 +55,64 @@ const STATUS_OPTIONS = [
   { value: "withdrawn", label: "Withdrawn" },
   { value: "closed", label: "Closed" },
 ];
+
+
+const PIPELINE_ORDER = [
+  "applied",
+  "screening",
+  "shortlisted",
+  "interview_scheduled",
+  "interview_completed",
+  "selected",
+];
+
+const RECRUITER_TERMINAL_STATUSES = new Set([
+  "selected",
+  "rejected",
+  "withdrawn",
+  "closed",
+]);
+
+// Recruiters cannot assign withdrawn.
+// They can move forward in the hiring pipeline or reject.
+const getRecruiterStatusOptions = (currentStatus) => {
+  const currentIndex = PIPELINE_ORDER.indexOf(currentStatus);
+
+  // Keep the current status visible for terminal applications,
+  // but do not offer any other status.
+  if (RECRUITER_TERMINAL_STATUSES.has(currentStatus)) {
+    return STATUS_OPTIONS.filter(
+      (option) => option.value === currentStatus
+    );
+  }
+
+  // Unknown statuses: display the current value only.
+  if (currentIndex === -1) {
+    return STATUS_OPTIONS.filter(
+      (option) => option.value === currentStatus
+    );
+  }
+
+  const allowedStatuses = new Set([
+    ...PIPELINE_ORDER.slice(currentIndex),
+    "rejected",
+    "closed",
+  ]);
+
+  return STATUS_OPTIONS.filter(
+    (option) =>
+      option.value !== "withdrawn" &&
+      allowedStatuses.has(option.value)
+  );
+};
+
+
+const TERMINAL_STATUSES = new Set([
+  "selected",
+  "rejected",
+  "withdrawn",
+  "closed",
+]);
 
 const STATUS_META = {
   applied: {
@@ -403,6 +461,9 @@ function ApplicationDrawer({
   onNotesSave,
   busyStatus,
   busyNotes,
+  setRecruiterActivePage,
+  setSelectedCandidate,
+  setTitle
 }) {
   const application = useMemo(
     () => normalizeApplication(rawApplication),
@@ -511,7 +572,8 @@ function ApplicationDrawer({
               </DetailField>
             </div>
 
-            {application.candidatePortfolio && (
+            <div className="flex justify-between">
+              {application.candidatePortfolio && (
               <a
                 href={application.candidatePortfolio}
                 target="_blank"
@@ -522,6 +584,31 @@ function ApplicationDrawer({
                 <ExternalLink size={15} />
               </a>
             )}
+            <button
+  type="button"
+  onClick={() => {
+    const candidate =
+      rawApplication?.candidate
+      // rawApplication?.candidateId;
+
+    // console.log("Raw application:", rawApplication);
+    console.log("Candidate data:", candidate);
+
+    if (!candidate || typeof candidate !== "object") {
+      console.error("Candidate is missing or not populated.");
+      return;
+    }
+
+    setSelectedCandidate(candidate);
+    setRecruiterActivePage("/recruiter/candidate/profile");
+    setTitle("Candidate");
+  }}
+  className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"
+>
+  <Eye size={16} />
+  Candidate Profile
+</button>
+            </div>
           </section>
 
           <section>
@@ -544,17 +631,20 @@ function ApplicationDrawer({
             <select
               id="application-status"
               value={application.status}
-              disabled={busyStatus}
+              disabled={
+  busyStatus ||
+  RECRUITER_TERMINAL_STATUSES.has(application.status)
+}
               onChange={(event) =>
                 onStatusChange(application._id, event.target.value)
               }
               className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-medium text-slate-800 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100 disabled:opacity-60"
             >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
+              {getRecruiterStatusOptions(application.status).map((option) => (
+  <option key={option.value} value={option.value}>
+    {option.label}
+  </option>
+))}
             </select>
 
             <div className="mt-3 flex flex-wrap gap-2">
@@ -799,7 +889,11 @@ export default function RecruiterApplication() {
     handleGetApplicationById,
     handleUpdateApplicationStatus,
     handleUpdateRecruiterNotes,
+    setSelectedCandidate
   } = useApplication();
+  const {setTitle} = useTitle();
+
+  const {setRecruiterActivePage} = useHome();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -891,6 +985,8 @@ export default function RecruiterApplication() {
   useEffect(() => {
     fetchApplications();
   }, [fetchApplications]);
+  
+  console.log(applications);
 
   const totalItems =
     myApplicationPagination?.total ??
@@ -969,6 +1065,13 @@ export default function RecruiterApplication() {
 
     try {
       const result = await handleGetApplicationById({ applicationId });
+
+      console.log("Application details response:", result);
+console.log(
+  "Message to recruiter:",
+  result?.data?.messageToRecruiter,
+  result?.data?.application?.messageToRecruiter
+);
       const detail = getApplicationFromResponse(result);
 
       if (!detail || typeof detail !== "object" || !detail._id) {
@@ -982,49 +1085,78 @@ export default function RecruiterApplication() {
     }
   };
 
-  const updateStatus = async (applicationId, status) => {
+  
+const updateStatus = async (applicationId, status) => {
   const current = items.find(
     (item) => item._id === applicationId
   );
 
   if (!current || current.status === status) return;
 
+  // Prevent changes to terminal application statuses.
   if (TERMINAL_STATUSES.has(current.status)) {
     notify(
-      `Applications with status "${STATUS_META[current.status]?.label || current.status}" cannot be changed.`
+      `Applications with status "${
+        STATUS_META[current.status]?.label || current.status
+      }" cannot be changed.`
     );
     return;
   }
 
-  // Keep the rest of your existing updateStatus function here.
+  // Validate the requested status before calling the API.
+  const isValidStatus = getRecruiterStatusOptions(
+  current.status
+).some((option) => option.value === status);
 
-    setBusyStatus(true);
-    setError("");
+if (!isValidStatus || status === current.status) {
+  notify("This status transition is not allowed.");
+  return;
+}
 
-    try {
-      await handleUpdateApplicationStatus({
-        applicationId,
-        status,
-      });
+  if (!isValidStatus) {
+    notify("Please select a valid application status.");
+    return;
+  }
 
-      setSelectedApplication((previous) =>
-        previous?._id === applicationId
-          ? { ...previous, status }
-          : previous
-      );
+  if (typeof handleUpdateApplicationStatus !== "function") {
+    setError("Application status handler is missing from ApplicationContext.");
+    return;
+  }
 
-      notify(
-        `Status updated to ${STATUS_META[status]?.label || status}.`
-      );
+  setBusyStatus(true);
+  setError("");
 
-      await fetchApplications({ silent: true });
-    } catch (err) {
-      setError(err?.message || "Unable to update application status.");
-      notify("Status update failed.");
-    } finally {
-      setBusyStatus(false);
-    }
-  };
+  try {
+    await handleUpdateApplicationStatus({
+      applicationId,
+      status,
+    });
+
+    // Update the open drawer immediately.
+    setSelectedApplication((previous) =>
+      previous?._id === applicationId
+        ? { ...previous, status }
+        : previous
+    );
+
+    notify(
+      `Status updated to ${
+        STATUS_META[status]?.label || status
+      }.`
+    );
+
+    // Reload the current page from the API.
+    await fetchApplications({ silent: true });
+  } catch (err) {
+    setError(
+      err?.message || "Unable to update application status."
+    );
+    notify("Status update failed.");
+  } finally {
+    setBusyStatus(false);
+  }
+};
+
 
   const saveNotes = async (applicationId, recruiterNotes) => {
     if (typeof handleUpdateRecruiterNotes !== "function") {
@@ -1664,27 +1796,29 @@ export default function RecruiterApplication() {
                             <div className="flex flex-col items-start gap-2">
                               <StatusBadge status={item.status} />
 
-                              <select
-                                value={item.status}
-                                disabled={busyStatus}
-                                onChange={(event) =>
-                                  updateStatus(
-                                    item._id,
-                                    event.target.value
-                                  )
-                                }
-                                aria-label={`Update status for ${item.candidateName}`}
-                                className="max-w-[190px] cursor-pointer rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium outline-none focus:border-violet-500 disabled:opacity-50"
-                              >
-                                {STATUS_OPTIONS.map((option) => (
-                                  <option
-                                    key={option.value}
-                                    value={option.value}
-                                  >
-                                    {option.label}
-                                  </option>
-                                ))}
-                              </select>
+                              
+<select
+  value={item.status}
+  disabled={
+    busyStatus ||
+    RECRUITER_TERMINAL_STATUSES.has(item.status)
+  }
+  onChange={(event) =>
+    updateStatus(item._id, event.target.value)
+  }
+  aria-label={`Update status for ${item.candidateName}`}
+  className="max-w-[190px] cursor-pointer rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium outline-none focus:border-violet-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:opacity-70"
+>
+  {getRecruiterStatusOptions(item.status).map((option) => (
+    <option key={option.value} disabled={
+  busyStatus ||
+  RECRUITER_TERMINAL_STATUSES.has(item.status)
+} value={option.value}>
+      {option.label}
+    </option>
+  ))}
+</select>
+
                             </div>
                           </td>
 
@@ -1958,6 +2092,9 @@ export default function RecruiterApplication() {
 
       {selectedApplication && (
         <ApplicationDrawer
+        setRecruiterActivePage={setRecruiterActivePage}
+        setSelectedCandidate={setSelectedCandidate}
+        setTitle={setTitle}
           key={selectedApplication._id}
           application={selectedApplication}
           onClose={() => setSelectedApplication(null)}

@@ -8,71 +8,75 @@ const CompanyProvider = ({ children }) => {
   const [company, setCompany] = useState(null);
 
   const handleCreateCompany = useCallback(async ({ details, logo }) => {
-    try {
-      if (!details) {
-        throw new Error("Company details are required.");
-      }
-
-      const {
-        name,
-        description,
-        industry,
-        companySize,
-        foundedYear,
-        headquarters,
-        socialLinks,
-      } = details;
-
-      if (!name?.trim()) {
-        throw new Error("Company name is required.");
-      }
-
-      const formData = new FormData();
-
-      formData.append("name", name.trim());
-      formData.append("description", description ?? "");
-      formData.append("industry", industry ?? "");
-
-      if (companySize) {
-        formData.append("companySize", companySize);
-      }
-
-      if (foundedYear !== undefined && foundedYear !== "") {
-        formData.append("foundedYear", foundedYear);
-      }
-
-      if (headquarters) {
-        formData.append("headquarters", JSON.stringify(headquarters));
-      }
-
-      if (socialLinks) {
-        formData.append("socialLinks", JSON.stringify(socialLinks));
-      }
-
-      if (logo) {
-        formData.append("logo", logo);
-      }
-
-      const response = await fetch(`${API_URL}/companies`, {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to create company.");
-      }
-
-      setCompany(data.data);
-
-      return data.data;
-    } catch (error) {
-      console.error("Create company error:", error);
-      throw error;
+  try {
+    if (!details) {
+      throw new Error("Company details are required.");
     }
-  }, [API_URL]);
+
+    const {
+      name,
+      companyEmail,
+      companyPhone,
+      description,
+      industry,
+      companySize,
+      foundedYear,
+      headquarters,
+      socialLinks,
+    } = details;
+
+    if (!name?.trim()) {
+      throw new Error("Company name is required.");
+    }
+
+    const formData = new FormData();
+
+    formData.append("name", name.trim());
+    formData.append("companyEmail", companyEmail?.trim() ?? "");
+    formData.append("companyPhone", companyPhone?.trim() ?? "");
+    formData.append("description", description ?? "");
+    formData.append("industry", industry ?? "");
+
+    if (companySize) {
+      formData.append("companySize", companySize);
+    }
+
+    if (foundedYear !== undefined && foundedYear !== "") {
+      formData.append("foundedYear", foundedYear);
+    }
+
+    if (headquarters) {
+      formData.append("headquarters", JSON.stringify(headquarters));
+    }
+
+    if (socialLinks) {
+      formData.append("socialLinks", JSON.stringify(socialLinks));
+    }
+
+    if (logo) {
+      formData.append("logo", logo);
+    }
+
+    const response = await fetch(`${API_URL}/companies`, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to create company.");
+    }
+
+    setCompany(data.data);
+
+    return data.data;
+  } catch (error) {
+    console.error("Create company error:", error);
+    throw error;
+  }
+}, [API_URL]);
 
   const handleGetMyCompany = useCallback(async () => {
     try {

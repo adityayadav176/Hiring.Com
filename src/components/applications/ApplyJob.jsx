@@ -197,6 +197,7 @@ function ApplyJob({job, resumes, onClose, onSuccess}) {
   }
 
 
+
 const handleApply = async () => {
   setError("");
 
@@ -217,7 +218,7 @@ const handleApply = async () => {
     const application = await handleApplyForAJob({
       jobId: job._id,
       resumeId: selectedResumeId,
-      MessageToRecruiter: message,
+      messageToRecruiter: message.trim(),
     });
 
     setSuccess(true);
@@ -231,6 +232,7 @@ const handleApply = async () => {
     setLoading(false);
   }
 };
+
 
 
   const steps = [

@@ -15,6 +15,7 @@ const ApplicationProvider = ({ children }) => {
   const [deletedApplications, setDeletedApplications] = useState([]);
   const [myApplicationPagination, setMyApplicationPagination] =
     useState(null);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
 
   const [jobApplications, setJobApplications] = useState([]);
   const [jobApplicationPagination, setJobApplicationPagination] =
@@ -448,6 +449,8 @@ const handleGetRecruiterApplications = useCallback(async (filters = {}) => {
         handleUpdateApplicationStatus,
         handleWithdrawApplication,
         handleGetRecruiterApplications,
+        selectedCandidate,
+        setSelectedCandidate
       }}
     >
       {children}

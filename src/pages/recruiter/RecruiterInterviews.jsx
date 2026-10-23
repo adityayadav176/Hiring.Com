@@ -89,16 +89,74 @@ function getName(value, fallback = "Unknown") {
   );
 }
 
-function normalizeInterview(raw = {}) {
-  const candidate = raw.candidateId || raw.candidate || raw.applicant || {};
-  const job = raw.jobId || raw.job || {};
-  const company = raw.companyId || raw.company || {};
-  const application = raw.applicationId || raw.application || {};
+function getAvatarUrl(value) {
+  if (!value) return "";
+  if (typeof value === "string") return value;
 
-  const scheduledAt = raw.scheduledAt || raw.date || null;
+  return value.url || value.secure_url || value.publicUrl || "";
+}
+
+function unwrapInterviewList(value) {
+  if (Array.isArray(value)) return value;
+  if (!value || typeof value !== "object") return [];
+
+  if (Array.isArray(value.interviews)) return value.interviews;
+  if (Array.isArray(value.data)) return unwrapInterviewList(value.data);
+  if (value.data && typeof value.data === "object") {
+    return unwrapInterviewList(value.data);
+  }
+  if (value.interview) return [value.interview];
+
+  return [];
+}
+
+function normalizeInterview(raw = {}) {
+  const application =
+    raw.applicationId && typeof raw.applicationId === "object"
+      ? raw.applicationId
+      : raw.application || {};
+
+  const candidate =
+    raw.candidate && typeof raw.candidate === "object"
+      ? raw.candidate
+      : raw.candidateId && typeof raw.candidateId === "object"
+        ? raw.candidateId
+        : application.candidate && typeof application.candidate === "object"
+          ? application.candidate
+          : application.candidateId &&
+              typeof application.candidateId === "object"
+            ? application.candidateId
+            : raw.applicant || {};
+
+  const recruiter =
+    raw.recruiter && typeof raw.recruiter === "object"
+      ? raw.recruiter
+      : raw.recruiterId && typeof raw.recruiterId === "object"
+        ? raw.recruiterId
+        : {};
+
+  const job =
+    raw.job && typeof raw.job === "object"
+      ? raw.job
+      : raw.jobId && typeof raw.jobId === "object"
+        ? raw.jobId
+        : application.job && typeof application.job === "object"
+          ? application.job
+          : application.jobId && typeof application.jobId === "object"
+            ? application.jobId
+            : {};
+
+  const company =
+    raw.company && typeof raw.company === "object"
+      ? raw.company
+      : raw.companyId && typeof raw.companyId === "object"
+        ? raw.companyId
+        : {};
+
+  const scheduledAt = raw.scheduledAt || null;
+  const timezone = raw.timezone || "Asia/Kolkata";
   const dateObj = scheduledAt ? new Date(scheduledAt) : null;
   const validDate = dateObj && !Number.isNaN(dateObj.getTime());
-  const timezone = raw.timezone || "Asia/Kolkata";
 
   let formattedDate = "";
   let formattedTime = "";
@@ -124,30 +182,71 @@ function normalizeInterview(raw = {}) {
     }
   }
 
+  const candidateName =
+    candidate.name ||
+    candidate.fullName ||
+    candidate.username ||
+    candidate.email ||
+    raw.candidateName ||
+    "Candidate";
+
+  const recruiterName =
+    recruiter.name ||
+    recruiter.fullName ||
+    recruiter.email ||
+    raw.recruiterName ||
+    "Recruiter";
+
+  const candidateAvatar = getAvatarUrl(candidate.avatar);
+  const recruiterAvatar = getAvatarUrl(recruiter.avatar);
+
+  const rawDate =
+    typeof raw.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.date)
+      ? raw.date
+      : "";
+
+  const rawTime =
+    typeof raw.time === "string" && /^\d{2}:\d{2}$/.test(raw.time)
+      ? raw.time
+      : "";
+
   return {
     ...raw,
     id: getId(raw),
-    candidateId: getId(candidate) || getId(raw.candidateId),
-    candidate: getName(candidate, raw.name || "Unknown candidate"),
-    email: candidate?.email || raw.candidateEmail || "",
-    jobId: getId(job) || getId(raw.jobId),
+    candidate,
+    recruiter,
+    job,
+    company,
+    application,
+    candidateId:
+      getId(candidate) ||
+      getId(application.candidateId) ||
+      getId(raw.candidateId),
+    candidateName,
+    candidateEmail: candidate.email || raw.candidateEmail || "",
+    candidateAvatar,
+    recruiterId:
+      getId(recruiter) ||
+      getId(raw.recruiterId),
+    recruiterName,
+    recruiterEmail: recruiter.email || raw.recruiterEmail || "",
+    recruiterAvatar,
+    interviewer: recruiterName,
+    jobId: getId(job) || getId(application.jobId) || getId(raw.jobId),
     jobTitle: getName(job, raw.jobTitle || "Untitled job"),
-    companyId: getId(company) || getId(raw.companyId),
-    applicationId: getId(application) || getId(raw.applicationId),
+    companyId: getId(company) || getId(application.companyId),
+    companyName: getName(company, "Company"),
+    applicationId:
+      getId(application) ||
+      getId(raw.applicationId) ||
+      getId(raw.application),
     type: raw.interviewType || raw.type || "Online",
     status: raw.status || "Scheduled",
-    date:
-      typeof raw.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.date)
-        ? raw.date
-        : formattedDate || "",
-    time:
-      typeof raw.time === "string" && /^\d{2}:\d{2}$/.test(raw.time)
-        ? raw.time
-        : formattedTime || "",
+    date: rawDate || formattedDate,
+    time: rawTime || formattedTime,
     scheduledAt,
     duration: Number(raw.duration || 60),
     timezone,
-    interviewer: getName(raw.recruiterId || raw.recruiter, "Recruiter"),
     roomId: raw.interviewRoomId || raw.roomId || "",
     notes: raw.description || raw.notes || "",
     round: raw.round || 1,
@@ -172,6 +271,7 @@ function formatTime(time) {
   if (!time) return "Time not set";
 
   const [hours, minutes] = time.split(":").map(Number);
+
   if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
     return "Time not set";
   }
@@ -309,11 +409,13 @@ function getApplicationId(application) {
 }
 
 function getApplicationCandidate(application) {
-  return application?.candidateId || application?.candidate || {};
+  const candidate = application?.candidate || application?.candidateId;
+  return candidate && typeof candidate === "object" ? candidate : {};
 }
 
 function getApplicationJob(application) {
-  return application?.jobId || application?.job || {};
+  const job = application?.job || application?.jobId;
+  return job && typeof job === "object" ? job : {};
 }
 
 function getStatusActions(status) {
@@ -325,6 +427,37 @@ function getStatusActions(status) {
   }
 
   return [];
+}
+
+function ProfileIdentity({ avatar, name, email, size = "h-12 w-12" }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      {avatar ? (
+        <img
+          src={avatar}
+          alt={name || "Profile"}
+          className={`${size} shrink-0 rounded-2xl border border-slate-200 object-cover`}
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      ) : (
+        <div
+          className={`${size} flex shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-sm font-bold text-violet-700`}
+        >
+          {initials(name || email || "User")}
+        </div>
+      )}
+      <div className="min-w-0">
+        <p className="truncate text-sm font-bold text-slate-900">
+          {name || email || "Unknown"}
+        </p>
+        {email && (
+          <p className="mt-1 break-all text-xs text-slate-500">{email}</p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function RecruiterInterviews() {
@@ -348,24 +481,24 @@ export default function RecruiterInterviews() {
   const [applicationSearch, setApplicationSearch] = useState("");
   const [applicationPickerOpen, setApplicationPickerOpen] = useState(false);
   const [loadingApplications, setLoadingApplications] = useState(false);
-
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All interviews");
   const [typeFilter, setTypeFilter] = useState("All types");
   const [view, setView] = useState("grid");
   const [sortBy, setSortBy] = useState("date");
-
   const [modal, setModal] = useState("");
   const [selected, setSelected] = useState(null);
   const [editingId, setEditingId] = useState(null);
-
   const [notice, setNotice] = useState("");
   const [formError, setFormError] = useState("");
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState("");
 
-  const applicationList = Array.isArray(applications) ? applications : [];
+  const applicationList = useMemo(
+    () => unwrapInterviewList(applications),
+    [applications]
+  );
 
   const refresh = useCallback(async () => {
     const results = await Promise.allSettled([
@@ -381,8 +514,7 @@ export default function RecruiterInterviews() {
 
     if (failed) {
       setNotice(
-        failed.reason?.message ||
-          "Some interview data could not be loaded."
+        failed.reason?.message || "Some interview data could not be loaded."
       );
     }
   }, [handleGetRecruiterInterviews, handleGetRecruiterInterviewStats]);
@@ -392,13 +524,10 @@ export default function RecruiterInterviews() {
   }, [refresh]);
 
   const sourceInterviews = useMemo(() => {
-    // An empty recruiterInterviews array is still authoritative.
-    const source = Array.isArray(recruiterInterviews)
-      ? recruiterInterviews
-      : Array.isArray(contextInterviews)
-        ? contextInterviews
-        : [];
-
+    const recruiterSource = unwrapInterviewList(recruiterInterviews);
+    const contextSource = unwrapInterviewList(contextInterviews);
+    const source =
+      recruiterSource.length > 0 ? recruiterSource : contextSource;
     const unique = new Map();
 
     source.forEach((item) => {
@@ -444,9 +573,12 @@ export default function RecruiterInterviews() {
       const matchesSearch =
         !query ||
         [
-          item.candidate,
-          item.email,
+          item.candidateName,
+          item.candidateEmail,
+          item.recruiterName,
+          item.recruiterEmail,
           item.jobTitle,
+          item.companyName,
           item.id,
           item.interviewer,
           item.roomId,
@@ -458,14 +590,15 @@ export default function RecruiterInterviews() {
       const matchesStatus =
         activeFilter === "All interviews" || item.status === activeFilter;
 
-      const matchesType = typeFilter === "All types" || item.type === typeFilter;
+      const matchesType =
+        typeFilter === "All types" || item.type === typeFilter;
 
       return matchesSearch && matchesStatus && matchesType;
     });
 
     result = [...result].sort((a, b) => {
       if (sortBy === "candidate") {
-        return a.candidate.localeCompare(b.candidate);
+        return a.candidateName.localeCompare(b.candidateName);
       }
 
       if (sortBy === "recent") {
@@ -567,7 +700,6 @@ export default function RecruiterInterviews() {
 
     setEditingId(normalized.id);
     setSelected(normalized);
-
     setForm({
       ...EMPTY_FORM,
       applicationId: normalized.applicationId,
@@ -580,7 +712,6 @@ export default function RecruiterInterviews() {
       location: normalized.location || "",
       description: normalized.notes || "",
     });
-
     setFormError("");
     setApplicationPickerOpen(false);
     setModal("create");
@@ -644,8 +775,6 @@ export default function RecruiterInterviews() {
 
     try {
       if (editingId) {
-        // The current reschedule handler persists the new date/time.
-        // Do not imply that unrelated form fields are being updated.
         await handleRescheduleInterview({
           interviewId: editingId,
           scheduledAt,
@@ -667,8 +796,6 @@ export default function RecruiterInterviews() {
           description: form.description.trim(),
         };
 
-        // If your context handler accepts the payload directly,
-        // replace this with: await handleScheduleInterview(payload);
         await handleScheduleInterview({ details: payload });
 
         setNotice("Interview scheduled successfully.");
@@ -677,9 +804,7 @@ export default function RecruiterInterviews() {
       setModal("");
       await refresh();
     } catch (err) {
-      setFormError(
-        err?.message || "The interview could not be saved."
-      );
+      setFormError(err?.message || "The interview could not be saved.");
     } finally {
       setSubmitting(false);
     }
@@ -699,7 +824,12 @@ export default function RecruiterInterviews() {
       });
 
       if (result) {
-        const record = result?.data?.interview ?? result?.data ?? result;
+        const record = unwrapInterviewList(result)[0] ||
+          result?.data?.interview ||
+          result?.data ||
+          result?.interview ||
+          result;
+
         setSelected(normalizeInterview(record));
       }
     } catch (err) {
@@ -734,7 +864,9 @@ export default function RecruiterInterviews() {
       ["Completed", "No Show"].includes(status) &&
       !ACTIVE_STATUSES.includes(item.status)
     ) {
-      setNotice(`An interview marked ${item.status} cannot be updated to ${status}.`);
+      setNotice(
+        `An interview marked ${item.status} cannot be updated to ${status}.`
+      );
       return;
     }
 
@@ -763,23 +895,33 @@ export default function RecruiterInterviews() {
       setNotice(`Interview marked ${status.toLowerCase()}.`);
       await refresh();
 
-      // Reload the selected record so the modal reflects persisted backend data.
       if (modal === "details") {
         try {
           const result = await handleGetRecruiterInterviewById({
             interviewId: id,
           });
+
           if (result) {
-            const record = result?.data?.interview ?? result?.data ?? result;
+            const record = unwrapInterviewList(result)[0] ||
+              result?.data?.interview ||
+              result?.data ||
+              result?.interview ||
+              result;
+
             setSelected(normalizeInterview(record));
           }
         } catch {
-          // The successful status update should not be reported as failed
-          // merely because this optional follow-up read failed.
+          setSelected((current) =>
+            current && getId(current) === id
+              ? { ...current, status }
+              : current
+          );
         }
       }
     } catch (err) {
-      setNotice(err?.message || `Could not mark interview ${status.toLowerCase()}.`);
+      setNotice(
+        err?.message || `Could not mark interview ${status.toLowerCase()}.`
+      );
     } finally {
       setStatusUpdatingId("");
     }
@@ -809,9 +951,20 @@ export default function RecruiterInterviews() {
       <article className="rounded-2xl border border-slate-200/80 bg-white p-5 transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-xl hover:shadow-slate-200/60 sm:p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3.5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-sm font-bold text-violet-700">
-              {initials(item.candidate)}
-            </div>
+            {item.candidateAvatar ? (
+              <img
+                src={item.candidateAvatar}
+                alt={item.candidateName || "Candidate"}
+                className="h-12 w-12 shrink-0 rounded-2xl border border-slate-200 object-cover"
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                }}
+              />
+            ) : (
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-sm font-bold text-violet-700">
+                {initials(item.candidateName || item.candidateEmail)}
+              </div>
+            )}
 
             <div className="min-w-0">
               <button
@@ -819,9 +972,12 @@ export default function RecruiterInterviews() {
                 onClick={() => openDetails(item)}
                 className="truncate text-left text-base font-bold text-slate-900 hover:text-violet-700"
               >
-                {item.candidate}
+                {item.candidateName}
               </button>
               <p className="mt-1 truncate text-xs text-slate-500">
+                {item.candidateEmail || "Candidate email unavailable"}
+              </p>
+              <p className="mt-1 truncate text-xs font-medium text-violet-700">
                 {item.jobTitle}
               </p>
               <p className="mt-1 break-all text-[11px] text-slate-400">
@@ -962,10 +1118,15 @@ export default function RecruiterInterviews() {
               <UserRound size={16} />
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-slate-500">Interviewer</p>
+              <p className="text-xs text-slate-500">Recruiter</p>
               <p className="mt-0.5 truncate font-semibold text-slate-800">
-                {item.interviewer}
+                {item.recruiterName}
               </p>
+              {item.recruiterEmail && (
+                <p className="mt-0.5 truncate text-xs text-slate-500">
+                  {item.recruiterEmail}
+                </p>
+              )}
             </div>
           </div>
 
@@ -1168,7 +1329,7 @@ export default function RecruiterInterviews() {
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search candidate, job, interviewer or room ID..."
+                  placeholder="Search candidate, job, recruiter or room ID..."
                   className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-4 text-sm outline-none focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
                 />
               </div>
@@ -1442,10 +1603,7 @@ export default function RecruiterInterviews() {
                                   candidate,
                                   candidate?.email || "Candidate"
                                 );
-                                const avatarUrl =
-                                  typeof candidate?.avatar === "string"
-                                    ? candidate.avatar
-                                    : candidate?.avatar?.url;
+                                const avatarUrl = getAvatarUrl(candidate?.avatar);
 
                                 return (
                                   <button
@@ -1457,7 +1615,7 @@ export default function RecruiterInterviews() {
                                     {avatarUrl ? (
                                       <img
                                         src={avatarUrl}
-                                        alt=""
+                                        alt={candidateName}
                                         className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 object-cover"
                                       />
                                     ) : (
@@ -1685,25 +1843,30 @@ export default function RecruiterInterviews() {
             onClose={() => setModal("")}
           >
             <div className="max-h-[75vh] space-y-5 overflow-y-auto px-5 py-6 sm:px-7">
-              <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-100 text-lg font-bold text-violet-700">
-                  {initials(selected.candidate)}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-lg font-bold text-slate-900">
-                    {selected.candidate}
-                  </h3>
-                  <p className="mt-1 break-all text-sm text-slate-500">
-                    {selected.email || "No email available"}
-                  </p>
-                  <span
-                    className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      STATUS_STYLES[selected.status] || STATUS_STYLES.Scheduled
-                    }`}
-                  >
-                    {selected.status}
-                  </span>
-                </div>
+              <div className="rounded-2xl border border-slate-200 p-4">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Candidate
+                </p>
+                <ProfileIdentity
+                  avatar={selected.candidateAvatar}
+                  name={selected.candidateName}
+                  email={selected.candidateEmail}
+                />
+                <p className="mt-3 break-all text-xs text-slate-500">
+                  Candidate ID: {selected.candidateId || "Not available"}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 p-4">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Recruiter
+                </p>
+                <ProfileIdentity
+                  avatar={selected.recruiterAvatar}
+                  name={selected.recruiterName}
+                  email={selected.recruiterEmail}
+                  size="h-10 w-10"
+                />
               </div>
 
               <div className="rounded-2xl border border-slate-200 p-4">
@@ -1769,8 +1932,13 @@ export default function RecruiterInterviews() {
                   Interviewer
                 </p>
                 <p className="mt-2 text-sm font-semibold text-slate-800">
-                  {selected.interviewer || "Not assigned"}
+                  {selected.recruiterName || "Not assigned"}
                 </p>
+                {selected.recruiterEmail && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    {selected.recruiterEmail}
+                  </p>
+                )}
               </div>
 
               {selected.roomId && (
