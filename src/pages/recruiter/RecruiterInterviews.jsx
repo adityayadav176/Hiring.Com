@@ -372,7 +372,7 @@ function MetricCard({ icon: Icon, label, value, caption, tone }) {
 function Modal({ title, subtitle, onClose, children, wide = false }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/50 p-3 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 min-h-full z-50 flex items-center justify-center overflow-y-auto bg-slate-950/50 p-3 backdrop-blur-sm sm:p-6"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}

@@ -1,4 +1,10 @@
-import { createContext, useState, useEffect } from "react";
+import {
+  createContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 
 export const AuthContext = createContext();
@@ -10,77 +16,142 @@ function AuthProvider({children}) {
     const [authLoading, setAuthLoading] = useState(true);
     const navigate = useNavigate();
 
-const getUser = async () => {
+    const refreshPromiseRef = useRef(null);
+const authCheckPromiseRef = useRef(null);
+const mountedRef = useRef(true);
+
+const handleRefreshAccessToken = useCallback(async () => {
+  // Share one refresh request between concurrent API calls.
+  if (refreshPromiseRef.current) {
+    return refreshPromiseRef.current;
+  }
+
+  refreshPromiseRef.current = (async () => {
     try {
-        let response = await fetch(
-            "http://localhost:9000/api/v1/auth/fetchUser",
-            {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-            }
+      const response = await fetch(
+        "http://localhost:9000/api/v1/auth/refreshAccessToken",
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        console.error(
+          "Refresh token failed:",
+          response.status
+        );
+        return false;
+      }
+
+      console.log("Access token refreshed successfully");
+      return true;
+    } catch (error) {
+      console.error("Refresh request failed:", error);
+      return false;
+    } finally {
+      refreshPromiseRef.current = null;
+    }
+  })();
+
+  return refreshPromiseRef.current;
+}, []);
+
+const getUser = useCallback(async () => {
+  // Prevent duplicate simultaneous authentication checks.
+  if (authCheckPromiseRef.current) {
+    return authCheckPromiseRef.current;
+  }
+
+  authCheckPromiseRef.current = (async () => {
+    try {
+      const fetchCurrentUser = () =>
+        fetch(
+          "http://localhost:9000/api/v1/auth/fetchUser",
+          {
+            method: "GET",
+            credentials: "include",
+          }
         );
 
-        let data = await response.json();
+      let response = await fetchCurrentUser();
 
-        if (response.status === 401) {
-            console.log("Access token expired. Trying refresh...");
+      if (response.status === 401) {
+        console.log("Access token expired. Trying refresh...");
 
-            const refreshed = await handleRefreshAccessToken();
+        const refreshed = await handleRefreshAccessToken();
 
-            if (!refreshed) {
-                throw new Error(
-                    "Session expired. Please login again."
-                );
-            }
-
-            response = await fetch(
-                "http://localhost:9000/api/v1/auth/fetchUser",
-                {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    credentials: "include",
-                }
-            );
-
-            data = await response.json();
+        if (!refreshed) {
+          throw new Error("SESSION_EXPIRED");
         }
 
-        
-        if (!response.ok) {
-            throw new Error(
-                data.message || "Failed to fetch User"
-            );
+        response = await fetchCurrentUser();
+      }
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          throw new Error("SESSION_EXPIRED");
         }
 
-        console.log("User fetched successfully:", data);
+        throw new Error(
+          data.message || `Failed to fetch user (${response.status})`
+        );
+      }
 
-        const account = data.data;
+      const account = data?.data;
 
-        if (account?.role === "recruiter") {
-            setRecruiter(account);
-            setUser(null);
+      if (!account) {
+        throw new Error("User data was not returned by the server");
+      }
 
-            console.log("Recruiter data set successfully");
-        } else {
-            setUser(account);
-            setRecruiter(null);
+      if (!mountedRef.current) return;
 
-            console.log("User data set successfully");
-        }
-    } catch (error) {
-        console.error("getUser error:", error);
+      // Clear stale state from other account types.
+      setAdmin(null);
 
+      if (account.role === "admin") {
+        setAdmin(account);
         setUser(null);
         setRecruiter(null);
+      } else if (account.role === "recruiter") {
+        setRecruiter(account);
+        setUser(null);
+      } else {
+        setUser(account);
+        setRecruiter(null);
+      }
 
-        window.location.href = "/login";
+      return account;
+    } catch (error) {
+      console.error("getUser error:", error);
+
+      if (mountedRef.current) {
+        setUser(null);
+        setRecruiter(null);
+        setAdmin(null);
+
+        // Redirect only for a confirmed authentication failure.
+        if (error.message === "SESSION_EXPIRED") {
+          navigate("/login", { replace: true });
+        }
+      }
+
+      // Network/CORS failures should not automatically redirect.
+      throw error;
+    } finally {
+      if (mountedRef.current) {
+        setAuthLoading(false);
+      }
+
+      authCheckPromiseRef.current = null;
     }
-};
+  })();
+
+  return authCheckPromiseRef.current;
+}, [handleRefreshAccessToken, navigate]);
+
 
 const handleLogin = async (details) => {
     try {
@@ -727,40 +798,9 @@ const handleVerify2fa = async ({ token }) => {
     }
 };
 
-    const handleRefreshAccessToken = async () => {
-    try {
-        const response = await fetch(
-            "http://localhost:9000/api/v1/auth/refreshAccessToken",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-            }
-        );
+ 
 
-        const data = await response.json();
 
-        if (!response.ok) {
-            console.error(
-                "Refresh token failed:",
-                data?.message
-            );
-
-            return false;
-        }
-
-        console.log("Access token refreshed successfully");
-
-        return true;
-
-    } catch (error) {
-        console.error("Refresh access token error:", error);
-
-        return false;
-    }
-};
     return (
         <AuthContext.Provider value={{user, admin, recruiter, handleGoogleAuth, authLoading, getUser, handleLogin, handleForgetPassword, handleDeleteAccount, handleLogout ,handleSignup, changeName, handlePasswordResetOtp, handleEnable2FA, handleLoginWith2FA, handleVerify2fa, handleEmailVerificationOtp, handleVerifyEmail, handleUpdateAvatar, handleUpdateCoverImage, handleSendDeleteAccountOtp, handleRefreshAccessToken}}>
             {children}

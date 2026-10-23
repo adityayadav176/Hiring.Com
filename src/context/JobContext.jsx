@@ -20,7 +20,7 @@ const JobProvider = ({ children }) => {
         data?.message || fallback;
 
     // Create Job
-    const handleCreateJob = async ({ jobData }) => {
+    const handleCreateJob = useCallback(async ({ jobData }) => {
         try {
             const response = await fetch(`${API_URL}/job`, {
                 method: "POST",
@@ -51,107 +51,126 @@ const JobProvider = ({ children }) => {
             console.error("Create Job Error:", error);
             throw error;
         }
-    };
+    });
 
     // Get All Public Jobs
-    const handleGetAllJobs = async (params = {}) => {
-        const {
-            append = false,
-            page = 1,
-            limit = 20,
-            search = "",
-            location = "",
-            employmentType = [],
-            workSpaceType = [],
-            experienceLevel = [],
-            skills = [],
-            minSalary = "",
-            maxSalary = "",
-            postedWithin = "",
-            sortBy = "relevance",
-        } = params;
+    
+const handleGetAllJobs = useCallback(
+  async (params = {}) => {
+    const {
+      append = false,
+      page = 1,
+      limit = 20,
+      search = "",
+      location = "",
+      category = "",
+      employmentType = [],
+      workSpaceType = [],
+      experienceLevel = "",
+      skills = [],
+      minSalary = "",
+      maxSalary = "",
+      postedWithin = "",
+      sortBy = "relevance",
+      signal,
+    } = params;
 
-        try {
-            const query = new URLSearchParams();
+    try {
+      const query = new URLSearchParams();
 
-            query.set("page", String(page));
-            query.set("limit", String(limit));
+      query.set("page", String(page));
+      query.set("limit", String(limit));
 
-            if (search.trim()) {
-                query.set("search", search.trim());
+      const addFilter = (key, value) => {
+        if (Array.isArray(value)) {
+          value.forEach((item) => {
+            if (item !== "" && item != null) {
+              query.append(key, String(item));
             }
-
-            if (location.trim()) {
-                query.set("location", location.trim());
-            }
-
-            const addFilter = (key, value) => {
-                if (Array.isArray(value)) {
-                    value.forEach((item) => {
-                        if (item !== "" && item != null) {
-                            query.append(key, String(item));
-                        }
-                    });
-                } else if (value !== "" && value != null) {
-                    query.set(key, String(value));
-                }
-            };
-
-            addFilter("employmentType", employmentType);
-            addFilter("workSpaceType", workSpaceType);
-            addFilter("experienceLevel", experienceLevel);
-            addFilter("skills", skills);
-            addFilter("minSalary", minSalary);
-            addFilter("maxSalary", maxSalary);
-            addFilter("postedWithin", postedWithin);
-            addFilter("sortBy", sortBy);
-
-            const response = await fetch(
-                `${API_URL}/job?${query.toString()}`,
-                {
-                    method: "GET",
-                    credentials: "include",
-                }
-            );
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    getErrorMessage(
-                        data,
-                        `Request failed: ${response.status}`
-                    )
-                );
-            }
-
-            const incomingJobs = data?.data?.jobs || [];
-
-            setJobs((previousJobs) => {
-                if (!append) {
-                    return incomingJobs;
-                }
-
-                const existingIds = new Set(
-                    previousJobs.map((item) => item._id)
-                );
-
-                return [
-                    ...previousJobs,
-                    ...incomingJobs.filter(
-                        (item) => !existingIds.has(item._id)
-                    ),
-                ];
-            });
-
-            setJobPagination(data?.data?.pagination || {});
-
-            return data;
-        } catch (error) {
-            console.error("Get All Jobs Error:", error);
-            throw error;
+          });
+          return;
         }
-    };
+
+        if (value !== "" && value != null) {
+          query.set(key, String(value));
+        }
+      };
+
+      // Must match the backend query parameter names.
+      addFilter(
+        "search",
+        typeof search === "string" ? search.trim() : ""
+      );
+
+      addFilter(
+        "location",
+        typeof location === "string" ? location.trim() : ""
+      );
+
+      addFilter("category", category);
+      addFilter("employmentType", employmentType);
+      addFilter("workSpaceType", workSpaceType);
+      addFilter("experienceLevel", experienceLevel);
+      addFilter("skills", skills);
+      addFilter("minSalary", minSalary);
+      addFilter("maxSalary", maxSalary);
+      addFilter("postedWithin", postedWithin);
+      addFilter("sortBy", sortBy);
+
+      const response = await fetch(
+        `${API_URL}/job?${query.toString()}`,
+        {
+          method: "GET",
+          credentials: "include",
+          signal,
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(
+            data,
+            `Request failed: ${response.status}`
+          )
+        );
+      }
+
+      const incomingJobs = Array.isArray(data?.data?.jobs)
+        ? data.data.jobs
+        : [];
+
+      setJobs((previousJobs) => {
+        if (!append) {
+          return incomingJobs;
+        }
+
+        const existingIds = new Set(
+          previousJobs.map((job) => String(job._id))
+        );
+
+        return [
+          ...previousJobs,
+          ...incomingJobs.filter(
+            (job) => !existingIds.has(String(job._id))
+          ),
+        ];
+      });
+
+      setJobPagination(data?.data?.pagination ?? {});
+
+      return data;
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        console.error("Get All Jobs Error:", error);
+      }
+
+      throw error;
+    }
+  },
+  [API_URL]
+);
 
     // Get Recruiter Jobs
 const handleGetRecruiterJobs = useCallback(
@@ -168,7 +187,9 @@ const handleGetRecruiterJobs = useCallback(
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to fetch recruiter jobs");
+        throw new Error(
+          data?.message || "Failed to fetch recruiter jobs"
+        );
       }
 
       setRecruiterJobs(data?.data?.jobs || []);
@@ -180,11 +201,11 @@ const handleGetRecruiterJobs = useCallback(
       throw error;
     }
   },
-  []
+  [API_URL]
 );
 
     // Get Deleted Jobs
-    const handleGetDeletedJobs = async ({ query = "" } = {}) => {
+    const handleGetDeletedJobs = useCallback(async ({ query = "" } = {}) => {
         try {
             const response = await fetch(
                 `${API_URL}/job/deleted${query}`,
@@ -210,7 +231,7 @@ const handleGetRecruiterJobs = useCallback(
             console.error("Get Deleted Jobs Error:", error);
             throw error;
         }
-    };
+    });
 
     // Get Recruiter Job By ID
 const handleGetJobById = useCallback(
@@ -260,7 +281,7 @@ const handleGetJobById = useCallback(
 );
 
     // Get User Job By ID
-    const handleGetUserJobById = async ({ JobId }) => {
+    const handleGetUserJobById = useCallback(async ({ JobId }) => {
         try {
             if (!JobId) {
                 throw new Error("Job ID is required");
@@ -289,10 +310,10 @@ const handleGetJobById = useCallback(
             console.error("Get User Job Error:", error);
             throw error;
         }
-    };
+    });
 
     // Update Job
-    const handleUpdateJob = async ({ JobId, jobData }) => {
+    const handleUpdateJob = useCallback(async ({ JobId, jobData }) => {
         try {
             const response = await fetch(`${API_URL}/job/${JobId}`, {
                 method: "PATCH",
@@ -334,10 +355,10 @@ const handleGetJobById = useCallback(
             console.error("Update Job Error:", error);
             throw error;
         }
-    };
+    });
 
     // Soft Delete Job
-    const handleDeleteJob = async ({ JobId }) => {
+    const handleDeleteJob = useCallback(async ({ JobId }) => {
         try {
             const response = await fetch(
                 `${API_URL}/job/${JobId}/delete`,
@@ -376,10 +397,10 @@ const handleGetJobById = useCallback(
             console.error("Delete Job Error:", error);
             throw error;
         }
-    };
+    });
 
     // Permanently Delete Job
-    const handlePermanentDeleteJob = async ({ JobId }) => {
+    const handlePermanentDeleteJob = useCallback(async ({ JobId }) => {
         try {
             const response = await fetch(
                 `${API_URL}/job/${JobId}/permanent`,
@@ -417,10 +438,10 @@ const handleGetJobById = useCallback(
             console.error("Permanent Delete Job Error:", error);
             throw error;
         }
-    };
+    });
 
     // Change Job Status
-    const handleChangeJobStatus = async ({ JobId, status }) => {
+    const handleChangeJobStatus = useCallback(async ({ JobId, status }) => {
         try {
             const response = await fetch(
                 `${API_URL}/job/${JobId}/status`,
@@ -465,10 +486,10 @@ const handleGetJobById = useCallback(
             console.error("Change Job Status Error:", error);
             throw error;
         }
-    };
+    });
 
     // Restore Job
-    const handleRestoreJob = async ({ JobId }) => {
+    const handleRestoreJob =  useCallback(async ({ JobId }) => {
         try {
             const response = await fetch(
                 `${API_URL}/job/${JobId}/restore`,
@@ -502,7 +523,7 @@ const handleGetJobById = useCallback(
             console.error("Restore Job Error:", error);
             throw error;
         }
-    };
+    });
 
     // Time Ago
     const getTimeAgo = (date) => {

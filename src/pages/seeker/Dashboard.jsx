@@ -1,58 +1,49 @@
-import DashboardLayout from '../../components/layout/DashboardLayout'
-import Sidebar from '../../components/layout/Sidebar'
-import Navbar from '../../components/layout/Navbar'
-import Profile from './Profile'
-import JobLayout from '../../components/jobs/JobLayout'
-import Settings from './Settings'
-import Application from "./Application"
-import { useHome } from '../../hooks/Hook'
-import Overview from './../pubic/Overview';
-import ADashboard from './../admin/ADashboard';
-import InterviewPage from './InterviewPage'
-import ResumePage from './ResumePage';
+import DashboardLayout from "../../components/layout/DashboardLayout";
+import Sidebar from "../../components/layout/Sidebar";
+import Navbar from "../../components/layout/Navbar";
+import Profile from "./Profile";
+import JobLayout from "../../components/jobs/JobLayout";
+import Settings from "./Settings";
+import Application from "./Application";
+import { useHome } from "../../hooks/Hook";
+import Overview from "./../pubic/Overview";
+import ADashboard from "./../admin/ADashboard";
+import InterviewPage from "./InterviewPage";
+import ResumePage from "./ResumePage";
 
 function Dashboard() {
-    const {activePage, setActivePage} = useHome();
-    return (
-        <DashboardLayout>
+  const { activePage, setActivePage } = useHome();
 
-            {/* Sidebar */}
-            <Sidebar
-                activePage={activePage}
-                setActivePage={setActivePage}
-            />
+  return (
+    <DashboardLayout>
+      <div className="flex min-h-0 w-full flex-1">
+        <Sidebar
+          activePage={activePage}
+          setActivePage={setActivePage}
+        />
 
-            {/* Right side */}
-            <div className="flex-1 min-w-0 flex flex-col min-h-0">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <Navbar
+            activePage={activePage}
+            setActivePage={setActivePage}
+          />
 
-                {/* Navbar */}
-                <Navbar activePage={activePage} setActivePage={setActivePage}/>
-
-                {/* Content */}
-                <main className="flex-1 min-h-0 overflow-y-auto">
-
-                    {activePage === "profile" && <Profile />}
-
-                    {activePage === "jobs" && <JobLayout/>}
-
-                    {activePage === "settings" && <Settings/>}
-
-                    {activePage === "applications" && <Application/>}
-
-                    {activePage === "overview" && <Overview/>}
-
-                    {activePage === "admin/dashboard" && <ADashboard/>}
-
-                    {activePage === "interviews" && <InterviewPage/>}
-
-                    {activePage === "resume" && <ResumePage/>}
-
-                </main>
-
-            </div>
-
-        </DashboardLayout>
-    )
+          <main
+            className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain"
+          >
+            {activePage === "profile" && <Profile />}
+            {activePage === "jobs" && <JobLayout />}
+            {activePage === "settings" && <Settings />}
+            {activePage === "applications" && <Application />}
+            {activePage === "overview" && <Overview />}
+            {activePage === "admin/dashboard" && <ADashboard />}
+            {activePage === "interviews" && <InterviewPage />}
+            {activePage === "resume" && <ResumePage />}
+          </main>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
 }
 
-export default Dashboard
+export default Dashboard;

@@ -12,7 +12,7 @@ function Navbar() {
   const { user, admin, recruiter } = useAuth()
   const { title, setTitle } = useTitle()
   const { setActivePage, setAdminActivePage, setRecruiterActivePage } = useHome()
-  const currentAccount = admin || admin || recruiter
+  const currentAccount = user || admin || recruiter
 
   return (
     <nav className="flex min-w-full items-center justify-between bg-white px-10 py-2">

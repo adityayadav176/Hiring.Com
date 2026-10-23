@@ -1,19 +1,19 @@
-
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import {
+  ArrowRight,
   ArrowUpRight,
-  Bookmark,
   BriefcaseBusiness,
   CalendarDays,
   Check,
-  ChevronDown,
+  ChevronRight,
   Clock3,
+  Eye,
+  FileText,
   MapPin,
-  MoreHorizontal,
-  Paperclip,
   Search,
-  User,
   Sparkles,
+  UserRound,
+  Video,
 } from "lucide-react";
 
 import {
@@ -26,688 +26,964 @@ import {
   useResume,
 } from "../../hooks/Hook";
 
-const formatDate = (date) => {
-  if (!date) return "Date unavailable";
+const TERMINAL_STATUSES = new Set([
+  "completed",
+  "cancelled",
+  "canceled",
+  "rejected",
+  "no show",
+  "withdrawn",
+]);
 
-  const parsed = new Date(date);
+const TIME_ZONE = "Asia/Kolkata";
 
-  if (Number.isNaN(parsed.getTime())) return "Date unavailable";
+const formatDate = (value) => {
+  if (!value) return "Date unavailable";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Date unavailable";
 
   return new Intl.DateTimeFormat("en-IN", {
     day: "numeric",
     month: "short",
     year: "numeric",
-  }).format(parsed);
+    timeZone: TIME_ZONE,
+  }).format(date);
 };
 
-const formatTime = (date) => {
-  if (!date) return "Time unavailable";
+const formatTime = (value) => {
+  if (!value) return "Time unavailable";
 
-  const parsed = new Date(date);
-
-  if (Number.isNaN(parsed.getTime())) return "Time unavailable";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Time unavailable";
 
   return new Intl.DateTimeFormat("en-IN", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
-  }).format(parsed);
+    timeZone: TIME_ZONE,
+  }).format(date);
 };
 
 const getInterviewDate = (interview) =>
   interview?.scheduledAt ||
   interview?.interviewDate ||
   interview?.date ||
-  interview?.time ||
   null;
+
+const getInterviewCompany = (interview) =>
+  interview?.company?.name ||
+  interview?.companyId?.name ||
+  interview?.job?.companyId?.name ||
+  interview?.jobId?.companyId?.name ||
+  "Company details unavailable";
+
+const getInterviewJob = (interview) =>
+  interview?.job?.title ||
+  interview?.jobId?.title ||
+  interview?.title ||
+  interview?.interviewType ||
+  "Interview";
+
+const getGreeting = () => {
+  const hour = new Date().getHours();
+
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+};
+
+const normalizeList = (value) => {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object") return [value];
+  return [];
+};
+
+const normalizeInterviewList = (value) => {
+  if (Array.isArray(value)) return value;
+
+  if (Array.isArray(value?.interviews)) {
+    return value.interviews;
+  }
+
+  if (Array.isArray(value?.data?.interviews)) {
+    return value.data.interviews;
+  }
+
+  if (Array.isArray(value?.data)) {
+    return value.data;
+  }
+
+  if (value && typeof value === "object" && getInterviewDate(value)) {
+    return [value];
+  }
+
+  return [];
+};
+
+const getTimestamp = (value) => {
+  if (!value) return 0;
+
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+};
+
+const normalizeStatus = (status) =>
+  String(status || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
 
 function Overview() {
   const { jobs, handleGetAllJobs } = useJob();
-  const { profileCompletion, handleProfileCompletion, profile, handleGetMyProfile } = useProfile();
+
+  const {
+    profile,
+    profileCompletion,
+    handleProfileCompletion,
+    handleGetMyProfile,
+  } = useProfile();
+
   const { applications, handleGetMyApplications } = useApplication();
-  const {handleGetAllResumes, resumes} = useResume();
-  const {user, getUser} = useAuth();
+
+  const { resumes, handleGetAllResumes } = useResume();
+
+  const { user, getUser } = useAuth();
 
   const { setActivePage } = useHome();
 
   const {
-    upcomingInterview,
+    upcomingInterviews,
     handleGetUpcomingInterviews,
     todayInterviews,
     handleGetTodayInterviews,
   } = useInterview();
 
+  // Prevent duplicate dashboard initialization and infinite fetch loops.
+  const initializedRef = useRef(false);
+
   useEffect(() => {
-    handleGetMyApplications();
-    handleGetUpcomingInterviews();
-    handleProfileCompletion();
-    handleGetAllJobs();
-    handleGetTodayInterviews();
-    handleGetMyProfile();
-    getUser();
-    handleGetAllResumes();
+    if (initializedRef.current) return;
+
+    initializedRef.current = true;
+
+    const tasks = [
+      handleGetMyApplications,
+      handleGetUpcomingInterviews,
+      handleProfileCompletion,
+      handleGetAllJobs,
+      handleGetTodayInterviews,
+      handleGetMyProfile,
+      getUser,
+      handleGetAllResumes,
+    ];
+
+    tasks.forEach((task) => {
+      if (typeof task !== "function") return;
+
+      try {
+        Promise.resolve(task()).catch((error) => {
+          console.error("Dashboard request failed:", error);
+        });
+      } catch (error) {
+        console.error("Dashboard request failed:", error);
+      }
+    });
   }, []);
 
-  const applicationList = Array.isArray(applications)
-    ? applications
-    : [];
-
-  const jobList = Array.isArray(jobs) ? jobs : [];
-
-  const upcomingInterviewList = Array.isArray(upcomingInterview)
-    ? upcomingInterview
-    : upcomingInterview
-      ? [upcomingInterview]
-      : [];
-
-  const todayInterviewList = Array.isArray(todayInterviews)
-    ? todayInterviews
-    : todayInterviews
-      ? [todayInterviews]
-      : [];
-
-  const completion =
-    profileCompletion?.score ??
-    profile?.profileCompletion ??
-    0;
-
-  const savedJobs = useMemo(
-    () =>
-      jobList.filter(
-        (job) =>
-          job?.isSaved === true ||
-          job?.saved === true
-      ),
-    [jobList]
+  const applicationList = useMemo(
+    () => normalizeList(applications),
+    [applications]
   );
 
-  const nextInterviews = useMemo(
-    () =>
-      [...upcomingInterviewList]
-        .filter((interview) => {
-          const date = getInterviewDate(interview);
+  const jobList = useMemo(
+    () => normalizeList(jobs),
+    [jobs]
+  );
 
-          return date && !Number.isNaN(new Date(date).getTime());
-        })
+  const resumeList = useMemo(
+    () => normalizeList(resumes),
+    [resumes]
+  );
+
+  const upcomingInterviewList = useMemo(
+    () => normalizeInterviewList(upcomingInterviews),
+    [upcomingInterviews]
+  );
+
+  const todayInterviewList = useMemo(
+    () => normalizeInterviewList(todayInterviews),
+    [todayInterviews]
+  );
+
+  const completion = Math.min(
+    100,
+    Math.max(
+      0,
+      Number(
+        profileCompletion?.score ??
+          profileCompletion?.completion ??
+          profile?.profileCompletion ??
+          0
+      ) || 0
+    )
+  );
+
+  const profileViews = Number(profile?.profileViews ?? 0) || 0;
+
+  const nextInterviews = useMemo(() => {
+    const now = Date.now();
+
+    return upcomingInterviewList
+      .filter((interview) => {
+        const timestamp = getTimestamp(getInterviewDate(interview));
+
+        if (!timestamp || timestamp < now) return false;
+
+        const status = normalizeStatus(interview?.status);
+
+        return !TERMINAL_STATUSES.has(status);
+      })
+      .sort(
+        (a, b) =>
+          getTimestamp(getInterviewDate(a)) -
+          getTimestamp(getInterviewDate(b))
+      )
+      .slice(0, 3);
+  }, [upcomingInterviewList]);
+
+  const profileName =
+    profile?.userId?.name ||
+    user?.name ||
+    "there";
+
+  const avatar =
+    profile?.userId?.avatar?.url ||
+    user?.avatar?.url ||
+    "";
+
+  const profileHeadline =
+    profile?.headline ||
+    "Add a professional headline to introduce yourself to employers.";
+
+  const profileSteps = useMemo(
+    () => [
+      {
+        title: "Add a profile photo",
+        done: Boolean(avatar),
+      },
+      {
+        title: "Write your professional headline",
+        done: Boolean(profile?.headline?.trim()),
+      },
+      {
+        title: "Add work experience",
+        done:
+          Array.isArray(profile?.experience) &&
+          profile.experience.length > 0,
+      },
+      {
+        title: "Upload a resume",
+        done: resumeList.length > 0,
+      },
+    ],
+    [avatar, profile?.headline, profile?.experience, resumeList.length]
+  );
+
+  const incompleteSteps = profileSteps.filter(
+    (step) => !step.done
+  ).length;
+
+  const recentApplications = useMemo(
+    () =>
+      [...applicationList]
         .sort(
           (a, b) =>
-            new Date(getInterviewDate(a)) -
-            new Date(getInterviewDate(b))
+            getTimestamp(b?.createdAt) -
+            getTimestamp(a?.createdAt)
         )
-        .slice(0, 2),
-    [upcomingInterviewList]
+        .slice(0, 4),
+    [applicationList]
   );
 
-  const firstInterview = nextInterviews[0];
-  const firstInterviewDate = firstInterview
-    ? getInterviewDate(firstInterview)
-    : null;
-
-  const profileSteps = [
-    {
-      title: "Add a profile photo",
-      done: Boolean(profile?.userId?.avatar?.url || profile?.userId?.avatar?.public_id || user?.avatar?.public_id || user?.avatar?.url),
-    },
-    {
-      title: "Write your professional headline",
-      done: Boolean(profile?.headline),
-    },
-    {
-      title: "Add your work experience",
-      done: Boolean(profile?.experience?.length),
-    },
-    {
-      title: "Add your resume",
-      done: Boolean(profile?.resumeId || resumes?.length > 0),
-    },
-  ];
-
   return (
-    <div className="w-full bg-[#f7f8fc] px-4 py-5 sm:px-6 lg:px-8">
-      <section className="mb-7">
-        <div className="flex items-end justify-between gap-6">
+    <div className="min-h-full w-full bg-[#F6F7FB] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1600px] space-y-6">
+        <section className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
           <div>
-            <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-600">
-              <Sparkles size={14} />
-              Your career space
+            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">
+              <span className="h-2 w-2 rounded-full bg-violet-600" />
+              Your career workspace
             </div>
 
-            <h1 className="text-[34px] font-semibold leading-[1.1] tracking-[-0.035em] text-slate-950">
-              Good morning
-              <span className="ml-1.5 text-[29px] text-amber-400">
-                ✦
-              </span>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              Dashboard<span className="text-violet-600">.</span>
             </h1>
 
-            <p className="mt-2 text-[13px] text-slate-500">
-              Here&apos;s what&apos;s happening with your job search today.
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
+              Your applications, career profile, and upcoming opportunities
+              in one place.
             </p>
           </div>
 
           <button
             type="button"
             onClick={() => setActivePage("jobs")}
-            className="flex h-10 shrink-0 items-center gap-2 rounded-[10px] border border-violet-400 bg-indigo-600 px-4 py-2 text-[12px] font-semibold text-white shadow-[0_5px_14px_rgba(79,70,229,0.22)] transition hover:bg-indigo-700"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white shadow-lg shadow-violet-600/15 transition hover:bg-violet-700"
           >
-            <Search size={16} />
-            <span>Explore jobs</span>
+            <Search size={17} />
+            Explore jobs
+            <ArrowRight size={16} />
           </button>
-        </div>
-      </section>
+        </section>
 
-      <section className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          icon={<Paperclip size={18} />}
-          iconClass="bg-indigo-50 text-indigo-600"
-          title="Applications sent"
-          value={applicationList.length}
-          footer="Total applications submitted"
-        />
+        <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-[#211044] via-[#381477] to-[#6425D9] p-6 text-white shadow-xl shadow-violet-950/10 sm:p-8 lg:p-9">
+          <div className="pointer-events-none absolute -right-16 -top-28 -z-10 h-80 w-80 rounded-full border border-white/10" />
+          <div className="pointer-events-none absolute -right-4 -top-16 -z-10 h-64 w-64 rounded-full border border-white/10" />
+          <div className="pointer-events-none absolute -bottom-36 right-1/3 -z-10 h-72 w-72 rounded-full bg-fuchsia-500/15 blur-3xl" />
 
-        <StatCard
-          icon={<User size={18} />}
-          iconClass="bg-violet-50 text-violet-600"
-          title="Profile completion"
-          value={`${completion}%`}
-          footer={
-            completion >= 100
-              ? "Your profile is complete"
-              : "Keep going — almost there"
-          }
-        />
+          <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div className="min-w-0">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-medium text-violet-100">
+                <Sparkles size={14} />
+                CANDIDATE WORKSPACE
+              </span>
 
-        <StatCard
-          icon={<Bookmark size={18} />}
-          iconClass="bg-amber-50 text-amber-600"
-          title="Saved jobs"
-          value={savedJobs.length}
-          footer="Saved opportunities"
-        />
+              <div className="mt-5 flex items-center gap-4">
+                {avatar ? (
+                  <img
+                    src={avatar}
+                    alt={profileName}
+                    className="h-14 w-14 rounded-2xl border border-white/20 object-cover"
+                  />
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-xl font-bold">
+                    {profileName.charAt(0).toUpperCase()}
+                  </div>
+                )}
 
-        <StatCard
-          icon={<CalendarDays size={18} />}
-          iconClass="bg-emerald-50 text-emerald-600"
-          title="Upcoming interviews"
-          value={upcomingInterviewList.length}
-          footer={
-            firstInterviewDate
-              ? `Next: ${formatDate(firstInterviewDate)}`
-              : "No upcoming interviews"
-          }
-        />
-      </section>
+                <div className="min-w-0">
+                  <p className="text-sm text-violet-200">
+                    {getGreeting()},
+                  </p>
+                  <h2 className="mt-0.5 break-words text-2xl font-bold tracking-tight sm:text-3xl">
+                    {profileName}
+                  </h2>
+                </div>
+              </div>
 
-      <section className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[1.65fr_1fr]">
-        <div className="rounded-[14px] border border-slate-200 bg-white p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-[16px] font-semibold tracking-[0.01em] text-slate-950">
-                Recommended for you
-              </h2>
-              <p className="mt-1.5 text-[12px] text-slate-500">
-                Explore available job opportunities
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-violet-100/85 sm:text-base">
+                {profile?.headline
+                  ? profileHeadline
+                  : "Build your profile, discover relevant roles, and keep your next career move on track."}
               </p>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActivePage("jobs")}
+                  className="inline-flex h-11 items-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-violet-800 transition hover:bg-violet-50"
+                >
+                  Find your next role
+                  <ArrowUpRight size={16} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActivePage("profile")}
+                  className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/15"
+                >
+                  <UserRound size={16} />
+                  View profile
+                </button>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setActivePage("jobs")}
-              className="flex items-center justify-center gap-1 text-[12px] font-semibold text-indigo-600 hover:text-indigo-700"
-            >
-              View All
-              <ArrowUpRight size={14} />
-            </button>
-          </div>
-
-          <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
-            {jobList.length > 0 ? (
-              jobList.slice(0, 4).map((item) => (
-                <JobCard
-                  key={item?._id}
-                  logo={
-                    item?.companyId?.name?.charAt(0)?.toUpperCase() ||
-                    "C"
-                  }
-                  title={item?.title || "Untitled job"}
-                  company={item?.companyId?.name || "Company"}
-                  type={
-                    item?.employmentType?.replaceAll("_", " ") ||
-                    "Not specified"
-                  }
-                  location={
-                    [
-                      item?.location?.city,
-                      item?.location?.country,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ") || "Location not specified"
-                  }
-                  salary={formatSalary(item?.salary)}
-                  logoClass="bg-violet-100 text-violet-600"
-                  skills={
-                    Array.isArray(item?.skills)
-                      ? item.skills
-                          .map((skill) =>
-                            typeof skill === "string"
-                              ? skill
-                              : skill?.name
-                          )
-                          .filter(Boolean)
-                          .slice(0, 3)
-                      : []
-                  }
-                />
-              ))
-            ) : (
-              <EmptyState message="No job opportunities available right now." />
-            )}
-          </div>
-        </div>
-
-        <div className="rounded-[14px] border border-slate-200 bg-white p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="text-[16px] font-semibold text-slate-950">
-                Complete your profile
-              </h3>
-              <p className="mt-1.5 text-[12px] text-slate-500">
-                Stand out to the right employers
-              </p>
+            <div className="grid grid-cols-2 gap-3 lg:w-[300px]">
+              <HeroMetric
+                icon={<BriefcaseBusiness size={18} />}
+                label="Applications"
+                value={applicationList.length}
+              />
+              <HeroMetric
+                icon={<CalendarDays size={18} />}
+                label="Upcoming interviews"
+                value={nextInterviews.length}
+              />
             </div>
+          </div>
+        </section>
 
-            <span className="text-[12px] font-semibold text-indigo-600">
-              {completion}%
+        <section>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-base font-bold text-slate-900">
+              Your career at a glance
+            </h2>
+            <span className="text-xs text-slate-400">
+              Live account data
             </span>
           </div>
 
-          <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-slate-100">
-            <div
-              className="h-full rounded-full bg-indigo-600 transition-all duration-500"
-              style={{ width: `${completion}%` }}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              icon={<BriefcaseBusiness size={19} />}
+              iconClass="bg-violet-50 text-violet-700"
+              title="Applications sent"
+              value={applicationList.length}
+              footer="Your submitted applications"
+              onClick={() => setActivePage("applications")}
+            />
+
+            <StatCard
+              icon={<Eye size={19} />}
+              iconClass="bg-blue-50 text-blue-700"
+              title="Profile views"
+              value={profileViews.toLocaleString("en-IN")}
+              footer="Views of your professional profile"
+              onClick={() => setActivePage("profile")}
+            />
+
+            <StatCard
+              icon={<CalendarDays size={19} />}
+              iconClass="bg-emerald-50 text-emerald-700"
+              title="Upcoming interviews"
+              value={nextInterviews.length}
+              footer={
+                nextInterviews[0]
+                  ? `Next: ${formatDate(getInterviewDate(nextInterviews[0]))}`
+                  : "No upcoming interviews"
+              }
+              onClick={() => setActivePage("interviews")}
+            />
+
+            <StatCard
+              icon={<FileText size={19} />}
+              iconClass="bg-amber-50 text-amber-700"
+              title="My resumes"
+              value={resumeList.length}
+              footer="Resumes available to use"
+              onClick={() => setActivePage("resume")}
             />
           </div>
+        </section>
 
-          <div className="mt-5 space-y-3.5">
-            {profileSteps.map((step, index) => (
-              <ProfileStep
-                key={step.title}
-                title={step.title}
-                done={step.done}
-                number={index + 1}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
+        <section className="grid grid-cols-1 gap-5 xl:grid-cols-[0.9fr_1.5fr]">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-violet-600">
+                  Profile spotlight
+                </p>
+                <h2 className="mt-1.5 text-lg font-bold text-slate-950">
+                  Make your profile count
+                </h2>
+                <p className="mt-1 text-sm leading-5 text-slate-500">
+                  A complete profile helps employers understand your strengths.
+                </p>
+              </div>
 
-      <section className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[1.65fr_1fr]">
-        <div className="rounded-[14px] border border-slate-200 bg-white p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-[16px] font-semibold text-slate-950">
-                Application activity
-              </h2>
-              <p className="mt-1.5 text-[12px] text-slate-500">
-                Your job application overview
-              </p>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                <UserRound size={20} />
+              </div>
             </div>
 
-            <span className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-[10px] text-slate-500">
-              Last 30 days
-              <ChevronDown size={13} />
-            </span>
-          </div>
+            <div className="mt-6 flex items-end justify-between">
+              <div>
+                <p className="text-3xl font-bold tracking-tight text-slate-950">
+                  {completion}%
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Profile completion
+                </p>
+              </div>
 
-          <ActivityChart applications={applicationList} />
-        </div>
+              <span className="rounded-lg bg-violet-50 px-2.5 py-1.5 text-xs font-semibold text-violet-700">
+                {completion >= 100
+                  ? "Complete"
+                  : `${incompleteSteps} steps left`}
+              </span>
+            </div>
 
-        <div className="rounded-[14px] border border-slate-200 bg-white p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-[16px] font-semibold text-slate-950">
-                Next interviews
-              </h2>
-              <p className="mt-1.5 text-[12px] text-slate-500">
-                Prepare for your conversations
-              </p>
+            <div
+              className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100"
+              role="progressbar"
+              aria-valuenow={completion}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Profile completion"
+            >
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 transition-all duration-500"
+                style={{ width: `${completion}%` }}
+              />
+            </div>
+
+            <div className="mt-5 space-y-4">
+              {profileSteps.map((step) => (
+                <div key={step.title} className="flex items-center gap-3">
+                  <span
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                      step.done
+                        ? "bg-emerald-50 text-emerald-600"
+                        : "border border-slate-200 text-slate-400"
+                    }`}
+                  >
+                    {step.done ? (
+                      <Check size={14} />
+                    ) : (
+                      <ChevronRight size={14} />
+                    )}
+                  </span>
+
+                  <span
+                    className={`flex-1 text-sm ${
+                      step.done
+                        ? "text-slate-400 line-through"
+                        : "font-medium text-slate-700"
+                    }`}
+                  >
+                    {step.title}
+                  </span>
+
+                  <span
+                    className={`text-xs font-medium ${
+                      step.done ? "text-emerald-600" : "text-violet-600"
+                    }`}
+                  >
+                    {step.done ? "Done" : "Add"}
+                  </span>
+                </div>
+              ))}
             </div>
 
             <button
               type="button"
-              onClick={() => setActivePage("interviews")}
-              className="flex items-center gap-1 text-[12px] font-semibold text-indigo-600"
+              onClick={() => setActivePage("profile")}
+              className="mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 text-sm font-semibold text-violet-700 transition hover:bg-violet-100"
             >
-              View all
-              <ArrowUpRight size={14} />
+              Improve my profile
+              <ArrowRight size={16} />
             </button>
           </div>
 
-          <div className="mt-5 divide-y divide-slate-100">
-            {nextInterviews.length > 0 ? (
-              nextInterviews.map((interview) => {
-                const date = getInterviewDate(interview);
-                const interviewDate = new Date(date);
+          <div className="min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-950">
+                  Recommended opportunities
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Explore jobs from the current job listings.
+                </p>
+              </div>
 
-                return (
-                  <InterviewCard
-                    key={interview?._id || date}
-                    day={interviewDate.getDate()}
-                    month={interviewDate
-                      .toLocaleString("en-IN", { month: "short" })
-                      .toUpperCase()}
-                    title={
-                      interview?.title ||
-                      interview?.interviewType ||
-                      "Interview"
-                    }
-                    company={
-                      interview?.companyId?.name ||
-                      interview?.jobId?.companyId?.name ||
-                      interview?.jobId?.title ||
-                      "Company details unavailable"
-                    }
-                    time={`${formatDate(date)} · ${formatTime(date)}`}
+              <button
+                type="button"
+                onClick={() => setActivePage("jobs")}
+                className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-violet-700 hover:text-violet-800"
+              >
+                All jobs
+                <ArrowUpRight size={16} />
+              </button>
+            </div>
+
+            <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
+              {jobList.length > 0 ? (
+                jobList.slice(0, 4).map((job, index) => (
+                  <JobCard key={job?._id || index} job={job} />
+                ))
+              ) : (
+                <div className="col-span-full">
+                  <EmptyState
+                    icon={<Search size={22} />}
+                    title="No jobs to show yet"
+                    message="New opportunities will appear here when job listings are available."
+                    action="Explore jobs"
+                    onAction={() => setActivePage("jobs")}
                   />
-                );
-              })
-            ) : (
-              <EmptyState message="You have no upcoming interviews scheduled." />
-            )}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+          <div className="min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-950">
+                  Recent applications
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Keep track of your latest submissions.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActivePage("applications")}
+                className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-violet-700"
+              >
+                View all
+                <ArrowUpRight size={16} />
+              </button>
+            </div>
+
+            <div className="mt-5 divide-y divide-slate-100">
+              {recentApplications.length > 0 ? (
+                recentApplications.map((application, index) => {
+                  const job =
+                    application?.jobId || application?.job || {};
+
+                  const company =
+                    application?.companyId ||
+                    application?.company ||
+                    job?.companyId ||
+                    {};
+
+                  const status = normalizeStatus(
+                    application?.status || "applied"
+                  );
+
+                  return (
+                    <div
+                      key={application?._id || index}
+                      className="flex items-center gap-3 py-4 first:pt-0 last:pb-0"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                        <BriefcaseBusiness size={18} />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-slate-900">
+                          {job?.title || "Job application"}
+                        </p>
+                        <p className="mt-1 truncate text-xs text-slate-500">
+                          {company?.name || "Company"}
+                          {application?.createdAt
+                            ? ` · ${formatDate(application.createdAt)}`
+                            : ""}
+                        </p>
+                      </div>
+
+                      <span className="shrink-0 rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-semibold capitalize text-violet-700">
+                        {status}
+                      </span>
+                    </div>
+                  );
+                })
+              ) : (
+                <EmptyState
+                  icon={<FileText size={22} />}
+                  title="Your application journey starts here"
+                  message="Apply for a role and your latest application will appear here."
+                  action="Browse jobs"
+                  onAction={() => setActivePage("jobs")}
+                />
+              )}
+            </div>
           </div>
 
-          {todayInterviewList.length > 0 && (
-            <p className="mt-3 text-[11px] text-slate-500">
-              You have {todayInterviewList.length} interview
-              {todayInterviewList.length === 1 ? "" : "s"} scheduled today.
-            </p>
-          )}
-        </div>
-      </section>
+          <div className="min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-950">
+                  Next interviews
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Your nearest scheduled conversations.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActivePage("interviews")}
+                className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-violet-700"
+              >
+                View all
+                <ArrowUpRight size={16} />
+              </button>
+            </div>
+
+            <div className="mt-5 divide-y divide-slate-100">
+              {nextInterviews.length > 0 ? (
+                nextInterviews.map((interview, index) => {
+                  const date = getInterviewDate(interview);
+                  const parsedDate = new Date(date);
+
+                  const status = String(
+                    interview?.status || "Scheduled"
+                  );
+
+                  const mode =
+                    interview?.interviewType ||
+                    interview?.interviewMode ||
+                    interview?.mode ||
+                    "Interview";
+
+                  return (
+                    <div
+                      key={interview?._id || `${date}-${index}`}
+                      className="flex gap-3 py-4 first:pt-0 last:pb-0"
+                    >
+                      <div className="flex h-[58px] w-[58px] shrink-0 flex-col items-center justify-center rounded-xl border border-violet-100 bg-violet-50">
+                        <span className="text-xl font-bold leading-none text-violet-800">
+                          {new Intl.DateTimeFormat("en-IN", {
+                            day: "numeric",
+                            timeZone: TIME_ZONE,
+                          }).format(parsedDate)}
+                        </span>
+                        <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-violet-600">
+                          {new Intl.DateTimeFormat("en-IN", {
+                            month: "short",
+                            timeZone: TIME_ZONE,
+                          }).format(parsedDate)}
+                        </span>
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-slate-900">
+                          {getInterviewJob(interview)}
+                        </p>
+
+                        <p className="mt-1 truncate text-xs text-slate-500">
+                          {getInterviewCompany(interview)}
+                        </p>
+
+                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                          <span className="inline-flex items-center gap-1">
+                            <Clock3 size={13} />
+                            {formatTime(date)}
+                          </span>
+
+                          <span className="inline-flex items-center gap-1">
+                            {String(mode).toLowerCase().includes("online") ? (
+                              <Video size={13} />
+                            ) : (
+                              <CalendarDays size={13} />
+                            )}
+                            {String(mode).replace(/[_-]+/g, " ")}
+                          </span>
+                        </div>
+                      </div>
+
+                      <span className="h-fit shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold capitalize text-emerald-700">
+                        {status.replace(/[_-]+/g, " ")}
+                      </span>
+                    </div>
+                  );
+                })
+              ) : (
+                <EmptyState
+                  icon={<CalendarDays size={22} />}
+                  title="No upcoming interviews"
+                  message="When an interview is scheduled for you, its details will appear here."
+                  action="View interviews"
+                  onAction={() => setActivePage("interviews")}
+                />
+              )}
+            </div>
+
+            {todayInterviewList.length > 0 && (
+              <div className="mt-4 flex items-start gap-2 rounded-xl bg-violet-50 p-3 text-xs leading-5 text-violet-800">
+                <Sparkles size={15} className="mt-0.5 shrink-0" />
+                You have {todayInterviewList.length} interview
+                {todayInterviewList.length === 1 ? "" : "s"} scheduled today.
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
 
-function formatSalary(salary) {
-  const min = salary?.min;
-  const max = salary?.max;
+function HeroMetric({ icon, label, value }) {
+  return (
+    <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-violet-100">
+        {icon}
+      </div>
+      <p className="mt-4 text-3xl font-bold tracking-tight text-white">
+        {value}
+      </p>
+      <p className="mt-1 text-xs leading-5 text-violet-100/85">
+        {label}
+      </p>
+    </div>
+  );
+}
 
-  if (min == null && max == null) return "Salary not specified";
+function StatCard({
+  icon,
+  iconClass,
+  title,
+  value,
+  footer,
+  onClick,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div
+          className={`flex h-11 w-11 items-center justify-center rounded-xl ${iconClass}`}
+        >
+          {icon}
+        </div>
+        <ArrowUpRight
+          size={17}
+          className="text-slate-300 transition group-hover:text-violet-600"
+        />
+      </div>
+
+      <p className="mt-5 text-sm font-medium text-slate-500">
+        {title}
+      </p>
+      <p className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
+        {value}
+      </p>
+      <p className="mt-2 truncate text-xs text-slate-500">
+        {footer}
+      </p>
+    </button>
+  );
+}
+
+function JobCard({ job }) {
+  const company =
+    job?.companyId?.name ||
+    job?.company?.name ||
+    "Company";
+
+  const salary = job?.salary;
+
+  const location = [
+    job?.location?.city,
+    job?.location?.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   const formatAmount = (amount) =>
     Number(amount).toLocaleString("en-IN");
 
-  if (min != null && max != null) {
-    return `₹${formatAmount(min)} – ₹${formatAmount(max)}`;
-  }
+  const salaryText =
+    salary?.min != null && salary?.max != null
+      ? `₹${formatAmount(salary.min)} – ₹${formatAmount(salary.max)}`
+      : salary?.min != null
+        ? `From ₹${formatAmount(salary.min)}`
+        : salary?.max != null
+          ? `Up to ₹${formatAmount(salary.max)}`
+          : "Salary not specified";
 
-  if (min != null) return `From ₹${formatAmount(min)}`;
-
-  return `Up to ₹${formatAmount(max)}`;
-}
-
-const InterviewCard = ({
-  day,
-  month,
-  title,
-  company,
-  time,
-}) => (
-  <div className="flex gap-3 py-4 first:pt-0">
-    <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-[10px] bg-violet-50">
-      <span className="text-[16px] font-semibold leading-none text-indigo-600">
-        {day}
-      </span>
-      <span className="mt-1 text-[7px] font-bold tracking-wider text-indigo-500">
-        {month}
-      </span>
-    </div>
-
-    <div className="min-w-0 flex-1">
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="text-[12px] font-semibold text-slate-900">
-          {title}
-        </h3>
-        <MoreHorizontal size={15} className="shrink-0 text-slate-400" />
-      </div>
-
-      <p className="mt-1 text-[10px] text-slate-500">{company}</p>
-
-      <div className="mt-2 flex items-center gap-1 text-[10px] font-medium text-indigo-600">
-        <Clock3 size={11} />
-        {time}
-      </div>
-    </div>
-  </div>
-);
-
-const ActivityChart = ({ applications = [] }) => {
-  const chartData = useMemo(() => {
-    const now = new Date();
-
-    const days = Array.from({ length: 30 }, (_, index) => {
-      const date = new Date(now);
-      date.setHours(0, 0, 0, 0);
-      date.setDate(date.getDate() - (29 - index));
-
-      return {
-        date,
-        count: 0,
-      };
-    });
-
-    applications.forEach((application) => {
-      const createdAt = application?.createdAt;
-      if (!createdAt) return;
-
-      const date = new Date(createdAt);
-      if (Number.isNaN(date.getTime())) return;
-
-      date.setHours(0, 0, 0, 0);
-
-      const index = days.findIndex(
-        (day) => day.date.getTime() === date.getTime()
-      );
-
-      if (index !== -1) days[index].count += 1;
-    });
-
-    return days;
-  }, [applications]);
-
-  const maxCount = Math.max(
-    4,
-    ...chartData.map((item) => item.count)
-  );
-
-  const points = chartData
-    .map((item, index) => {
-      const x = (index / Math.max(chartData.length - 1, 1)) * 700;
-      const y = 180 - (item.count / maxCount) * 165;
-
-      return { x, y, ...item };
-    });
-
-  const path = points
-    .map(
-      (point, index) =>
-        `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`
-    )
-    .join(" ");
-
-  const areaPath = points.length
-    ? `${path} L 700 190 L 0 190 Z`
-    : "";
+  const skills = Array.isArray(job?.skills)
+    ? job.skills
+        .map((skill) =>
+          typeof skill === "string" ? skill : skill?.name
+        )
+        .filter(Boolean)
+        .slice(0, 3)
+    : [];
 
   return (
-    <div className="relative mt-5 h-[205px]">
-      <div className="absolute inset-0 flex flex-col justify-between">
-        {[maxCount, Math.round(maxCount * 0.66), Math.round(maxCount * 0.33), 0].map(
-          (value, index) => (
-            <div key={`${value}-${index}`} className="flex items-center gap-2">
-              <span className="w-4 text-[9px] text-slate-400">{value}</span>
-              <div className="h-px flex-1 bg-slate-100" />
-            </div>
-          )
+    <div className="group rounded-xl border border-slate-200 p-4 transition hover:border-violet-200 hover:bg-violet-50/30">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-lg font-bold text-violet-700">
+          {company.charAt(0).toUpperCase()}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-sm font-bold text-slate-900">
+            {job?.title || "Untitled position"}
+          </h3>
+          <p className="mt-1 truncate text-xs text-slate-500">
+            {company}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-x-3 gap-y-2 text-xs text-slate-500">
+        {location && (
+          <span className="inline-flex items-center gap-1">
+            <MapPin size={13} />
+            {location}
+          </span>
+        )}
+
+        {job?.employmentType && (
+          <span className="inline-flex items-center gap-1">
+            <BriefcaseBusiness size={13} />
+            {String(job.employmentType).replace(/[_-]+/g, " ")}
+          </span>
         )}
       </div>
 
-      <div className="absolute bottom-5 left-6 right-0 top-1">
-        <svg
-          viewBox="0 0 700 190"
-          className="h-full w-full"
-          preserveAspectRatio="none"
-          role="img"
-          aria-label="Job applications submitted over the last 30 days"
-        >
-          <defs>
-            <linearGradient
-              id="homeChartGradient"
-              x1="0"
-              x2="0"
-              y1="0"
-              y2="1"
+      {skills.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {skills.map((skill, index) => (
+            <span
+              key={`${skill}-${index}`}
+              className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-600"
             >
-              <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.14" />
-              <stop offset="100%" stopColor="#4f46e5" stopOpacity="0" />
-            </linearGradient>
-          </defs>
+              {skill}
+            </span>
+          ))}
+        </div>
+      )}
 
-          {points.length > 0 && (
-            <>
-              <path d={areaPath} fill="url(#homeChartGradient)" />
-              <path
-                d={path}
-                fill="none"
-                stroke="#4f46e5"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </>
-          )}
-        </svg>
+      <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+        <span className="truncate text-xs font-semibold text-slate-800">
+          {salaryText}
+        </span>
+        <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-violet-700">
+          Explore
+          <ArrowRight
+            size={14}
+            className="transition group-hover:translate-x-0.5"
+          />
+        </span>
       </div>
     </div>
   );
-};
+}
 
-const ProfileStep = ({ title, done = false, number = 1 }) => (
-  <div className="flex items-start justify-between gap-2">
-    <div className="flex items-start gap-2.5">
-      {done ? (
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
-          <Check size={12} strokeWidth={2.5} />
-        </span>
-      ) : (
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-200 text-[9px] text-slate-500">
-          {number}
-        </span>
-      )}
-      <span className="text-[10px] text-slate-600">{title}</span>
-    </div>
-
-    <span
-      className={`shrink-0 text-[10px] ${
-        done ? "text-emerald-500" : "text-indigo-600"
-      }`}
-    >
-      {done ? "Done" : "Add now"}
-    </span>
-  </div>
-);
-
-const JobCard = ({
-  logo,
+function EmptyState({
+  icon,
   title,
-  company,
-  type,
-  skills = [],
-  salary,
-  logoClass,
-  location,
-}) => (
-  <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-indigo-200 hover:shadow-sm">
-    <div className="flex items-start justify-between">
-      <div
-        className={`flex h-9 w-9 items-center justify-center rounded-[10px] p-2 text-[13px] font-semibold ${logoClass}`}
-      >
-        {logo}
-      </div>
-
-      <Bookmark size={16} className="text-slate-400" />
-    </div>
-
-    <h3 className="mt-4 text-[13px] font-semibold text-slate-950">
-      {title}
-    </h3>
-
-    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-500">
-      {company}
-      <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-        <Check size={8} strokeWidth={3} />
-      </span>
-    </div>
-
-    <div className="my-3 border-t border-slate-100" />
-
-    <div className="flex flex-wrap gap-3 text-[10px] text-slate-500">
-      <span className="flex items-center gap-1">
-        <MapPin size={12} />
-        {location}
-      </span>
-
-      <span className="flex items-center gap-1">
-        <BriefcaseBusiness size={12} />
-        {type}
-      </span>
-    </div>
-
-    <div className="my-3 border-t border-slate-100" />
-
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <span className="text-[12px] font-semibold text-slate-900">
-        {salary}
-      </span>
-
-      <div className="flex flex-wrap gap-1">
-        {skills.map((skill) => (
-          <span
-            key={skill}
-            className="rounded bg-slate-100 px-1.5 py-1 text-[8px] text-slate-600"
-          >
-            {skill}
-          </span>
-        ))}
-      </div>
-    </div>
-  </div>
-);
-
-const StatCard = ({ icon, iconClass, title, value, footer }) => (
-  <div className="min-h-[112px] rounded-[13px] border border-slate-200 bg-white px-4 py-4">
-    <div className="flex items-start gap-3">
-      <div
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] ${iconClass}`}
-      >
+  message,
+  action,
+  onAction,
+}) {
+  return (
+    <div className="flex flex-col items-center rounded-xl border border-dashed border-slate-200 px-5 py-8 text-center">
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
         {icon}
       </div>
 
-      <div className="min-w-0">
-        <p className="text-[11px] leading-4 text-slate-500">{title}</p>
-        <p className="mt-1 text-[25px] font-semibold leading-none tracking-[-0.02em] text-slate-900">
-          {value}
-        </p>
-      </div>
+      <h3 className="mt-3 text-sm font-semibold text-slate-900">
+        {title}
+      </h3>
+      <p className="mt-1 max-w-xs text-xs leading-5 text-slate-500">
+        {message}
+      </p>
+
+      {action && onAction && (
+        <button
+          type="button"
+          onClick={onAction}
+          className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-violet-700 hover:text-violet-800"
+        >
+          {action}
+          <ArrowRight size={14} />
+        </button>
+      )}
     </div>
-
-    <div className="mt-4 text-[10px] text-slate-500">{footer}</div>
-  </div>
-);
-
-const EmptyState = ({ message }) => (
-  <div className="col-span-full rounded-lg border border-dashed border-slate-200 px-4 py-8 text-center text-[12px] text-slate-500">
-    {message}
-  </div>
-);
+  );
+}
 
 export default Overview;

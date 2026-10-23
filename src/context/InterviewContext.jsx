@@ -45,10 +45,20 @@ const InterviewProvider = ({ children }) => {
     [API_URL]
   );
 
-  const getListData = (data) => ({
-    interviews: data?.data?.interviews ?? [],
-    pagination: data?.data?.pagination ?? null,
-  });
+ 
+const getListData = (response) => {
+  // Support both { data: { interviews, pagination } }
+  // and { interviews, pagination } response formats.
+  const payload = response?.data ?? response;
+
+  return {
+    interviews: Array.isArray(payload?.interviews)
+      ? payload.interviews
+      : [],
+    pagination: payload?.pagination ?? null,
+  };
+};
+
 
   const handleScheduleInterview = useCallback(
     async ({ details }) => {
