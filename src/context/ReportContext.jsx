@@ -54,43 +54,44 @@ const ReportProvider = ({ children }) => {
   );
 
   // Get reports with pagination and optional filters.
-  const handleGetReports = useCallback(
-    async ({
-      page = 1,
-      limit = 10,
-      status = "",
-      reason = "",
-      search = "",
-      sortBy = "createdAt",
-      sortOrder = "desc",
-    } = {}) => {
-      const params = new URLSearchParams();
+const handleGetReports = useCallback(
+  async ({
+    page = 1,
+    limit = 10,
+    status = "",
+    reason = "",
+    search = "",
+    targetType = "",
+    sortBy = "createdAt",
+    sortOrder = "desc",
+  } = {}) => {
+    const params = new URLSearchParams();
 
-      params.set("page", String(page));
-      params.set("limit", String(limit));
+    params.set("page", String(page));
+    params.set("limit", String(limit));
+    params.set("sortBy", sortBy);
+    params.set("order", sortOrder);
 
-      if (status) params.set("status", status);
-      if (reason) params.set("reason", reason);
-      if (search) params.set("search", search);
+    if (status) params.set("status", status);
+    if (reason) params.set("reason", reason);
+    if (search) params.set("search", search);
+    if (targetType) params.set("targetType", targetType);
 
-      params.set("sortBy", sortBy);
-      params.set("sortOrder", sortOrder);
+    const data = await request(`/reports?${params.toString()}`);
 
-      const data = await request(`/reports?${params.toString()}`);
+    const fetchedReports = data?.data?.reports ?? [];
+    const pagination = data?.data?.pagination ?? {};
 
-      const fetchedReports = data?.data?.reports ?? [];
-      const pagination = data?.data?.pagination ?? {};
+    setReports(fetchedReports);
+    setReportsPagination((prev) => ({
+      ...prev,
+      ...pagination,
+    }));
 
-      setReports(fetchedReports);
-      setReportsPagination((prev) => ({
-        ...prev,
-        ...pagination,
-      }));
-
-      return fetchedReports;
-    },
-    [request]
-  );
+    return fetchedReports;
+  },
+  [request]
+);
 
   // Get one report.
   const handleGetReportById = useCallback(
@@ -176,49 +177,56 @@ const ReportProvider = ({ children }) => {
   );
 
   // Create a report as a signed-in user.
-  const handleCreateReport = useCallback(
-    async ({
-      reportedUser = null,
-      reportedJob = null,
-      reason,
-      description = "",
-    }) => {
-      if (!reason?.trim()) {
-        throw new Error("Reason is required");
-      }
+  
+const handleCreateReport = useCallback(
+  async ({
+    reportedUser = null,
+    reportedJob = null,
+    reason,
+    description = "",
+  }) => {
+    if (!reason?.trim()) {
+      throw new Error("Reason is required.");
+    }
 
-      if (!reportedUser && !reportedJob) {
-        throw new Error("A reported user or job is required");
-      }
+    if (!reportedUser && !reportedJob) {
+      throw new Error("A reported user or job is required.");
+    }
 
-      if (reportedUser && reportedJob) {
-        throw new Error("Report a user or a job, not both");
-      }
+    if (reportedUser && reportedJob) {
+      throw new Error("Report a user or a job, not both.");
+    }
 
-      const data = await request("/reports/create", {
-        method: "POST",
-        body: JSON.stringify({
-          reportedUser,
-          reportedJob,
-          reason: reason.trim(),
-          description: description.trim(),
-        }),
-      });
+    const payload = {
+      reason: reason.trim(),
+      description: description.trim(),
+      ...(reportedUser ? { reportedUser } : {}),
+      ...(reportedJob ? { reportedJob } : {}),
+    };
 
-      const newReport = data?.data;
+    const response = await request("/reports/create", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
 
-      if (!newReport?._id) {
-        throw new Error("Created report was not returned by the server");
-      }
+    const report =
+      response?.data?.report ??
+      response?.data ??
+      response?.report;
 
-      setSelected(newReport);
+    if (!report?._id) {
+      console.error("Unexpected create-report response:", response);
+      throw new Error(
+        "The server did not return the created report. Check the backend response."
+      );
+    }
 
-      // Don't insert into the admin list blindly: the current filters
-      // or page may not include this report.
-      return newReport;
-    },
-    [request]
-  );
+    setSelected(report);
+    return report;
+  },
+  [request, setSelected]
+);
+
 
   return (
     <ReportContext.Provider

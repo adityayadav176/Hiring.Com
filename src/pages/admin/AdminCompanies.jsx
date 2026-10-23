@@ -835,7 +835,7 @@ if (result?.success === false) {
 
                     const email =
                       company?.email ||
-                      company?.contactEmail ||
+                      company?.companyEmail ||
                       company?.recruiter?.email ||
                       company?.owner?.email ||
                       "";
@@ -885,7 +885,7 @@ if (result?.success === false) {
                             {email || "No email provided"}
                           </p>
                           <p className="mt-1 max-w-[220px] truncate text-xs text-slate-500">
-                            {company?.phone ||
+                            {company?.companyPhone ||
                               company?.contactNumber ||
                               "No phone provided"}
                           </p>
@@ -1202,50 +1202,41 @@ if (result?.success === false) {
                     </h3>
                     <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 px-4">
                       <DetailRow
-                        icon={Mail}
-                        label="Email"
-                        value={
-                          selected?.email ||
-                          selected?.contactEmail ||
-                          selected?.recruiter?.email ||
-                          selected?.owner?.email
-                        }
-                      />
-                      <DetailRow
-                        icon={Phone}
-                        label="Phone"
-                        value={
-                          selected?.phone ||
-                          selected?.contactNumber ||
-                          selected?.mobile
-                        }
-                      />
-                      <DetailRow
-                        icon={Globe}
-                        label="Website"
-                        value={selected?.website || selected?.websiteUrl}
-                        href={
-                          selected?.website || selected?.websiteUrl
-                            ? /^https?:\/\//i.test(
-                                selected.website || selected.websiteUrl
-                              )
-                              ? selected.website || selected.websiteUrl
-                              : `https://${selected.website || selected.websiteUrl}`
-                            : undefined
-                        }
-                      />
-                      <DetailRow
-                        icon={MapPin}
-                        label="Location"
-                        value={[
-                          selected?.address,
-                          selected?.city,
-                          selected?.state,
-                          selected?.country,
-                        ]
-                          .filter(Boolean)
-                          .join(", ")}
-                      />
+  icon={Mail}
+  label="Email"
+  value={selected?.companyEmail}
+/>
+
+<DetailRow
+  icon={Phone}
+  label="Phone"
+  value={selected?.companyPhone}
+/>
+
+<DetailRow
+  icon={Globe}
+  label="Website"
+  value={selected?.socialLinks?.website}
+  href={
+    selected?.socialLinks?.website
+      ? /^https?:\/\//i.test(selected.socialLinks.website)
+        ? selected.socialLinks.website
+        : `https://${selected.socialLinks.website}`
+      : undefined
+  }
+/>
+
+<DetailRow
+  icon={MapPin}
+  label="Location"
+  value={[
+    selected?.headquarters?.city,
+    selected?.headquarters?.state,
+    selected?.headquarters?.country,
+  ]
+    .filter(Boolean)
+    .join(", ")}
+/>
                     </div>
                   </div>
 
@@ -1267,17 +1258,23 @@ if (result?.success === false) {
                         )}
                       />
                       <DetailRow
+  icon={CalendarDays}
+  label="Founded year"
+  value={selected?.foundedYear}
+/>
+                      <DetailRow
                         icon={CalendarDays}
                         label="Registration date"
                         value={formatDate(
                           selected?.createdAt || selected?.registeredAt
                         )}
                       />
-                      <DetailRow
-                        icon={ShieldCheck}
-                        label="Company ID"
-                        value={getCompanyId(selected)}
-                      />
+
+<DetailRow
+  icon={ShieldCheck}
+  label="Verification status"
+  value={selected?.verificationStatus}
+/>
                     </div>
                   </div>
 

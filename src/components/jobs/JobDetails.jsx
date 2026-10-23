@@ -26,6 +26,27 @@ function JobDetails({ job }) {
     formatSalary,
   } = useJob();
 
+  const getCompanyLogo = (job) => {
+  const company = job?.companyId || job?.company;
+  const logo = company?.logo;
+
+  if (typeof logo === "string") return logo;
+  return logo?.url || company?.logoUrl || job?.companyLogo || "";
+};
+
+const getCompanyName = (job) => {
+  const company = job?.companyId || job?.company;
+
+  if (company && typeof company === "object") {
+    return company.name || company.companyName || "Company";
+  }
+
+  return job?.companyName || "Company";
+};
+
+const companyName = getCompanyName(job);
+const companyLogo = getCompanyLogo(job);
+
   const [showApplyModal, setShowApplyModal] = useState(false);
 
   const { setTitle } = useTitle();
@@ -108,13 +129,26 @@ function JobDetails({ job }) {
         <div className="shrink-0 border-b border-slate-200 bg-white px-5 py-5 sm:px-7">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#F0EDFF] text-xl font-bold text-[#6D28D9]">
-                {(job?.companyId?.name || "C").charAt(0).toUpperCase()}
-              </div>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center
+                overflow-hidden rounded-xl border border-slate-200
+                bg-white text-lg font-bold text-violet-700">
+  {companyLogo ? (
+    <img
+      src={companyLogo}
+      alt={`${companyName} logo`}
+      className="h-full w-full object-contain p-1"
+      onError={(event) => {
+        event.currentTarget.style.display = "none";
+      }}
+    />
+  ) : (
+    companyName.charAt(0).toUpperCase()
+  )}
+</div>
 
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-slate-500">
-                  {job?.companyId?.name || "Company not specified"}
+                  {companyName || "Company not specified"}
                 </p>
                 <h1 className="mt-1 break-words text-xl font-bold tracking-tight text-slate-900">
                   {job?.title || "Untitled position"}

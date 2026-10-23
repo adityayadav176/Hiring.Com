@@ -359,8 +359,6 @@ const ReportDetailsModal = ({
   const reporterName =
     reporter.fullName ||
     reporter.name ||
-    [reporter.firstName, reporter.lastName].filter(Boolean).join(" ") ||
-    report.reporterName ||
     "Unknown user";
 
   const targetName =
@@ -423,59 +421,56 @@ const ReportDetailsModal = ({
         className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-white/60 bg-slate-50 shadow-2xl shadow-slate-950/20"
       >
         {/* Header */}
-        <div className="relative overflow-hidden border-b border-slate-200 bg-white px-5 py-5 sm:px-7">
-          <div className="pointer-events-none absolute -right-12 -top-20 h-48 w-48 rounded-full bg-violet-100/70 blur-3xl" />
+        
+{/* Header */}
+<header className="shrink-0 border-b border-slate-200 bg-white px-5 py-5 sm:px-7">
+  <div className="flex items-start justify-between gap-4">
+    <div className="flex min-w-0 items-start gap-3">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+        <Flag size={23} />
+      </div>
 
-          <div className="relative flex items-start justify-between gap-4">
-            <div className="flex min-w-0 items-start gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
-                <Flag size={23} />
-              </div>
-
-              <div className="min-w-0">
-                <div className="mb-1 flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-violet-700">
-                    Report review
-                  </span>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold capitalize ring-1 ring-inset ${getStatusStyle(status)}`}
-                  >
-                    {status}
-                  </span>
-                </div>
-
-                <h2
-                  id="report-modal-title"
-                  className="break-words text-xl font-bold tracking-tight text-slate-950 sm:text-2xl"
-                >
-                  {reason}
-                </h2>
-
-                <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
-                  <span className="inline-flex items-center gap-1">
-                    <Hash size={13} />
-                    {String(reportId).slice(-12)}
-                  </span>
-                  <span className="text-slate-300">•</span>
-                  <span className="inline-flex items-center gap-1">
-                    <CalendarDays size={13} />
-                    {formatDate(report.createdAt || report.submittedAt)}
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={loading}
-              aria-label="Close report details"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"
-            >
-              <X size={18} />
-            </button>
-          </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-violet-700">
+            Report review
+          </span>
+          <StatusBadge status={status} />
         </div>
+
+        <h2
+          id="report-modal-title"
+          className="mt-2 break-words text-xl font-bold leading-snug tracking-tight text-slate-950 sm:text-2xl"
+        >
+          {reason}
+        </h2>
+
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+          <span className="inline-flex items-center gap-1">
+            <Hash size={13} />
+            {String(reportId).slice(-12)}
+          </span>
+
+          <span className="inline-flex items-center gap-1">
+            <CalendarDays size={13} />
+            {formatDate(report.createdAt || report.submittedAt)}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      onClick={onClose}
+      disabled={loading}
+      aria-label="Close report details"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"
+    >
+      <X size={18} />
+    </button>
+  </div>
+</header>
+
 
         {/* Scrollable body */}
         <div className="overflow-y-auto px-4 py-5 sm:px-7 sm:py-6">
@@ -522,7 +517,7 @@ const ReportDetailsModal = ({
                 <div className="flex items-start gap-3">
                   {reporter.avatar || reporter.profilePicture ? (
                     <img
-                      src={reporter.avatar || reporter.profilePicture}
+                      src={reporter.avatar.url || reporter.profilePicture}
                       alt={reporterName}
                       className="h-12 w-12 shrink-0 rounded-2xl object-cover ring-1 ring-slate-200"
                     />
@@ -714,7 +709,7 @@ const ReportDetailsModal = ({
             <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
               <button
                 type="button"
-                onClick={() => handleAction("reject")}
+                onClick={() => {handleAction("reject"); onClose()}}
                 disabled={loading}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-bold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
@@ -728,7 +723,7 @@ const ReportDetailsModal = ({
 
               <button
                 type="button"
-                onClick={() => handleAction("resolve")}
+                onClick={() => {handleAction("resolve"); onClose();}}
                 disabled={loading}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-violet-200 transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
@@ -921,14 +916,14 @@ export default function AdminReports() {
 
       try {
         await handleGetReports({
-          page,
-          limit: PAGE_SIZE,
-          status: statusFilter === "all" ? "" : statusFilter,
-          search,
-          targetType: targetFilter === "all" ? "" : targetFilter,
-          sortBy: "createdAt",
-          sortOrder: "desc",
-        });
+  page,
+  limit: PAGE_SIZE,
+  status: statusFilter === "all" ? "" : statusFilter,
+  search,
+  targetType: targetFilter === "all" ? "" : targetFilter,
+  sortBy: "createdAt",
+  sortOrder: "desc",
+});
 
         return true;
       } catch (err) {
@@ -953,8 +948,8 @@ export default function AdminReports() {
   }, [fetchReports]);
 
   useEffect(() => {
-    setPage(1);
-  }, [statusFilter, targetFilter]);
+  setPage(1);
+}, [statusFilter, targetFilter, search]);
 
   useEffect(() => {
     const closeMenu = (event) => {

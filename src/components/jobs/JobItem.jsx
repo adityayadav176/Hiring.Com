@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Bookmark,
   BriefcaseBusiness,
   Clock3,
   MapPin,
+  Flag
 } from "lucide-react";
-import { useJob } from "../../hooks/Hook";
+import { useJob, useReport } from "../../hooks/Hook";
+import ReportModal from "../modal/reportModal";
 
 function JobItem({job}) {
 
@@ -18,6 +20,31 @@ const {
   formatSalary,
 } = useJob();
 
+const getCompanyLogo = (job) => {
+  const company = job?.companyId || job?.company;
+  const logo = company?.logo;
+
+  if (typeof logo === "string") return logo;
+  return logo?.url || company?.logoUrl || job?.companyLogo || "";
+};
+
+const getCompanyName = (job) => {
+  const company = job?.companyId || job?.company;
+
+  if (company && typeof company === "object") {
+    return company.name || company.companyName || "Company";
+  }
+
+  return job?.companyName || "Company";
+};
+
+const companyName = getCompanyName(job);
+const companyLogo = getCompanyLogo(job);
+
+const {handleCreateReport} = useReport(); 
+
+const [reportOpen, setReportOpen] = useState(false);
+
 const handleViewJob = async () => {
   if (!job?._id) return;
 
@@ -26,6 +53,7 @@ const handleViewJob = async () => {
 };
 
   return (
+    <>
     <article
       className="
         group
@@ -44,25 +72,22 @@ const handleViewJob = async () => {
       {/* Top Section */}
       <div className="flex gap-4">
         {/* Company Logo */}
-        <div
-          className="
-            flex
-            h-12
-            w-12
-            shrink-0
-            items-center
-            justify-center
-            rounded-xl
-            bg-[#F0EDFF]
-            text-lg
-            font-bold
-            text-[#6D28D9]
-          "
-        >
-        {job?.companyId?.logo ? 
-            <img src={job?.companyId.logo} alt={job?.companyId?.name || "Company"} className="h-full w-full rounded-xl object-cover" />
-        : job?.companyId?.name?.charAt(0).toUpperCase() || "A"}
-        </div>
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center
+                overflow-hidden rounded-xl border border-slate-200
+                bg-white text-lg font-bold text-violet-700">
+  {companyLogo ? (
+    <img
+      src={companyLogo}
+      alt={`${companyName} logo`}
+      className="h-full w-full object-contain p-1"
+      onError={(event) => {
+        event.currentTarget.style.display = "none";
+      }}
+    />
+  ) : (
+    companyName.charAt(0).toUpperCase()
+  )}
+</div>
 
         {/* Job Information */}
         <div className="min-w-0 flex-1">
@@ -88,21 +113,29 @@ const handleViewJob = async () => {
             </div>
 
             {/* Bookmark */}
-            <button
-              type="button"
-              aria-label="Save job"
-              className="
-                shrink-0
-                rounded-xl
-                p-2
-                text-slate-400
-                transition-all
-                hover:bg-[#F0EDFF]
-                hover:text-[#6D28D9]
-              "
-            >
-              <Bookmark size={19} strokeWidth={1.8} />
-            </button>
+            <div className="flex shrink-0 items-center gap-1">
+  {/* Save Job */}
+  <button
+    type="button"
+    aria-label="Save job"
+    title="Save job"
+    className="rounded-lg p-2 text-slate-400 transition hover:bg-[#F0EDFF] hover:text-[#6D28D9]"
+  >
+    <Bookmark size={18} strokeWidth={1.8} />
+  </button>
+
+  {/* Report Job */}
+<button
+  type="button"
+  aria-label="Report job"
+  title="Report this job"
+  onClick={() => setReportOpen(true)}
+  className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-200"
+>
+  <Flag size={17} strokeWidth={1.8} />
+</button>
+</div>
+            
           </div>
 
           {/* Job Meta */}
@@ -212,6 +245,13 @@ const handleViewJob = async () => {
         </div>
       </div>
     </article>
+<ReportModal
+  isOpen={reportOpen}
+  onClose={() => setReportOpen(false)}
+  job={job}
+  onSubmit={handleCreateReport}
+/>
+</>
   );
 }
 
