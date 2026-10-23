@@ -104,6 +104,8 @@ const CandidateProfile = () => {
     }
   };
 
+  
+
   const text = (value, fallback = "Not provided") =>
     value === undefined || value === null || value === ""
       ? fallback
