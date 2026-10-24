@@ -124,8 +124,13 @@ const companyLogo = getCompanyLogo(job);
 
   return (
     <>
-    <div className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-[2px]">
-      <aside className="fixed right-0 top-0 z-50 flex h-screen w-[650px] max-w-[92vw] flex-col overflow-hidden bg-white shadow-2xl">
+    <div onClick={() => setSelectedJobs(null)} aria-hidden="true" className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-[2px]">
+        <aside
+      className="fixed right-0 top-0 z-50 flex h-dvh w-[650px] max-w-[92vw] flex-col overflow-hidden bg-white shadow-2xl"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Job details"
+    >
         <div className="shrink-0 border-b border-slate-200 bg-white px-5 py-5 sm:px-7">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-4">

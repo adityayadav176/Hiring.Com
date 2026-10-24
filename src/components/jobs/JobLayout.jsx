@@ -576,7 +576,7 @@ function JobLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F8FC] px-4 py-5 text-slate-900 sm:px-6 lg:px-8 lg:py-8">
+    <div className="min-h-screen relative bg-[#F7F8FC] px-4 py-5 text-slate-900 sm:px-6 lg:px-8 lg:py-8">
       <div className="mx-auto max-w-[1500px] space-y-7">
 
         {/* Page header */}
