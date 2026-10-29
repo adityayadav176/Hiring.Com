@@ -1,6 +1,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useApplication, useInterview } from "../../hooks/Hook";
+import { useNavigate } from "react-router-dom";
 import {
   Video,
   CalendarDays,
@@ -212,7 +213,9 @@ function normalizeInterview(raw = {}) {
 
   return {
     ...raw,
-    id: getId(raw),
+    id: typeof raw._id === "string"
+      ? raw._id
+      : raw._id?.toString?.() || "",
     candidate,
     recruiter,
     job,
@@ -460,6 +463,18 @@ function ProfileIdentity({ avatar, name, email, size = "h-12 w-12" }) {
   );
 }
 
+function getMongoInterviewId(item) {
+  const rawId = item?._id ?? item?.id;
+  const id =
+    typeof rawId === "string"
+      ? rawId
+      : rawId && typeof rawId.toString === "function"
+        ? rawId.toString()
+        : "";
+
+  return /^[a-f\d]{24}$/i.test(id) ? id : "";
+}
+
 export default function RecruiterInterviews() {
   const {
     interviews: contextInterviews,
@@ -476,6 +491,7 @@ export default function RecruiterInterviews() {
     handleCancelRecruiterInterview,
   } = useInterview();
 
+  const navigate = useNavigate();
   const { applications, handleGetRecruiterApplications } = useApplication();
 
   const [applicationSearch, setApplicationSearch] = useState("");
@@ -494,6 +510,34 @@ export default function RecruiterInterviews() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState("");
+
+  const handleJoinInterview = useCallback(
+    (item) => {
+      const interviewId = getMongoInterviewId(item);
+
+      if (!interviewId) {
+        setNotice(
+          "A valid MongoDB interview ID is missing. Refresh the interview list and try again."
+        );
+        return;
+      }
+
+      const interviewType = item?.interviewType ?? item?.type;
+
+      if (interviewType !== "Online") {
+        setNotice("Only online interviews can be joined through the video room.");
+        return;
+      }
+
+      if (!ACTIVE_STATUSES.includes(item?.status)) {
+        setNotice("This interview is no longer active.");
+        return;
+      }
+
+      navigate(`/interview/${encodeURIComponent(interviewId)}`);
+    },
+    [navigate]
+  );
 
   const applicationList = useMemo(
     () => unwrapInterviewList(applications),
@@ -1145,23 +1189,36 @@ export default function RecruiterInterviews() {
           )}
         </div>
 
-        <div className="mt-5 flex gap-2">
-          <button
-            type="button"
-            onClick={() => openDetails(item)}
-            className="min-h-11 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-700 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
-          >
-            View details
-          </button>
-          <button
-            type="button"
-            disabled={!canCancel}
-            onClick={() => openEdit(item)}
-            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-violet-700 px-3 py-2.5 text-xs font-bold text-white hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <CalendarClock size={15} /> Reschedule
-          </button>
-        </div>
+        <div className="mt-5 flex flex-wrap gap-2">
+  <button
+    type="button"
+    onClick={() => openDetails(item)}
+    className="min-h-11 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-700 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
+  >
+    View details
+  </button>
+
+  <button
+    type="button"
+    disabled={!canCancel}
+    onClick={() => openEdit(item)}
+    className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+  >
+    <CalendarClock size={15} />
+    Reschedule
+  </button>
+
+  {item.type === "Online" && canCancel && (
+    <button
+      type="button"
+      onClick={() => handleJoinInterview(item)}
+      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-violet-200 transition hover:bg-violet-800"
+    >
+      <Video size={16} />
+      Join Interview
+    </button>
+  )}
+</div>
       </article>
     );
   }
@@ -1969,6 +2026,17 @@ export default function RecruiterInterviews() {
               </div>
 
               <div className="space-y-3 border-t border-slate-100 pt-5">
+                {selected.type === "Online" &&
+                  ACTIVE_STATUSES.includes(selected.status) && (
+    <button
+      type="button"
+      onClick={() => handleJoinInterview(selected)}
+      className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-violet-200 transition hover:bg-violet-800"
+    >
+      <Video size={17} />
+      Join Interview
+    </button>
+  )}
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   Recruiter actions
                 </p>

@@ -1,86 +1,141 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../hooks/Hook";
+import { useEffect, useRef, useState } from "react";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useAuth, useAdmin } from "../hooks/Hook";
 
 const ProtectedRoutes = ({ allowedType }) => {
+    const { user, recruiter, getUser } = useAuth();
+    const { admin, getAdmin } = useAdmin();
+    const [checking, setChecking] = useState(true);
+    const location = useLocation();
 
-    const {
-        user,
-        admin,
-        recruiter,
-    } = useAuth();
+    const getUserRef = useRef(getUser);
+    const getAdminRef = useRef(getAdmin);
 
-    if (allowedType === "admin") {
+    getUserRef.current = getUser;
+    getAdminRef.current = getAdmin;
 
-        // Not logged in as admin
-        if (!admin) {
+    useEffect(() => {
+        let active = true;
 
-            if (user || recruiter) {
-                return <Navigate to="/" replace />;
+        const restoreSession = async () => {
+            setChecking(true);
+
+            try {
+                if (allowedType === "admin") {
+                    await getAdminRef.current();
+                } else {
+                    await getUserRef.current();
+                }
+            } catch (error) {
+                console.error(
+                    `Failed to restore ${allowedType} session:`,
+                    error
+                );
+            } finally {
+                if (active) {
+                    setChecking(false);
+                }
             }
+        };
 
-            // Nobody is logged in
-            return <Navigate to="/login" replace />;
-        }
+        restoreSession();
 
-        // Logged-in admin
-        if (admin.type !== "admin") {
-            return <Navigate to="/" replace />;
-        }
+        return () => {
+            active = false;
+        };
+    }, [allowedType]);
 
-        return <Outlet />;
+    if (checking) {
+        return (
+            <div className="flex min-h-screen items-center justify-center">
+                <p>Restoring your session...</p>
+            </div>
+        );
     }
 
-    if (allowedType === "user") {
-
-        // No user logged in
-        if (!user) {
-
-            // Admin is logged in
-            if (admin) {
-                return <Navigate to="/admin" replace />;
-            }
-
-            // Recruiter is logged in
-            if (recruiter) {
-                return <Navigate to="/recruiter" replace />;
-            }
-
-            // Nobody logged in
-            return <Navigate to="/login" replace />;
+    if (allowedType === "admin") {
+        if (admin) {
+            return <Outlet />;
         }
 
-        if (user.role !== "User") {
+        if (recruiter?.role === "recruiter") {
+            return <Navigate to="/recruiter" replace />;
+        }
+
+        if (user) {
             return <Navigate to="/" replace />;
         }
 
-        return <Outlet />;
+        return (
+            <Navigate
+                to="/login"
+                state={{ from: location }}
+                replace
+            />
+        );
     }
 
     if (allowedType === "recruiter") {
-
-        if (!recruiter) {
-
-            // Admin is logged in
-            if (admin) {
-                return <Navigate to="/admin" replace />;
-            }
-
-            // Normal user is logged in
-            if (user) {
-                return <Navigate to="/" replace />;
-            }
-
-            // Nobody logged in
-            return <Navigate to="/login" replace />;
+        if (recruiter?.role === "recruiter") {
+            return <Outlet />;
         }
 
-        if (recruiter.role !== "recruiter") {
+        if (admin) {
+            return <Navigate to="/admin" replace />;
+        }
+
+        if (user) {
             return <Navigate to="/" replace />;
         }
 
-        return <Outlet />;
+        return (
+            <Navigate
+                to="/login"
+                state={{ from: location }}
+                replace
+            />
+        );
     }
 
+    if (allowedType === "user") {
+        if (user?.role === "User") {
+            return <Outlet />;
+        }
+
+        if (admin) {
+            return <Navigate to="/admin" replace />;
+        }
+
+        if (recruiter?.role === "recruiter") {
+            return <Navigate to="/recruiter" replace />;
+        }
+
+        return (
+            <Navigate
+                to="/login"
+                state={{ from: location }}
+                replace
+            />
+        );
+    }
+
+    if (allowedType === "both") {
+        if (user?.role === "User" || recruiter?.role === "recruiter") {
+            return <Outlet />;
+        }
+
+        if (admin) {
+            return <Navigate to="/admin" replace />;
+        }
+
+        return (
+            <Navigate
+                to="/login"
+                state={{ from: location }}
+                replace
+            />
+        );
+    }
 
     return <Navigate to="/login" replace />;
 };

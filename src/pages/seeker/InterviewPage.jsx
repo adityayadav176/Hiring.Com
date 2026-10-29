@@ -35,6 +35,7 @@ import {
   X,
   XCircle,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import { useInterview } from "../../hooks/Hook";
 
@@ -539,7 +540,7 @@ function DetailRow({ label, children }) {
   );
 }
 
-function InterviewCard({ interview, onView }) {
+function InterviewCard({ interview, onView, onJoin }) {
   const companyName = getCompanyName(interview);
   const jobTitle = getJobTitle(interview);
   const recruiterName = getDisplayName(interview?.recruiter);
@@ -624,14 +625,29 @@ function InterviewCard({ interview, onView }) {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onView(interview)}
-          className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-violet-100 px-3.5 py-2.5 text-xs font-bold text-violet-700 transition hover:border-violet-300 hover:bg-violet-50"
-        >
-          View details
-          <ArrowUpRight size={14} />
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+{normalize(interview?.interviewType) === "online" &&
+  getText(interview?._id) &&
+  !TERMINAL_STATUSES.includes(getStatus(interview)) && (
+    <button
+      type="button"
+      onClick={() => onJoin(interview)}
+      className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-violet-800"
+    >
+      <Video size={15} />
+      Join Interview
+    </button>
+  )}
+
+  <button
+    type="button"
+    onClick={() => onView(interview)}
+    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-violet-100 px-3.5 py-2.5 text-xs font-bold text-violet-700 transition hover:border-violet-300 hover:bg-violet-50"
+  >
+    View details
+    <ArrowUpRight size={14} />
+  </button>
+</div>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-slate-500">
@@ -649,7 +665,7 @@ function InterviewCard({ interview, onView }) {
   );
 }
 
-function DetailModal({ interview, onClose }) {
+function DetailModal({ interview, onClose, onJoin  }) {
   useEffect(() => {
     if (!interview) return undefined;
 
@@ -733,6 +749,30 @@ function DetailModal({ interview, onClose }) {
         </div>
 
         <div className="max-h-[calc(92vh-90px)] overflow-y-auto p-5 sm:p-6">
+{normalize(interview?.interviewType) === "online" &&
+  getText(interview?._id) &&
+  !TERMINAL_STATUSES.includes(getStatus(interview)) && (
+    <div className="mb-5 flex flex-col justify-between gap-3 rounded-2xl border border-violet-100 bg-violet-50/70 p-4 sm:flex-row sm:items-center">
+      <div>
+        <h3 className="text-sm font-bold text-slate-900">
+          Ready for your interview?
+        </h3>
+
+        <p className="mt-1 text-xs text-slate-500">
+          Join the online interview with your camera and microphone.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => onJoin(interview)}
+        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-violet-800"
+      >
+        <Video size={16} />
+        Join Interview
+      </button>
+    </div>
+  )}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <InfoItem
               icon={CalendarDays}
@@ -1071,6 +1111,8 @@ export default function InterviewPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [calendarOpen, setCalendarOpen] = useState(false);
 
+  const navigate = useNavigate();
+
   const [calendarMonth, setCalendarMonth] = useState(
     () =>
       new Date(
@@ -1079,6 +1121,22 @@ export default function InterviewPage() {
         1
       )
   );
+
+
+const handleJoinInterview = useCallback(
+  (interview) => {
+    const interviewId = getText(interview?._id);
+
+    if (!interviewId) {
+      setError("The interview ID is missing. Please refresh your interviews.");
+      return;
+    }
+
+    setError("");
+    navigate(`/interview/${encodeURIComponent(interviewId)}`);
+  },
+  [navigate]
+);
 
   const interviews = useMemo(
     () => (Array.isArray(interviewData) ? interviewData : []),
@@ -1742,9 +1800,10 @@ export default function InterviewPage() {
                       className="min-w-0"
                     >
                       <InterviewCard
-                        interview={interview}
-                        onView={setSelectedInterview}
-                      />
+  interview={interview}
+  onView={setSelectedInterview}
+  onJoin={handleJoinInterview}
+/>
                     </div>
                   ))
                 ) : (
@@ -1967,9 +2026,10 @@ export default function InterviewPage() {
       </div>
 
       <DetailModal
-        interview={selectedInterview}
-        onClose={() => setSelectedInterview(null)}
-      />
+  interview={selectedInterview}
+  onClose={() => setSelectedInterview(null)}
+  onJoin={handleJoinInterview}
+/>
     </div>
   );
 }

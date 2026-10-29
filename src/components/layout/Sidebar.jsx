@@ -163,7 +163,7 @@ function Sidebar() {
     },
     {
       label: "Messages",
-      page: "messages",
+      page: "chats",
       title: "Messages",
       icon: MessagesSquare,
     },

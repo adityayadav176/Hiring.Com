@@ -398,10 +398,6 @@ const ApplicationProvider = ({ children }) => {
     [APPLICATIONS_URL, request]
   );
 
-  // --------------------------------------------------
-  // GET APPLICATIONS FOR A JOB (RECRUITER)
-  // --------------------------------------------------
-
   const handleGetJobApplications = useCallback(
     async ({
       jobId,

@@ -149,7 +149,7 @@ function Overview() {
 
   const { resumes, handleGetAllResumes } = useResume();
 
-  const { user, getUser } = useAuth();
+  const { user } = useAuth();
 
   const { setActivePage } = useHome();
 
@@ -175,7 +175,6 @@ function Overview() {
       handleGetAllJobs,
       handleGetTodayInterviews,
       handleGetMyProfile,
-      getUser,
       handleGetAllResumes,
     ];
 

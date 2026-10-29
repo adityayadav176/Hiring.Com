@@ -1,11 +1,11 @@
 import {
   createContext,
   useState,
-  useEffect,
   useCallback,
   useRef,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios"
 
 export const AuthContext = createContext();
 
@@ -15,13 +15,14 @@ function AuthProvider({children}) {
     const [recruiter, setRecruiter] = useState(null);
     const [authLoading, setAuthLoading] = useState(true);
     const navigate = useNavigate();
+    const API_URL = "http://localhost:9000/api/v1"
 
     const refreshPromiseRef = useRef(null);
 const authCheckPromiseRef = useRef(null);
 const mountedRef = useRef(true);
 
+
 const handleRefreshAccessToken = useCallback(async () => {
-  // Share one refresh request between concurrent API calls.
   if (refreshPromiseRef.current) {
     return refreshPromiseRef.current;
   }
@@ -36,11 +37,15 @@ const handleRefreshAccessToken = useCallback(async () => {
         }
       );
 
+      const data = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        console.error(
-          "Refresh token failed:",
-          response.status
-        );
+        console.error("Refresh failed:", {
+          status: response.status,
+          message: data.message,
+          response: data,
+        });
+
         return false;
       }
 
@@ -57,8 +62,9 @@ const handleRefreshAccessToken = useCallback(async () => {
   return refreshPromiseRef.current;
 }, []);
 
+
+
 const getUser = useCallback(async () => {
-  // Prevent duplicate simultaneous authentication checks.
   if (authCheckPromiseRef.current) {
     return authCheckPromiseRef.current;
   }
@@ -66,37 +72,33 @@ const getUser = useCallback(async () => {
   authCheckPromiseRef.current = (async () => {
     try {
       const fetchCurrentUser = () =>
-        fetch(
-          "http://localhost:9000/api/v1/auth/fetchUser",
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
+        fetch("http://localhost:9000/api/v1/auth/fetchUser", {
+          method: "GET",
+          credentials: "include",
+        });
+
+          console.trace("getUser() was called");
+
+  if (authCheckPromiseRef.current) {
+    return authCheckPromiseRef.current;
+  }
+
 
       let response = await fetchCurrentUser();
 
       if (response.status === 401) {
-        console.log("Access token expired. Trying refresh...");
-
         const refreshed = await handleRefreshAccessToken();
 
-        if (!refreshed) {
-          throw new Error("SESSION_EXPIRED");
+        if (refreshed) {
+          response = await fetchCurrentUser();
         }
-
-        response = await fetchCurrentUser();
       }
 
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          throw new Error("SESSION_EXPIRED");
-        }
-
         throw new Error(
-          data.message || `Failed to fetch user (${response.status})`
+          data?.message || `Authentication failed (${response.status})`
         );
       }
 
@@ -106,16 +108,11 @@ const getUser = useCallback(async () => {
         throw new Error("User data was not returned by the server");
       }
 
-      if (!mountedRef.current) return;
+      if (!mountedRef.current) return null;
 
-      // Clear stale state from other account types.
-      setAdmin(null);
-
-      if (account.role === "admin") {
-        setAdmin(account);
-        setUser(null);
-        setRecruiter(null);
-      } else if (account.role === "recruiter") {
+      // Update only user/recruiter state.
+      // Never clear admin state from the user authentication flow.
+      if (account.role === "recruiter") {
         setRecruiter(account);
         setUser(null);
       } else {
@@ -125,32 +122,30 @@ const getUser = useCallback(async () => {
 
       return account;
     } catch (error) {
-      console.error("getUser error:", error);
+      console.error("User session restoration failed:", error);
 
       if (mountedRef.current) {
         setUser(null);
         setRecruiter(null);
-        setAdmin(null);
 
-        // Redirect only for a confirmed authentication failure.
-        if (error.message === "SESSION_EXPIRED") {
-          navigate("/login", { replace: true });
-        }
+        // Do not clear admin state.
+        // Do not navigate here; let ProtectedRoutes decide.
       }
 
-      // Network/CORS failures should not automatically redirect.
-      throw error;
+      return null;
     } finally {
+      authCheckPromiseRef.current = null;
+
       if (mountedRef.current) {
         setAuthLoading(false);
       }
-
-      authCheckPromiseRef.current = null;
     }
   })();
 
   return authCheckPromiseRef.current;
-}, [handleRefreshAccessToken, navigate]);
+}, [handleRefreshAccessToken]);
+
+
 
 
 const handleLogin = async (details) => {
@@ -159,7 +154,7 @@ const handleLogin = async (details) => {
 
         if ((!email && !phoneNo) || !password) {
             throw new Error(
-                "Please enter email/phone number and password"
+                "Please enter email/phone number and password."
             );
         }
 
@@ -182,66 +177,88 @@ const handleLogin = async (details) => {
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(
-                data?.message || "Login Failed"
-            );
+            throw new Error(data?.message || "Login failed.");
         }
 
-        // 2FA REQUIRED
-        if (data?.data?.twoFactorRequired) {
-            console.log("2FA required");
-            console.log(data.data.userId);
-            console.log(data.data.type);
+        const account = data?.data;
+
+        if (!account) {
+            throw new Error("Invalid login response from server.");
+        }
+
+        // Two-factor authentication required
+        if (account.twoFactorRequired) {
+            if (!account.twoFactorToken) {
+                throw new Error(
+                    "The server requires 2FA but did not return a temporary token."
+                );
+            }
+
             return {
                 requires2FA: true,
-                userId: data.data.userId,
-                type: data.data.type,
+                twoFactorToken: account.twoFactorToken,
+                userId: account.userId,
+                type: account.type,
             };
         }
 
-        
+        // Admin login
+        if (account.type === "admin") {
+            setUser(null);
+            setRecruiter(null);
+            setAdmin(account);
 
-        
-/* ADMIN */
-if (data?.data?.type === "admin") {
-  setAdmin(data.data);
-  navigate("/admin");
+            navigate("/admin", { replace: true });
 
-  return {
-    requires2FA: false,
-    success: true,
-  };
-}
+            return {
+                success: true,
+                requires2FA: false,
+            };
+        }
 
-/* RECRUITER */
-if (data?.data?.type === "recruiter") {
-  setRecruiter(data.data.recruiter);
-  navigate("/recruiter");
+        // Recruiter login
+        if (account.type === "recruiter") {
+            if (!account.recruiter) {
+                throw new Error("Recruiter data missing from server response.");
+            }
 
-  return {
-    requires2FA: false,
-    success: true,
-  };
-}
+            setUser(null);
+            setAdmin(null);
+            setRecruiter(account.recruiter);
 
-/* NORMAL USER */
-if (data?.data?.type === "user") {
-  setUser(data.data.user);
-  navigate("/");
+            navigate("/recruiter", { replace: true });
 
-  return {
-    requires2FA: false,
-    success: true,
-  };
-}
+            return {
+                success: true,
+                requires2FA: false,
+            };
+        }
 
-throw new Error("Unknown account type returned by server");
+        // Normal user login
+        if (account.type === "user") {
+            if (!account.user) {
+                throw new Error("User data missing from server response.");
+            }
 
+            setAdmin(null);
+            setRecruiter(null);
+            setUser(account.user);
+
+            navigate("/", { replace: true });
+
+            return {
+                success: true,
+                requires2FA: false,
+            };
+        }
+
+        throw new Error("Unknown account type returned by server.");
     } catch (error) {
         console.error("Login error:", error);
         throw error;
     }
 };
+
 
 const handleGoogleAuth = async ({ credential, role = null }) => {
     try {
@@ -489,31 +506,40 @@ const handleSignup = async (details) => {
             }
     }
 
-    const handleLogout = async() => {
-        try {
-            const response = await fetch("http://localhost:9000/api/v1/auth/logoutCurrentUser", {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                method: "POST",
-                credentials: "include",
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Logout Failed");
-            }
-    
-            console.log("LogoutUser Successfully");
-            localStorage.removeItem("token");
-            setUser(null);
-            navigate("/login");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
+   
+const handleLogout = async () => {
+  try {
+    const response = await fetch(
+      "http://localhost:9000/api/v1/auth/logoutCurrentUser",
+      {
+        method: "POST",
+        credentials: "include",
+      }
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.message || "Logout failed");
     }
+
+    console.log("Logout successful");
+
+    // Clear every account type from React state.
+    setUser(null);
+    setRecruiter(null);
+    setAdmin(null);
+
+    // Clear any cached authentication-check promise.
+    authCheckPromiseRef.current = null;
+
+    navigate("/login", { replace: true });
+  } catch (error) {
+    console.error("Logout error:", error);
+    alert(error.message || "Logout failed");
+  }
+};
+
 
    const handleDeleteAccount = async ({ otp, password }) => {
     try {
@@ -736,67 +762,65 @@ const handleVerify2fa = async ({ token }) => {
     }
 };
 
-   const handleLoginWith2FA = async ({ userId, token }) => {
-    try {
-        const response = await fetch(
-            "http://localhost:9000/api/v1/auth/login/2fa",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    userId,
-                    token,
-                }),
-            }
-        );
+ 
 
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(
-                data?.message || "Login with 2FA failed"
-            );
-        }
-
-        console.log("Login with 2FA successfully:", data);
-
-        if (data?.data?.type === "admin") {
-            setAdmin(data.data);
-            navigate("/admin");
-            return {
-                requires2FA: false,
-                success: true,
-            };
-        }
-
-        // RECRUITER
-        if (data?.data?.user?.role === "recruiter") {
-            setRecruiter(data.data.user);
-            navigate("/recruiter");
-            return {
-                requires2FA: false,
-                success: true,
-            };
-        }
-
-         setUser(data.data.user);
-
-        console.log(
-            "User Login Successfully:",
-            data.data.user
-        );
-
-        navigate("/");
-
-        return data.data.user;
-    } catch (error) {
-        console.error("Login with 2FA error:", error);
-        throw error;
+const handleLoginWith2FA = async ({ twoFactorToken, userId, token }) => {
+  try {
+    if (!twoFactorToken || !token) {
+      throw new Error(
+        "Two-factor login token and authentication code are required."
+      );
     }
+
+    const response = await axios.post(
+      `${API_URL}/auth/login/2fa`,
+      {
+        twoFactorToken,
+        userId,
+        token: String(token).trim(),
+      },
+      { withCredentials: true }
+    );
+
+    const data = response.data?.data;
+
+    if (!data?.user) {
+      throw new Error("User data missing from login response.");
+    }
+
+    if (data.type === "recruiter") {
+      setRecruiter(data.user);
+      setUser(null);
+      setAdmin(null);
+
+      navigate("/recruiter", { replace: true });
+    } else if (data.type === "user") {
+      setUser(data.user);
+      setRecruiter(null);
+      setAdmin(null);
+
+      navigate("/", { replace: true });
+    } else {
+      throw new Error("Unknown account type returned by server.");
+    }
+
+    return {
+      success: true,
+      requires2FA: false,
+      data,
+    };
+  } catch (error) {
+    const message =
+      error.response?.data?.message ||
+      error.message ||
+      "Two-factor login failed.";
+
+    console.error("Login with 2FA error:", message);
+    throw new Error(message);
+  }
 };
+
+
 
  
 

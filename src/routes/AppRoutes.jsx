@@ -10,6 +10,8 @@ import NotFound from "../pages/NotFound";
 import RecruiterLayout from '../pages/recruiter/RecruiterLayout';
 import RecruiterProfileS from "../components/RecruiterProfile";
 import RecruiterProfile from "../components/RecruiterProfile";
+import InterviewRoom from "../pages/interview/InterviewRoom";
+import ChatPage from '../components/chat/ChatPage';
 const AppRoutes = () => {
     return (
         <Routes>
@@ -19,7 +21,17 @@ const AppRoutes = () => {
             <Route path="/signup" element={<Signup/>}/>
             <Route path="rp" element={<RecruiterProfileS/>}/>
             <Route path="/recruiterP" element={<RecruiterProfile/>}/>
+            <Route path="/chatpage" element={<ChatPage/>}/>
+ <Route
+    element={<ProtectedRoutes allowedType="both" />}
+>
+    <Route
+        path="/interview/:interviewId"
+        element={<InterviewRoom />}
+    />
+</Route>
 
+            
             <Route element={<ProtectedRoutes allowedType="admin" />}>
             <Route path="/admin" element={<ADashboard/>}/>
             </Route>

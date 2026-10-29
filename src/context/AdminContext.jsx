@@ -3,6 +3,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -12,7 +13,7 @@ export const AdminContext = createContext(null);
 
 const AdminProvider = ({ children }) => {
   const API_URL = import.meta.env.VITE_API_URL;
-
+  const [admin, setAdmin] = useState(null);
   const [dashboard, setDashboard] = useState(null);
 
   const [users, setUsers] = useState([]);
@@ -69,6 +70,88 @@ const AdminProvider = ({ children }) => {
     result
   );
 };
+
+
+const handleRefreshAdminToken = useCallback(async () => {
+  try {
+    const response = await fetch(
+      `${API_URL}/admin/refresh-admin-token`,
+      {
+        method: "POST",
+        credentials: "include",
+      }
+    );
+
+    if (!response.ok) {
+      console.error(
+        "Admin token refresh failed:",
+        response.status
+      );
+      return false;
+    }
+
+    console.log("Admin access token refreshed successfully");
+    return true;
+  } catch (error) {
+    console.error("Admin refresh request failed:", error);
+    return false;
+  }
+}, [API_URL]);
+
+
+
+
+const getAdmin = useCallback(async () => {
+  try {
+    const fetchAdminProfileRequest = () =>
+      fetch(`${API_URL}/admin/profile`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+    let response = await fetchAdminProfileRequest();
+
+    // Access token expired: refresh and retry once.
+    if (response.status === 401) {
+      const refreshed = await handleRefreshAdminToken();
+
+      if (!refreshed) {
+        setAdmin(null);
+        setAdminProfile(null);
+        return null;
+      }
+
+      response = await fetchAdminProfileRequest();
+    }
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok || result?.success === false) {
+      setAdmin(null);
+      setAdminProfile(null);
+      return null;
+    }
+
+    const adminData = result?.data?.admin;
+
+    if (!adminData?._id) {
+      setAdmin(null);
+      setAdminProfile(null);
+      return null;
+    }
+
+    setAdmin(adminData);
+    setAdminProfile(adminData);
+
+    return adminData;
+  } catch (error) {
+    console.error("Get Admin Error:", error);
+    setAdmin(null);
+    setAdminProfile(null);
+    return null;
+  }
+}, [API_URL, handleRefreshAdminToken]);
+
 
   const handleGetAdminDashboard = useCallback(async () => {
     try {
@@ -1274,10 +1357,17 @@ const handleUnlockJob = useCallback(async (jobId) => {
       fetchAdminProfile,
       setAdminProfile,
       avatarLoading,
+      getAdmin,
+      admin,
+      setAdmin,
+      handleRefreshAdminToken,
       handleRestoreCompany,
     }),
     [
       setAdminProfile,
+      admin,
+      setAdmin,
+      handleRefreshAdminToken,
       adminProfile,
       adminLogout,
       avatarLoading,
@@ -1314,6 +1404,7 @@ const handleUnlockJob = useCallback(async (jobId) => {
       handleUnblockCompany,
       handleBlockCompany,
       handleSoftDeleteCompany,
+      getAdmin,
       handleGetAllAdminCompanies
     ]
   );
