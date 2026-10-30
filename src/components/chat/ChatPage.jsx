@@ -26,6 +26,8 @@ import { ConversationContext } from "../../context/ConversationContext";
 import { MessageContext } from "../../context/MessageContext";
 import { ApplicationContext } from "../../context/ApplicationContext";
 import { useAuth } from "../../hooks/Hook";
+import { useChatSocket } from "../../hooks/useChatSocket";
+
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -310,7 +312,9 @@ export default function ChatPage() {
   const {
     messages = [],
     handleGetMessages,
+    handleSocketNewMessage
   } = useContext(MessageContext) || {};
+
 
   const appContext = useContext(ApplicationContext) || {};
 
@@ -358,6 +362,15 @@ export default function ChatPage() {
     () => (Array.isArray(myConversations) ? myConversations : []),
     [myConversations]
   );
+
+  const {isConnected, joinedConversationId, sendMessage: sendSocketMessage} = 
+  useChatSocket({
+    conversationId: activeId,
+    onNewMessage: handleSocketNewMessage,
+    onMessageError: (payload) => {
+      setError(payload?.message || "Unable to send message");
+    }
+  })
 
   useEffect(() => {
     if (getUserCalledRef.current) return;
@@ -707,18 +720,34 @@ export default function ChatPage() {
     [handleGetMyConversations]
   );
 
-  const sendMessage = useCallback(
-    (event) => {
-      event.preventDefault();
+  const sendMessage = (e) => {
+    e.preventDefault();
 
-      if (!draft.trim() || sending) return;
+    const content = draft.trim();
+    if(!content || !activeId) return;
 
-      setError(
-        "Message sending is not connected yet. Connect the Socket.IO send-message event to enable sending."
-      );
-    },
-    [draft, sending]
-  );
+    if(!isConnected) {
+      setError("You're disconnected. Please wait for reconnections");
+      return;
+    }
+
+    if(joinedConversationId !== activeId) {
+      setError("The conversation is still connecting. Try again shortly");
+      return;
+    }
+
+    const sent = sendSocketMessage({
+      conversationId: activeId,
+      content,
+    })
+
+    if(!sent) {
+      setError("Unable to send message. Please try again.");
+    }
+
+    setDraft("");
+    setError("");
+  } 
 
   const handleComposerKeyDown = useCallback((event) => {
     if (
@@ -763,6 +792,7 @@ export default function ChatPage() {
                   ? "Messages about job applications"
                   : `${section} workspace`}
               </p>
+              <span>{isConnected ? joinedConversationId === activeId ? "Connected" : "Joining conversation..." : "Connecting..."}</span>
             </div>
 
             {section === "Chats" && (

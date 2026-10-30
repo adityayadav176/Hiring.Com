@@ -46,6 +46,22 @@ const MessageProvider = ({ children }) => {
     [API_URL]
   );
 
+  
+const handleSocketNewMessage = useCallback((message) => {
+  if (!message?._id) return;
+
+  setMessages((previousMessages) => {
+    const alreadyExists = previousMessages.some(
+      (existing) => String(existing._id) === String(message._id)
+    );
+
+    if (alreadyExists) return previousMessages;
+
+    return [...previousMessages, message];
+  });
+}, []);
+
+
   const handleEditMessage = useCallback(
     async ({ messageId, content }) => {
       if (!messageId) {
@@ -232,6 +248,7 @@ const MessageProvider = ({ children }) => {
     handleDeleteMessage,
     handleMarkMessageAsRead,
     handleMarkAsDelivered,
+    handleSocketNewMessage,
   };
 
   return (
