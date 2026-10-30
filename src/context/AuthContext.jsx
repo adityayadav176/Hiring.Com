@@ -3,6 +3,7 @@ import {
   useState,
   useCallback,
   useRef,
+  useEffect,
 } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios"
@@ -64,6 +65,7 @@ const handleRefreshAccessToken = useCallback(async () => {
 
 
 
+
 const getUser = useCallback(async () => {
   if (authCheckPromiseRef.current) {
     return authCheckPromiseRef.current;
@@ -72,26 +74,25 @@ const getUser = useCallback(async () => {
   authCheckPromiseRef.current = (async () => {
     try {
       const fetchCurrentUser = () =>
-        fetch("http://localhost:9000/api/v1/auth/fetchUser", {
+        fetch(`${API_URL}/auth/fetchUser`, {
           method: "GET",
           credentials: "include",
         });
 
-          console.trace("getUser() was called");
-
-  if (authCheckPromiseRef.current) {
-    return authCheckPromiseRef.current;
-  }
-
+      console.log("Checking current user session...");
 
       let response = await fetchCurrentUser();
 
       if (response.status === 401) {
+        console.log("Access token expired. Trying refresh...");
+
         const refreshed = await handleRefreshAccessToken();
 
-        if (refreshed) {
-          response = await fetchCurrentUser();
+        if (!refreshed) {
+          throw new Error("Session refresh failed");
         }
+
+        response = await fetchCurrentUser();
       }
 
       const data = await response.json().catch(() => ({}));
@@ -110,8 +111,6 @@ const getUser = useCallback(async () => {
 
       if (!mountedRef.current) return null;
 
-      // Update only user/recruiter state.
-      // Never clear admin state from the user authentication flow.
       if (account.role === "recruiter") {
         setRecruiter(account);
         setUser(null);
@@ -121,18 +120,17 @@ const getUser = useCallback(async () => {
       }
 
       return account;
+
     } catch (error) {
-      console.error("User session restoration failed:", error);
+      console.error("Session restoration failed:", error);
 
       if (mountedRef.current) {
         setUser(null);
         setRecruiter(null);
-
-        // Do not clear admin state.
-        // Do not navigate here; let ProtectedRoutes decide.
       }
 
       return null;
+
     } finally {
       authCheckPromiseRef.current = null;
 
@@ -143,10 +141,17 @@ const getUser = useCallback(async () => {
   })();
 
   return authCheckPromiseRef.current;
+
 }, [handleRefreshAccessToken]);
 
 
+useEffect(() => {
+  mountedRef.current = true;
 
+  return () => {
+    mountedRef.current = false;
+  };
+}, []);
 
 const handleLogin = async (details) => {
     try {
