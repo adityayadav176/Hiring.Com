@@ -123,7 +123,7 @@ function Sidebar() {
     },
     {
       label: "Message Dashboard",
-      page: "recruiter/message",
+      page: "/recruiter/chat",
       title: "Message",
       icon: MessagesSquare,
     },

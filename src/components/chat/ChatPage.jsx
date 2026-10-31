@@ -36,10 +36,12 @@ import {
 import { ConversationContext } from "../../context/ConversationContext";
 import { MessageContext } from "../../context/MessageContext";
 import { ApplicationContext } from "../../context/ApplicationContext";
-import { useAuth } from "../../hooks/Hook";
+import { useAuth, useHome } from "../../hooks/Hook";
 import { useChatSocket } from "../../hooks/useChatSocket";
 
 const API_URL = import.meta.env.VITE_API_URL;
+
+const EMOJI_OPTIONS = ["😀", "😂", "😊", "😍", "👍", "👏", "🙏", "🎉", "🔥", "💯", "❤️", "🤝"];
 
 const NAV_ITEMS = [
   { id: "Chats", icon: MessageSquare },
@@ -47,6 +49,7 @@ const NAV_ITEMS = [
   { id: "Applications", icon: BriefcaseBusiness },
   { id: "Notifications", icon: Bell },
 ];
+
 
 const getId = (value) => {
   if (!value) return "";
@@ -264,10 +267,10 @@ function Avatar({
 }) {
   const sizeClass =
     size === "sm"
-      ? "h-8 w-8 text-[10px]"
+      ? "h-7 w-7 text-[9px]"
       : size === "lg"
         ? "h-11 w-11 text-sm"
-        : "h-11 w-11 text-[13px]";
+        : "h-9 w-9 text-[12px]";
 
   return (
     <div className="relative shrink-0">
@@ -275,18 +278,18 @@ function Avatar({
         <img
           src={image}
           alt={name}
-          className={`${sizeClass} rounded-full border border-[#e6e4ef] object-cover`}
+          className={`${sizeClass} rounded-full border border-[#2C2B42] object-cover`}
         />
       ) : (
         <div
-          className={`${sizeClass} flex items-center justify-center rounded-full border border-[#e6e4ef] bg-[#eeebf8] font-semibold text-[#58449c]`}
+          className={`${sizeClass} flex items-center justify-center rounded-full border border-[#2C2B42] bg-[#25233A] font-semibold text-[#B7A5FF]`}
         >
           {getInitials(name)}
         </div>
       )}
 
       {online && (
-        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-[#25a56a]" />
+        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#252536] bg-[#00D6A0] shadow-[0_0_8px_rgba(0,214,160,0.45)]" />
       )}
     </div>
   );
@@ -294,13 +297,13 @@ function Avatar({
 
 function SectionNavigation({ section, showSection, unreadCount, currentUser }) {
   return (
-    <nav className="hidden w-[64px] shrink-0 flex-col items-center border-r border-[#E7E2F3] bg-[#F7F5FF] py-4 md:flex sm:w-[72px]">
+    <nav className="hidden w-[64px] shrink-0 flex-col items-center border-r border-[#252536] bg-[#090A12] py-4 md:flex sm:w-[72px]">
       <button
         type="button"
         onClick={() => showSection("Chats")}
         title="Peer.Hiring home"
         aria-label="Peer.Hiring home"
-        className="mb-8 flex h-10 w-10 items-center justify-center rounded-xl bg-[#6D28D9] text-[15px] font-bold text-white shadow-sm transition-colors hover:bg-[#5B21B6]"
+        className="mb-8 flex h-10 w-10 items-center justify-center rounded-xl bg-[#7657F6] text-[15px] font-bold text-white shadow-sm transition-colors hover:bg-[#6248E8]"
       >
         P
       </button>
@@ -315,18 +318,18 @@ function SectionNavigation({ section, showSection, unreadCount, currentUser }) {
             onClick={() => showSection(id)}
             className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
               section === id
-                ? "bg-[#E4DCFF] text-[#6D28D9]"
-                : "text-[#77718B] hover:bg-[#EDE9FE] hover:text-[#6D28D9]"
+                ? "bg-[#292343] text-[#7657F6]"
+                : "text-[#7C819D] hover:bg-[#19172B] hover:text-[#7657F6]"
             }`}
           >
             {section === id && (
-              <span className="absolute -left-[17px] h-5 w-[3px] rounded-r bg-[#6D28D9]" />
+              <span className="absolute -left-[17px] h-5 w-[3px] rounded-r bg-[#7657F6]" />
             )}
 
             <Icon size={20} strokeWidth={1.8} />
 
             {id === "Chats" && unreadCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full border-2 border-[#F7F5FF] bg-[#6D28D9] px-1 text-[9px] font-semibold text-white">
+              <span className="absolute -right-1 -top-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full border-2 border-[#090A12] bg-[#7657F6] px-1 text-[9px] font-semibold text-white">
                 {unreadCount}
               </span>
             )}
@@ -334,7 +337,7 @@ function SectionNavigation({ section, showSection, unreadCount, currentUser }) {
         ))}
       </div>
 
-      <div className="my-5 h-px w-8 bg-[#E7E2F3]" />
+      <div className="my-5 h-px w-8 bg-[#252536]" />
 
       <button
         type="button"
@@ -343,8 +346,8 @@ function SectionNavigation({ section, showSection, unreadCount, currentUser }) {
         onClick={() => showSection("Settings")}
         className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
           section === "Settings"
-            ? "bg-[#E4DCFF] text-[#6D28D9]"
-            : "text-[#77718B] hover:bg-[#EDE9FE] hover:text-[#6D28D9]"
+            ? "bg-[#292343] text-[#7657F6]"
+            : "text-[#7C819D] hover:bg-[#19172B] hover:text-[#7657F6]"
         }`}
       >
         <Settings size={20} strokeWidth={1.8} />
@@ -356,7 +359,7 @@ function SectionNavigation({ section, showSection, unreadCount, currentUser }) {
           title="Help and support"
           aria-label="Help and support"
           onClick={() => showSection("Help")}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-[#77718B] transition-colors hover:bg-[#EDE9FE] hover:text-[#6D28D9]"
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-[#7C819D] transition-colors hover:bg-[#19172B] hover:text-[#7657F6]"
         >
           <CircleHelp size={20} strokeWidth={1.8} />
         </button>
@@ -366,7 +369,7 @@ function SectionNavigation({ section, showSection, unreadCount, currentUser }) {
           title="My profile"
           aria-label="My profile"
           onClick={() => showSection("Profile")}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D8CCF5] bg-[#EDE9FE] text-xs font-semibold text-[#6D28D9] transition-colors hover:bg-[#E4DCFF]"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-[#3B315F] bg-[#19172B] text-xs font-semibold text-[#7657F6] transition-colors hover:bg-[#292343]"
         >
           {getInitials(getName(currentUser))}
         </button>
@@ -398,6 +401,13 @@ export default function ChatPage() {
     handleGetRecruiterApplications,
   } = appContext;
 
+  const {
+  activePage,
+  setActivePage,
+  recruiterActivePage,
+  setRecruiterActivePage,
+} = useHome();
+
   const { user, recruiter, getUser } = useAuth();
 
   const currentUser = recruiter || user;
@@ -409,6 +419,14 @@ export default function ChatPage() {
 
   const isRecruiter = Boolean(recruiter || role === "recruiter");
   const isCandidate = Boolean(user && !isRecruiter);
+
+  const onBackToDashboard = () => {
+    if(isRecruiter) {
+      setRecruiterActivePage("recruiter/dashboard");
+    } else {
+      setActivePage("overview");
+    }
+  };
 
   const getUserCalledRef = useRef(false);
   const activeRequestRef = useRef(0);
@@ -426,6 +444,7 @@ export default function ChatPage() {
   const [favourites, setFavourites] = useState([]);
   const [unreadIds, setUnreadIds] = useState([]);
   const [sending, setSending] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
   const [error, setError] = useState("");
   const [loadedApplications, setLoadedApplications] = useState([]);
   const [applicationsLoading, setApplicationsLoading] = useState(false);
@@ -1034,6 +1053,7 @@ const formatLastSeen = (date) => {
       setActiveMessageMenu(null);
       setEditingMessageId("");
       setDraft("");
+      setEmojiOpen(false);
       setActiveId(getId(conversation));
       setSection("Chats");
       setMobileChatOpen(true);
@@ -1142,6 +1162,7 @@ const formatLastSeen = (date) => {
       }
 
       setDraft("");
+      setEmojiOpen(false);
       stopTyping?.();
 
       if (textareaRef.current) {
@@ -1341,7 +1362,7 @@ const formatLastSeen = (date) => {
         href={attachment.url}
         target="_blank"
         rel="noreferrer"
-        className="mt-2 flex items-center gap-2 rounded-lg border border-[#e3deed] bg-white/70 px-3 py-2 text-xs text-[#554092] hover:bg-white"
+        className="mt-2 flex items-center gap-2 rounded-lg border border-[#252536] bg-[#11121F]/90 px-3 py-2 text-xs text-[#B7A5FF] hover:bg-[#1B1B2C]"
       >
         <Paperclip size={14} />
         <span className="max-w-[220px] truncate">
@@ -1354,7 +1375,17 @@ const formatLastSeen = (date) => {
   };
 
   return (
-    <main className="fixed inset-0 z-40 flex h-dvh w-full overflow-hidden bg-[#F7F8FC] font-sans text-[#25213A]">
+    <>
+      <style>{`
+        .peer-chat-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .peer-chat-scroll::-webkit-scrollbar-thumb { background: #252536; border-radius: 20px; }
+        .peer-chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .peer-chat-glow { box-shadow: 0 0 0 1px rgba(118,87,246,.18), 0 0 28px rgba(118,87,246,.08); }
+        .peer-chat-scroll { scrollbar-color: #2C2B42 transparent; scrollbar-width: thin; }
+        .peer-chat-scroll::-webkit-scrollbar { width: 5px; }
+        .peer-chat-scroll::-webkit-scrollbar-thumb { background: #252536; border-radius: 20px; }
+      `}</style>
+    <main className="fixed inset-0 z-40 flex h-dvh w-full overflow-hidden bg-[#090A12] font-sans text-[#F1F0FA]">
       <SectionNavigation
         section={section}
         showSection={showSection}
@@ -1366,22 +1397,22 @@ const formatLastSeen = (date) => {
       <aside
         className={`${
           mobileChatOpen ? "hidden md:flex" : "flex"
-        } min-h-0 w-full shrink-0 flex-col border-r border-[#E7E2F3] bg-white md:w-[290px] sm:w-[320px] lg:w-[350px]`}
+        } min-h-0 w-full shrink-0 flex-col border-r border-[#252536] bg-[#0D0E17] md:w-[310px] sm:w-[330px] lg:w-[360px]`}
       >
         <header className="shrink-0 px-4 pb-4 pt-5 sm:px-5">
           <div className="mb-5 flex items-center justify-between">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-[23px] font-bold tracking-[-0.8px] text-[#25213A]">
+                <h1 className="text-[21px] font-bold tracking-[-0.7px] text-[#F1F0FA]">
                   {section}
                 </h1>
 
-                <span className="rounded-md bg-[#EDE9FE] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-[#6D28D9]">
+                <span className="rounded-md border border-[#7657F6]/25 bg-[#19172B] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-[#7657F6]">
                   Workspace
                 </span>
               </div>
 
-              <p className="mt-1 text-xs text-[#77718B]">
+              <p className="mt-1 text-xs text-[#7C819D]">
                 {section === "Chats"
                   ? "Your professional conversations"
                   : `${section} workspace`}
@@ -1394,7 +1425,7 @@ const formatLastSeen = (date) => {
                 title="Open applications"
                 aria-label="Open applications"
                 onClick={() => showSection("Applications")}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6D28D9] text-white shadow-md shadow-[#6D28D9]/20 transition hover:-translate-y-0.5 hover:bg-[#5B21B6]"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#9278FF] to-[#6248E8] text-white shadow-[0_0_22px_rgba(118,87,246,0.20)] transition hover:-translate-y-0.5 hover:bg-[#6248E8]"
               >
                 <Plus size={21} />
               </button>
@@ -1403,15 +1434,15 @@ const formatLastSeen = (date) => {
 
           {section === "Chats" && (
             <>
-              <label className="flex h-[44px] items-center gap-2.5 rounded-xl border border-[#E7E2F3] bg-[#FAF9FF] px-3 transition focus-within:border-[#8B5CF6] focus-within:shadow-sm">
-                <Search size={17} className="shrink-0 text-[#9690A8]" />
+              <label className="flex h-[44px] items-center gap-2.5 rounded-xl border border-[#252536] bg-[#11121F] px-3 transition focus-within:border-[#7657F6]/70 focus-within:shadow-[0_0_0_3px_rgba(118,87,246,0.12)]">
+                <Search size={17} className="shrink-0 text-[#777D99]" />
 
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search people or jobs..."
                   aria-label="Search conversations"
-                  className="w-full min-w-0 bg-transparent text-[13px] text-[#25213A] outline-none placeholder:text-[#AAA4B8]"
+                  className="w-full min-w-0 bg-transparent text-[13px] text-[#F1F0FA] outline-none placeholder:text-[#777D99]"
                 />
 
                 {search && (
@@ -1419,7 +1450,7 @@ const formatLastSeen = (date) => {
                     type="button"
                     onClick={() => setSearch("")}
                     aria-label="Clear search"
-                    className="shrink-0 text-[#9690A8] hover:text-[#6D28D9]"
+                    className="shrink-0 text-[#777D99] hover:text-[#7657F6]"
                   >
                     <X size={15} />
                   </button>
@@ -1434,8 +1465,8 @@ const formatLastSeen = (date) => {
                     onClick={() => setFilter(label)}
                     className={`flex h-[34px] shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-xs font-medium transition ${
                       filter === label
-                        ? "border-[#6D28D9] bg-[#6D28D9] text-white shadow-sm"
-                        : "border-[#E7E2F3] bg-white text-[#77718B] hover:border-[#8B5CF6] hover:text-[#6D28D9]"
+                        ? "border-[#7657F6] bg-gradient-to-br from-[#9278FF] to-[#6248E8] text-white shadow-[0_0_22px_rgba(139,92,246,0.25)]"
+                        : "border-[#252536] bg-[#11121F] text-[#7C819D] hover:border-[#7657F6] hover:text-[#7657F6]"
                     }`}
                   >
                     {label}
@@ -1452,18 +1483,18 @@ const formatLastSeen = (date) => {
 
         {/* Conversations */}
         {section === "Chats" ? (
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-3 [scrollbar-width:thin]">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-3 peer-chat-scroll [scrollbar-width:thin]">
             {filteredChats.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center px-4 text-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#E7E2F3] bg-[#F7F5FF] text-[#8B5CF6]">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#252536] bg-[#090A12] text-[#7657F6]">
                   <MessageSquare size={27} />
                 </div>
 
-                <p className="text-sm font-semibold text-[#25213A]">
+                <p className="text-sm font-semibold text-[#F1F0FA]">
                   No conversations found
                 </p>
 
-                <p className="mt-1 max-w-[220px] text-xs leading-5 text-[#77718B]">
+                <p className="mt-1 max-w-[220px] text-xs leading-5 text-[#7C819D]">
                   {search
                     ? "Try another name or filter."
                     : "Choose an application to start a conversation."}
@@ -1473,7 +1504,7 @@ const formatLastSeen = (date) => {
                   <button
                     type="button"
                     onClick={() => showSection("Applications")}
-                    className="mt-4 rounded-xl bg-[#6D28D9] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#5B21B6]"
+                    className="mt-4 rounded-xl bg-[#7657F6] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#6248E8]"
                   >
                     View applications
                   </button>
@@ -1505,10 +1536,10 @@ const formatLastSeen = (date) => {
                     type="button"
                     key={id}
                     onClick={() => selectChat(chat)}
-                    className={`mb-1 flex w-full items-center gap-3 rounded-sm border px-3 py-3 text-left transition-all duration-200 ${
+                    className={`mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-200 ${
                       selected
-                        ? "border-[#C4B5FD] bg-[#F3EFFF] shadow-sm"
-                        : "border-transparent hover:bg-[#F7F5FF]"
+                        ? "bg-violet-950 border-violet-950"
+                        : "hover:bg-violet-950"
                     }`}
                   >
                     <Avatar
@@ -1519,15 +1550,15 @@ const formatLastSeen = (date) => {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="truncate text-[13px] font-semibold text-[#25213A]">
+                        <span className="truncate text-[13px] font-semibold text-[#F1F0FA]">
                           {name}
                         </span>
 
                         <span
                           className={`shrink-0 text-[10px] ${
                             unread
-                              ? "font-bold text-[#6D28D9]"
-                              : "text-[#9690A8]"
+                              ? "font-bold text-[#7657F6]"
+                              : "text-[#777D99]"
                           }`}
                         >
                           {formatTime(chat.lastMessageAt || chat.updatedAt)}
@@ -1535,7 +1566,7 @@ const formatLastSeen = (date) => {
                       </div>
 
                       <div className="mt-1 flex items-center gap-1.5">
-                        <span className="truncate text-[11px] text-[#77718B]">
+                        <span className="truncate text-[11px] text-[#7C819D]">
                           {chat.application?.jobId?.title ||
                             chat.application?.jobTitle ||
                             "Conversation"}
@@ -1544,18 +1575,18 @@ const formatLastSeen = (date) => {
                         {favourite && (
                           <Star
                             size={11}
-                            className="shrink-0 fill-[#8B5CF6] text-[#6D28D9]"
+                            className="shrink-0 fill-[#7657F6] text-[#7657F6]"
                           />
                         )}
                       </div>
 
                       <div className="mt-1.5 flex items-center justify-between gap-2">
-                        <p className="truncate text-xs text-[#9690A8]">
+                        <p className="truncate text-xs text-[#777D99]">
                           {getLastMessageText(chat)}
                         </p>
 
                         {unread && (
-                          <span className="flex h-[19px] min-w-[19px] shrink-0 items-center justify-center rounded-full bg-[#6D28D9] px-1 text-[10px] font-bold text-white">
+                          <span className="flex h-[19px] min-w-[19px] shrink-0 items-center justify-center rounded-full bg-[#7657F6] px-1 text-[10px] font-bold text-white">
                             1
                           </span>
                         )}
@@ -1569,7 +1600,7 @@ const formatLastSeen = (date) => {
         ) : section === "Applications" ? (
           <div className="min-h-0 flex-1 overflow-y-auto p-3">
             <div className="mb-3 flex items-center justify-between px-1">
-              <p className="text-xs font-medium text-[#77718B]">
+              <p className="text-xs font-medium text-[#7C819D]">
                 {visibleApplications.length} application(s)
               </p>
 
@@ -1580,14 +1611,14 @@ const formatLastSeen = (date) => {
                   setLoadedApplications([]);
                   setApplicationsRefreshKey((value) => value + 1);
                 }}
-                className="rounded-xl border border-[#E7E2F3] bg-white p-2 text-[#6D28D9] transition hover:bg-[#F3EFFF]"
+                className="rounded-xl border border-[#252536] bg-[#11121F] p-2 text-[#7657F6] transition hover:bg-[#171626]"
               >
                 <RefreshCw size={16} />
               </button>
             </div>
 
             {applicationsError && (
-              <div className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+              <div className="mb-3 rounded-xl border border-red-900/60 bg-[#2A1720] p-3 text-xs text-red-300">
                 {applicationsError}
 
                 <button
@@ -1602,19 +1633,19 @@ const formatLastSeen = (date) => {
 
             {applicationsLoading ? (
               <div className="flex justify-center py-10">
-                <LoaderCircle className="animate-spin text-[#6D28D9]" />
+                <LoaderCircle className="animate-spin text-[#7657F6]" />
               </div>
             ) : visibleApplications.length === 0 ? (
               <div className="px-3 py-10 text-center">
-                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EDE9FE] text-[#6D28D9]">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#19172B] text-[#7657F6]">
                   <BriefcaseBusiness size={24} />
                 </div>
 
-                <p className="text-sm font-semibold text-[#25213A]">
+                <p className="text-sm font-semibold text-[#F1F0FA]">
                   No applications found
                 </p>
 
-                <p className="mt-1 text-xs text-[#77718B]">
+                <p className="mt-1 text-xs text-[#7C819D]">
                   Applications will appear here when available.
                 </p>
               </div>
@@ -1652,29 +1683,29 @@ const formatLastSeen = (date) => {
                 return (
                   <article
                     key={applicationId || item._id}
-                    className="mb-3 rounded-2xl border border-[#E7E2F3] bg-white p-4 shadow-sm transition hover:border-[#C4B5FD] hover:shadow-md"
+                    className="mb-3 rounded-2xl border border-[#252536] bg-[#11121F] p-4 shadow-sm transition hover:border-[#7657F6] hover:shadow-md"
                   >
                     <div className="flex items-start gap-2">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EDE9FE] text-[#6D28D9]">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#19172B] text-[#7657F6]">
                         <BriefcaseBusiness size={18} />
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-bold text-[#25213A]">
+                        <p className="truncate text-[13px] font-bold text-[#F1F0FA]">
                           {title}
                         </p>
 
-                        <p className="mt-1 truncate text-[11px] text-[#77718B]">
+                        <p className="mt-1 truncate text-[11px] text-[#7C819D]">
                           {company}
                         </p>
                       </div>
 
-                      <span className="rounded-full bg-[#EDE9FE] px-2.5 py-1 text-[9px] font-semibold capitalize text-[#6D28D9]">
+                      <span className="rounded-full bg-[#19172B] px-2.5 py-1 text-[9px] font-semibold capitalize text-[#7657F6]">
                         {status}
                       </span>
                     </div>
 
-                    <p className="mt-3 truncate text-[11px] text-[#77718B]">
+                    <p className="mt-3 truncate text-[11px] text-[#7C819D]">
                       <Users size={12} className="mr-1 inline" />
                       {isRecruiter ? "Candidate" : "Recruiter"}: {name}
                     </p>
@@ -1683,7 +1714,7 @@ const formatLastSeen = (date) => {
                       type="button"
                       disabled={!applicationId || Boolean(openingApplicationId)}
                       onClick={() => openApplicationConversation(item)}
-                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6D28D9] px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-[#5B21B6] disabled:cursor-not-allowed disabled:opacity-60"
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#7657F6] px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-[#6248E8] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {busy ? (
                         <>
@@ -1704,17 +1735,17 @@ const formatLastSeen = (date) => {
           </div>
         ) : (
           <div className="min-h-0 flex-1 overflow-y-auto p-5">
-            <div className="rounded-2xl border border-[#E7E2F3] bg-white px-5 py-8 text-center">
-              <p className="text-sm font-bold text-[#25213A]">{section}</p>
+            <div className="rounded-2xl border border-[#252536] bg-[#11121F] px-5 py-8 text-center">
+              <p className="text-sm font-bold text-[#F1F0FA]">{section}</p>
 
-              <p className="mt-2 text-xs leading-5 text-[#77718B]">
+              <p className="mt-2 text-xs leading-5 text-[#7C819D]">
                 This section is ready for integration with your Peer.Hiring account.
               </p>
 
               <button
                 type="button"
                 onClick={() => showSection("Chats")}
-                className="mt-4 rounded-xl border border-[#E7E2F3] bg-[#EDE9FE] px-4 py-2 text-xs font-semibold text-[#6D28D9] transition hover:bg-[#E4DCFF]"
+                className="mt-4 rounded-xl border border-[#252536] bg-[#19172B] px-4 py-2 text-xs font-semibold text-[#7657F6] transition hover:bg-[#292343]"
               >
                 Back to chats
               </button>
@@ -1722,10 +1753,10 @@ const formatLastSeen = (date) => {
           </div>
         )}
 
-        <footer className="flex shrink-0 items-center gap-2 border-t border-[#E7E2F3] px-3.5 py-3">
-          <ShieldCheck size={15} className="shrink-0 text-[#8B5CF6]" />
+        <footer className="flex shrink-0 items-center gap-2 border-t border-[#252536] px-3.5 py-3">
+          <ShieldCheck size={15} className="shrink-0 text-[#7657F6]" />
 
-          <p className="text-[10px] text-[#77718B]">
+          <p className="text-[10px] text-[#7C819D]">
             Professional communication for job applications
           </p>
         </footer>
@@ -1735,12 +1766,12 @@ const formatLastSeen = (date) => {
       <section
         className={`${
           mobileChatOpen ? "flex" : "hidden md:flex"
-        } min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-[#F7F5FF]`}
+        } min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-[#090A12]`}
       >
         {activeChat ? (
           <>
             {/* Chat header */}
-            <header className="flex min-h-[72px] shrink-0 items-center justify-between gap-3 border-b border-[#E7E2F3] bg-white px-3 sm:px-5">
+            <header className="flex min-h-[64px] shrink-0 items-center justify-between gap-3 border-b border-[#252536] bg-[#11121F] px-3 sm:px-5">
               <div className="flex min-w-0 items-center gap-3">
                 <button
                   type="button"
@@ -1749,7 +1780,7 @@ const formatLastSeen = (date) => {
                     setMobileChatOpen(false);
                   }}
                   aria-label="Back to conversations"
-                  className="rounded-xl p-1.5 text-[#77718B] hover:bg-[#F3EFFF] md:hidden"
+                  className="rounded-xl p-1.5 text-[#7C819D] hover:bg-[#171626] md:hidden"
                 >
                   <ArrowLeft size={19} />
                 </button>
@@ -1764,13 +1795,13 @@ const formatLastSeen = (date) => {
                 />
 
                 <div className="min-w-0">
-                  <h2 className="truncate text-[15px] font-bold text-[#25213A]">
+                  <h2 className="truncate text-[15px] font-bold text-[#F1F0FA]">
                     {activeName}
                   </h2>
 
-                  <p className="mt-1 flex items-center gap-1.5 truncate text-[11px] text-[#9690A8]">
+                  <p className="mt-1 flex items-center gap-1.5 truncate text-[11px] text-[#777D99]">
                     {typingNames.length ? (
-                      <span className="font-medium text-[#6D28D9]">
+                      <span className="font-medium text-[#7657F6]">
                         typing...
                       </span>
                     ) : activeChat.conversationType === "group" ? (
@@ -1780,8 +1811,8 @@ const formatLastSeen = (date) => {
                         <span
                           className={`h-1.5 w-1.5 shrink-0 rounded-full ${
                             otherParticipantOnline
-                              ? "bg-[#22A06B]"
-                              : "bg-[#B8B3C4]"
+                              ? "bg-[#00D6A0] shadow-[0_0_8px_rgba(0,214,160,0.45)]"
+                              : "bg-[#777D99]"
                           }`}
                         />
 
@@ -1798,19 +1829,47 @@ const formatLastSeen = (date) => {
 
               <div className="flex shrink-0 items-center gap-1">
                 <button
+  type="button"
+  onClick={onBackToDashboard}
+  title="Back to Dashboard"
+  className="
+    flex h-8 w-8 items-center justify-center
+    rounded-xl
+    border border-[#252536]
+    bg-[#171725]
+    text-[#A78BFA]
+    transition-all duration-200
+    hover:border-[#7657F6]
+    hover:bg-[#7657F6]
+    hover:text-white
+  "
+>
+  <ArrowLeft size={21} />
+</button>
+                <button
+                  type="button"
+                  title={favourites.includes(activeId) ? "Remove from favourites" : "Add to favourites"}
+                  aria-label={favourites.includes(activeId) ? "Remove from favourites" : "Add to favourites"}
+                  onClick={() => toggleFavourite(activeId)}
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-[#19172B] ${
+                    favourites.includes(activeId) ? "text-[#F5C451]" : "text-[#777D99] hover:text-[#F5C451]"
+                  }`}
+                >
+                  <Star size={17} className={favourites.includes(activeId) ? "fill-current" : ""} />
+                </button>
+                <button
                   type="button"
                   title="Call (coming soon)"
                   aria-label="Call"
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-[#77718B] transition hover:bg-[#EDE9FE] hover:text-[#6D28D9]"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-[#7C819D] transition hover:bg-[#19172B] hover:text-[#7657F6]"
                 >
                   <Phone size={18} />
                 </button>
-
                 <button
                   type="button"
                   title="More options"
                   aria-label="More conversation options"
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-[#77718B] transition hover:bg-[#EDE9FE] hover:text-[#6D28D9]"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-[#7C819D] transition hover:bg-[#19172B] hover:text-[#7657F6]"
                 >
                   <MoreVertical size={19} strokeWidth={1.8} />
                 </button>
@@ -1819,42 +1878,42 @@ const formatLastSeen = (date) => {
 
             {/* Application information */}
             {linkedApplication && (
-              <div className="flex min-h-[48px] shrink-0 items-center gap-2.5 border-b border-[#E7E2F3] bg-[#F3EFFF] px-4 sm:px-6">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E4DCFF] text-[#6D28D9]">
+              <div className="flex min-h-[42px] shrink-0 items-center gap-2.5 border-b border-[#252536] bg-[#171626] px-4 sm:px-6">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#292343] text-[#7657F6]">
                   <BriefcaseBusiness size={15} />
                 </div>
 
                 <div className="min-w-0">
-                  <p className="truncate text-[10px] text-[#77718B]">
+                  <p className="truncate text-[10px] text-[#7C819D]">
                     {activeCompanyName}
                   </p>
 
-                  <span className="truncate text-xs font-bold text-[#25213A]">
+                  <span className="truncate text-xs font-bold text-[#F1F0FA]">
                     {activeJobTitle}
                   </span>
                 </div>
 
                 <ShieldCheck
                   size={17}
-                  className="ml-auto shrink-0 text-[#8B5CF6]"
+                  className="ml-auto shrink-0 text-[#7657F6]"
                 />
               </div>
             )}
 
             {/* Messages */}
-            <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-[#F7F5FF] px-3 py-5 sm:px-6 sm:py-6 [scrollbar-width:thin]">
-              <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-4">
+            <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain peer-chat-scroll bg-[radial-gradient(ellipse_at_50%_38%,rgba(91,58,166,0.22),transparent_42%),radial-gradient(ellipse_at_10%_0%,rgba(118,87,246,0.07),transparent_32%),#090A12] px-3 py-3 sm:px-6 sm:py-4 [scrollbar-width:thin]">
+              <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-1.5">
                 {messageList.length === 0 ? (
                   <div className="flex flex-1 flex-col items-center justify-center py-20 text-center">
-                    <div className="mb-4 flex h-[76px] w-[76px] items-center justify-center rounded-3xl border border-[#E7E2F3] bg-white text-[#8B5CF6] shadow-sm">
+                    <div className="mb-4 flex h-[76px] w-[76px] items-center justify-center rounded-3xl border border-[#252536] bg-[#11121F] text-[#7657F6] shadow-sm">
                       <MessageSquare size={30} strokeWidth={1.5} />
                     </div>
 
-                    <p className="text-sm font-bold text-[#25213A]">
+                    <p className="text-sm font-bold text-[#F1F0FA]">
                       Start the conversation
                     </p>
 
-                    <p className="mt-1 text-xs text-[#9690A8]">
+                    <p className="mt-1 text-xs text-[#777D99]">
                       Send a message to get things moving.
                     </p>
                   </div>
@@ -1886,8 +1945,8 @@ const formatLastSeen = (date) => {
                     return (
                       <div key={messageId || index}>
                         {showDate && (
-                          <div className="my-4 flex justify-center">
-                            <span className="rounded-full border border-[#E7E2F3] bg-white px-4 py-1.5 text-[10px] font-semibold text-[#77718B] shadow-sm">
+                          <div className="my-2.5 flex justify-center">
+                            <span className="rounded-full border border-[#252536] bg-[#11121F] px-4 py-1.5 text-[10px] font-semibold text-[#7C819D] shadow-sm">
                               {formatDateLabel(message.createdAt)}
                             </span>
                           </div>
@@ -1899,7 +1958,7 @@ const formatLastSeen = (date) => {
                           }`}
                         >
                           {!mine && (
-                            <div className="w-8 shrink-0">
+                            <div className="w-7 shrink-0">
                               {showAvatar && (
                                 <Avatar
                                   name={getName(message.sender)}
@@ -1911,9 +1970,9 @@ const formatLastSeen = (date) => {
                           )}
 
                           <div
-                            className={`relative flex min-w-0 max-w-[82%] flex-col ${
+                            className={`relative flex min-w-0 max-w-[78%] flex-col ${
                               mine ? "items-end" : "items-start"
-                            } sm:max-w-[72%]`}
+                            } sm:max-w-[66%]`}
                           >
                             {mine && !deleted && !isEditing && (
                               <button
@@ -1925,7 +1984,7 @@ const formatLastSeen = (date) => {
                                       : messageId
                                   )
                                 }
-                                className="absolute -top-3 right-1 z-10 rounded-full border border-[#E7E2F3] bg-white p-1.5 text-[#77718B] opacity-0 shadow-sm transition group-hover:opacity-100 hover:bg-[#EDE9FE] hover:text-[#6D28D9]"
+                                className="absolute -top-3 right-1 z-10 rounded-full border border-[#252536] bg-[#11121F] p-1.5 text-[#7C819D] opacity-0 shadow-sm transition group-hover:opacity-100 hover:bg-[#19172B] hover:text-[#7657F6]"
                                 title="Message options"
                                 aria-label="Message options"
                               >
@@ -1936,7 +1995,7 @@ const formatLastSeen = (date) => {
                             {isEditing ? (
                               <form
                                 onSubmit={saveEditedMessage}
-                                className="w-full min-w-[220px] rounded-2xl border border-[#C4B5FD] bg-white p-2 shadow-md"
+                                className="w-full min-w-[220px] rounded-2xl border border-[#7657F6] bg-[#11121F] p-2 shadow-md"
                               >
                                 <textarea
                                   autoFocus
@@ -1958,14 +2017,14 @@ const formatLastSeen = (date) => {
                                       cancelEditing();
                                     }
                                   }}
-                                  className="max-h-32 min-h-[65px] w-full resize-y bg-transparent px-2 py-1 text-[13px] leading-5 text-[#25213A] outline-none"
+                                  className="max-h-32 min-h-[65px] w-full resize-y bg-transparent px-2 py-1 text-[12px] leading-[1.45] text-[#F1F0FA] outline-none"
                                 />
 
-                                <div className="flex justify-end gap-2 border-t border-[#E7E2F3] pt-2">
+                                <div className="flex justify-end gap-2 border-t border-[#252536] pt-2">
                                   <button
                                     type="button"
                                     onClick={cancelEditing}
-                                    className="rounded-lg px-3 py-1.5 text-[11px] text-[#77718B] transition hover:bg-[#F7F5FF]"
+                                    className="rounded-lg px-3 py-1.5 text-[11px] text-[#7C819D] transition hover:bg-[#131421]"
                                   >
                                     Cancel
                                   </button>
@@ -1973,7 +2032,7 @@ const formatLastSeen = (date) => {
                                   <button
                                     type="submit"
                                     disabled={!editDraft.trim() || editingMessage}
-                                    className="rounded-lg bg-[#6D28D9] px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-[#5B21B6] disabled:opacity-50"
+                                    className="rounded-lg bg-[#7657F6] px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-[#6248E8] disabled:opacity-50"
                                   >
                                     Save
                                   </button>
@@ -1981,12 +2040,12 @@ const formatLastSeen = (date) => {
                               </form>
                             ) : (
                               <div
-                                className={`break-words rounded-2xl px-3.5 py-2.5 text-[13px] leading-[1.65] shadow-sm [overflow-wrap:anywhere] ${
+                                className={`break-words rounded-[10px] px-3 py-[4px] text-[11.5px] leading-[1.32] shadow-none [overflow-wrap:anywhere] ${
                                   mine
-                                    ? "rounded-br-[5px] bg-[#6D28D9] text-white"
-                                    : "rounded-bl-[5px] border border-[#E7E2F3] bg-white text-[#25213A]"
+                                    ? "rounded-br-[3px] border border-[#7657F6]/35 bg-gradient-to-br from-[#40336B] to-[#30284F] text-[#F7F5FF] shadow-[0_1px_10px_rgba(118,87,246,0.08)]"
+                                    : "rounded-bl-[3px] border border-[#2C2B42] bg-[#141522] text-[#D8D7E8]"
                                 } ${
-                                  deleted ? "italic text-[#9690A8]" : ""
+                                  deleted ? "italic text-[#777D99]" : ""
                                 }`}
                               >
                                 {content}
@@ -1996,10 +2055,10 @@ const formatLastSeen = (date) => {
                                   message.attachments.map(renderAttachment)}
 
                                 <div
-                                  className={`mt-1 flex items-center justify-end gap-1.5 text-[9px] ${
+                                  className={`mt-0.5 flex items-center justify-end gap-1 text-[8px] leading-[1] ${
                                     mine
-                                      ? "text-[#E9DFFF]"
-                                      : "text-[#9690A8]"
+                                      ? "text-[#D8CCFF]"
+                                      : "text-[#777D99]"
                                   }`}
                                 >
                                   {message.isEdited && !deleted && (
@@ -2021,12 +2080,12 @@ const formatLastSeen = (date) => {
                                       {status === "read" ? (
                                         <CheckCheck
                                           size={13}
-                                          className="text-[#C4B5FD]"
+                                          className="text-[#7657F6]"
                                         />
                                       ) : status === "delivered" ? (
                                         <CheckCheck
                                           size={13}
-                                          className="text-[#E9DFFF]"
+                                          className="text-[#D8CCFF]"
                                         />
                                       ) : (
                                         <Check size={13} />
@@ -2041,11 +2100,11 @@ const formatLastSeen = (date) => {
                               activeMessageMenu === messageId &&
                               !deleted &&
                               !isEditing && (
-                                <div className="absolute right-0 top-1 z-20 w-40 overflow-hidden rounded-xl border border-[#E7E2F3] bg-white py-1 shadow-xl">
+                                <div className="absolute right-0 top-1 z-20 w-40 overflow-hidden rounded-xl border border-[#252536] bg-[#11121F] py-1 shadow-xl">
                                   <button
                                     type="button"
                                     onClick={() => handleEditMessage(message)}
-                                    className="flex w-full items-center gap-2 px-3 py-2.5 text-xs font-medium text-[#55506B] transition hover:bg-[#F3EFFF] hover:text-[#6D28D9]"
+                                    className="flex w-full items-center gap-2 px-3 py-2.5 text-xs font-medium text-[#C5C3D7] transition hover:bg-[#171626] hover:text-[#7657F6]"
                                   >
                                     <Pencil size={14} />
                                     Edit message
@@ -2054,7 +2113,7 @@ const formatLastSeen = (date) => {
                                   <button
                                     type="button"
                                     onClick={() => handleDeleteMessage(message)}
-                                    className="flex w-full items-center gap-2 px-3 py-2.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
+                                    className="flex w-full items-center gap-2 px-3 py-2.5 text-xs font-medium text-red-300 transition hover:bg-[#2A1720]"
                                   >
                                     <Trash2 size={14} />
                                     Delete message
@@ -2074,7 +2133,7 @@ const formatLastSeen = (date) => {
 
             {/* Error */}
             {error && (
-              <div className="mx-3 mb-2 flex items-start justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700 sm:mx-5">
+              <div className="mx-3 mb-2 flex items-start justify-between gap-3 rounded-xl border border-red-900/60 bg-[#2A1720] px-3 py-2.5 text-xs text-red-300 sm:mx-5">
                 <p>{error}</p>
 
                 <button
@@ -2088,9 +2147,29 @@ const formatLastSeen = (date) => {
             )}
 
             {/* Message composer */}
-            <div className="shrink-0 border-t border-[#E7E2F3] bg-white px-3 py-3 sm:px-5 sm:py-3.5">
-              <form onSubmit={handleSendMessage} className="mx-auto max-w-5xl">
-                <div className="flex min-h-[56px] items-end gap-2 rounded-[22px] border border-[#E7E2F3] bg-[#F7F5FF] px-2.5 py-1.5 shadow-sm transition focus-within:border-[#8B5CF6] focus-within:shadow-md sm:gap-2.5">
+            <div className="shrink-0 border-t border-[#252536] bg-[#0D0E17] px-3 py-2.5 sm:px-5 sm:py-3">
+              <form onSubmit={handleSendMessage} className="relative mx-auto max-w-5xl">
+                {emojiOpen && (
+                  <div className="absolute bottom-[calc(100%+12px)] left-12 z-30 grid grid-cols-6 gap-1 rounded-2xl border border-[#2C2B42] bg-[#131421] p-2 shadow-2xl shadow-black/30">
+                    {EMOJI_OPTIONS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => {
+                          setDraft((previous) => `${previous}${emoji}`);
+                          setEmojiOpen(false);
+                          textareaRef.current?.focus();
+                        }}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-xl transition hover:bg-[#292343]"
+                        aria-label={`Insert ${emoji}`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex min-h-[46px] items-end gap-1.5 rounded-xl border border-[#252536] bg-[#11121F] px-2.5 py-1.5 shadow-sm transition focus-within:border-[#7657F6]/70 focus-within:shadow-[0_0_0_3px_rgba(118,87,246,0.12)] sm:gap-2.5">
                   <button
                     type="button"
                     title="Attachments coming soon"
@@ -2100,7 +2179,7 @@ const formatLastSeen = (date) => {
                         "File attachments need to be connected to your upload endpoint."
                       )
                     }
-                    className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#77718B] transition hover:bg-[#EDE9FE] hover:text-[#6D28D9]"
+                    className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#7C819D] transition hover:bg-[#19172B] hover:text-[#7657F6]"
                   >
                     <Paperclip size={19} strokeWidth={1.8} />
                   </button>
@@ -2109,8 +2188,8 @@ const formatLastSeen = (date) => {
                     type="button"
                     title="Insert emoji"
                     aria-label="Insert emoji"
-                    onClick={() => setDraft((previous) => `${previous}😊`)}
-                    className="mb-0.5 hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#77718B] transition hover:bg-[#EDE9FE] hover:text-[#6D28D9] sm:flex"
+                    onClick={() => setEmojiOpen((previous) => !previous)}
+                    className={`mb-0.5 hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl transition hover:bg-[#19172B] hover:text-[#7657F6] sm:flex ${emojiOpen ? "bg-[#19172B] text-[#7657F6]" : "text-[#7C819D]"}`}
                   >
                     <Smile size={19} strokeWidth={1.8} />
                   </button>
@@ -2141,7 +2220,7 @@ const formatLastSeen = (date) => {
                     onKeyDown={handleComposerKeyDown}
                     placeholder="Write your message..."
                     aria-label="Type a message"
-                    className="max-h-28 min-h-[40px] min-w-0 flex-1 resize-none self-center bg-transparent px-1 py-[10px] text-[13px] leading-5 text-[#25213A] outline-none placeholder:text-[#AAA4B8]"
+                    className="max-h-28 min-h-[34px] min-w-0 flex-1 resize-none self-center bg-transparent px-1 py-[10px] text-[12px] leading-[1.45] text-[#F1F0FA] outline-none placeholder:text-[#777D99]"
                   />
 
                   <button
@@ -2154,7 +2233,7 @@ const formatLastSeen = (date) => {
                     }
                     title="Send message"
                     aria-label="Send message"
-                    className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6D28D9] text-white shadow-md shadow-[#6D28D9]/20 transition hover:-translate-y-0.5 hover:bg-[#5B21B6] disabled:translate-y-0 disabled:bg-[#D8D5E0] disabled:text-white disabled:shadow-none"
+                    className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#9278FF] to-[#6248E8] text-white shadow-[0_0_22px_rgba(118,87,246,0.20)] transition hover:-translate-y-0.5 hover:bg-[#6248E8] disabled:translate-y-0 disabled:bg-[#374151] disabled:text-white disabled:shadow-none"
                   >
                     {sending ? (
                       <LoaderCircle size={17} className="animate-spin" />
@@ -2164,7 +2243,7 @@ const formatLastSeen = (date) => {
                   </button>
                 </div>
 
-                <p className="mt-2 text-center text-[10px] text-[#9690A8]">
+                <p className="mt-2 text-center text-[10px] text-[#777D99]">
                   Keep conversations professional and related to the application.
                 </p>
               </form>
@@ -2172,25 +2251,25 @@ const formatLastSeen = (date) => {
           </>
         ) : (
           /* Empty workspace */
-          <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto bg-[#F7F5FF] px-5 py-8 text-center">
-            <div className="absolute right-[-100px] top-[-100px] h-72 w-72 rounded-full bg-[#8B5CF6]/10 blur-3xl" />
+          <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto bg-[#090A12] px-5 py-8 text-center">
+            <div className="absolute right-[-100px] top-[-100px] h-72 w-72 rounded-full bg-[#7657F6]/10 blur-3xl" />
 
-            <div className="absolute bottom-[-120px] left-[-100px] h-80 w-80 rounded-full bg-[#6D28D9]/5 blur-3xl" />
+            <div className="absolute bottom-[-120px] left-[-100px] h-80 w-80 rounded-full bg-[#7657F6]/5 blur-3xl" />
 
             <div className="relative z-10">
-              <div className="mx-auto mb-7 flex h-[100px] w-[100px] items-center justify-center rounded-[30px] border border-[#E7E2F3] bg-white text-[#8B5CF6] shadow-xl shadow-[#6D28D9]/5">
+              <div className="mx-auto mb-7 flex h-[100px] w-[100px] items-center justify-center rounded-[30px] border border-[#252536] bg-[#11121F] text-[#7657F6] shadow-xl shadow-[#7657F6]/5">
                 <MessageSquare size={42} strokeWidth={1.4} />
               </div>
 
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#6D28D9]">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#7657F6]">
                 Peer.Hiring messages
               </p>
 
-              <h2 className="mt-3 max-w-md text-2xl font-bold tracking-[-0.8px] text-[#25213A] sm:text-[32px]">
+              <h2 className="mt-3 max-w-md text-2xl font-bold tracking-[-0.8px] text-[#F1F0FA] sm:text-[32px]">
                 Make your next career connection.
               </h2>
 
-              <p className="mx-auto mt-3 max-w-[390px] text-sm leading-6 text-[#77718B]">
+              <p className="mx-auto mt-3 max-w-[390px] text-sm leading-6 text-[#7C819D]">
                 Connect with recruiters and candidates about real job applications.
                 Select a conversation to continue where you left off.
               </p>
@@ -2204,7 +2283,7 @@ const formatLastSeen = (date) => {
                     setSearch("");
                     setMobileChatOpen(false);
                   }}
-                  className="flex h-11 items-center gap-2 rounded-xl bg-[#6D28D9] px-5 text-[13px] font-semibold text-white shadow-lg shadow-[#6D28D9]/15 transition hover:-translate-y-0.5 hover:bg-[#5B21B6]"
+                  className="flex h-11 items-center gap-2 rounded-xl bg-[#7657F6] px-5 text-[13px] font-semibold text-white shadow-lg shadow-[#7657F6]/15 transition hover:-translate-y-0.5 hover:bg-[#6248E8]"
                 >
                   <MessageSquare size={16} />
                   View conversations
@@ -2213,21 +2292,21 @@ const formatLastSeen = (date) => {
                 <button
                   type="button"
                   onClick={() => showSection("Applications")}
-                  className="flex h-11 items-center gap-2 rounded-xl border border-[#E7E2F3] bg-white px-5 text-[13px] font-semibold text-[#55506B] shadow-sm transition hover:-translate-y-0.5 hover:border-[#C4B5FD] hover:bg-[#F3EFFF]"
+                  className="flex h-11 items-center gap-2 rounded-xl border border-[#252536] bg-[#11121F] px-5 text-[13px] font-semibold text-[#C5C3D7] shadow-sm transition hover:-translate-y-0.5 hover:border-[#7657F6] hover:bg-[#171626]"
                 >
                   <BriefcaseBusiness size={16} />
                   Applications
                 </button>
               </div>
 
-              <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-[11px] font-medium text-[#77718B]">
+              <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-[11px] font-medium text-[#7C819D]">
                 <span className="flex items-center gap-1.5">
-                  <ShieldCheck size={15} className="text-[#8B5CF6]" />
+                  <ShieldCheck size={15} className="text-[#7657F6]" />
                   Professional communication
                 </span>
 
                 <span className="flex items-center gap-1.5">
-                  <BriefcaseBusiness size={15} className="text-[#8B5CF6]" />
+                  <BriefcaseBusiness size={15} className="text-[#7657F6]" />
                   Job-focused conversations
                 </span>
               </div>
@@ -2236,5 +2315,6 @@ const formatLastSeen = (date) => {
         )}
       </section>
     </main>
+    </>
   );
 }
