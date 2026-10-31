@@ -1,3 +1,4 @@
+
 import {
   createContext,
   useState,
@@ -5,836 +6,1296 @@ import {
   useRef,
   useEffect,
 } from "react";
+
 import { useNavigate } from "react-router-dom";
-import axios from "axios"
 
-export const AuthContext = createContext();
+export const AuthContext = createContext(null);
 
-function AuthProvider({children}) {
-    const [user, setUser] = useState(null);
-    const [admin, setAdmin] = useState(null);
-    const [recruiter, setRecruiter] = useState(null);
-    const [authLoading, setAuthLoading] = useState(true);
-    const navigate = useNavigate();
-    const API_URL = "http://localhost:9000/api/v1"
+const API_URL = (
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:9000/api/v1"
+).replace(/\/$/, "");
 
-    const refreshPromiseRef = useRef(null);
-const authCheckPromiseRef = useRef(null);
-const mountedRef = useRef(true);
+// IMPORTANT:
+// These paths must match your actual Admin router.
+
+const ADMIN_PROFILE_URL = `${API_URL}/admin/profile`;
+const ADMIN_LOGOUT_URL = `${API_URL}/admin/logout`;
+
+const REFRESH_URL = `${API_URL}/auth/refreshAccessToken`;
+
+const parseResponse = async (response) => {
+  return response.json().catch(() => ({}));
+};
+
+const getErrorMessage = (data, fallback) => {
+  return (
+    data?.message ||
+    data?.error ||
+    fallback ||
+    "Something went wrong."
+  );
+};
 
 
-const handleRefreshAccessToken = useCallback(async () => {
-  if (refreshPromiseRef.current) {
-    return refreshPromiseRef.current;
-  }
+function AuthProvider({ children }) {
+  const navigate = useNavigate();
 
-  refreshPromiseRef.current = (async () => {
-    try {
-      const response = await fetch(
-        "http://localhost:9000/api/v1/auth/refreshAccessToken",
-        {
-          method: "POST",
-          credentials: "include",
-        }
-      );
 
-      const data = await response.json().catch(() => ({}));
+  const [user, setUser] = useState(null);
+  const [admin, setAdmin] = useState(null);
+  const [recruiter, setRecruiter] = useState(null);
 
-      if (!response.ok) {
-        console.error("Refresh failed:", {
-          status: response.status,
-          message: data.message,
-          response: data,
-        });
+  const [authLoading, setAuthLoading] = useState(true);
 
-        return false;
+  const refreshPromiseRef = useRef(null);
+  const authCheckPromiseRef = useRef(null);
+  const mountedRef = useRef(false);
+
+  const clearLocalAuth = useCallback(() => {
+    if (!mountedRef.current) return;
+
+    setUser(null);
+    setRecruiter(null);
+    setAdmin(null);
+  }, []);
+
+
+  const setAuthenticatedAccount = useCallback(
+    (type, account) => {
+      if (!account) {
+        clearLocalAuth();
+        return;
       }
 
-      console.log("Access token refreshed successfully");
-      return true;
-    } catch (error) {
-      console.error("Refresh request failed:", error);
-      return false;
+      if (type === "admin") {
+        setAdmin(account);
+        setUser(null);
+        setRecruiter(null);
+        return;
+      }
+
+      if (type === "recruiter") {
+        setRecruiter(account);
+        setUser(null);
+        setAdmin(null);
+        return;
+      }
+
+      setUser(account);
+      setRecruiter(null);
+      setAdmin(null);
+    },
+    [clearLocalAuth]
+  );
+
+  const handleRefreshAccessToken = useCallback(async () => {
+    // Deduplicate concurrent refresh requests in this tab.
+    if (refreshPromiseRef.current) {
+      return refreshPromiseRef.current;
+    }
+
+    refreshPromiseRef.current = (async () => {
+      try {
+        const response = await fetch(REFRESH_URL, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await parseResponse(response);
+
+        if (!response.ok) {
+          console.error("Access token refresh failed:", {
+            status: response.status,
+            message: data?.message,
+          });
+
+          return false;
+        }
+
+        console.log("Access token refreshed successfully.");
+
+        return true;
+      } catch (error) {
+        console.error("Refresh request failed:", error);
+        return false;
+      }
+    })();
+
+    try {
+      return await refreshPromiseRef.current;
     } finally {
       refreshPromiseRef.current = null;
     }
-  })();
+  }, []);
 
-  return refreshPromiseRef.current;
-}, []);
+  // Use for protected User, Recruiter and Admin requests.
+  // Login, registration and refresh requests should not
+  // use this helper.
 
-
-
-
-const getUser = useCallback(async () => {
-  if (authCheckPromiseRef.current) {
-    return authCheckPromiseRef.current;
-  }
-
-  authCheckPromiseRef.current = (async () => {
-    try {
-      const fetchCurrentUser = () =>
-        fetch(`${API_URL}/auth/fetchUser`, {
-          method: "GET",
+  const authenticatedFetch = useCallback(
+    async (url, options = {}) => {
+      const makeRequest = () =>
+        fetch(url, {
+          ...options,
           credentials: "include",
         });
 
-      console.log("Checking current user session...");
+      let response = await makeRequest();
 
-      let response = await fetchCurrentUser();
+      // Never retry the refresh endpoint itself.
+      const requestUrl =
+        typeof url === "string"
+          ? url
+          : url instanceof URL
+            ? url.toString()
+            : "";
 
-      if (response.status === 401) {
-        console.log("Access token expired. Trying refresh...");
-
-        const refreshed = await handleRefreshAccessToken();
-
-        if (!refreshed) {
-          throw new Error("Session refresh failed");
-        }
-
-        response = await fetchCurrentUser();
+      if (
+        requestUrl.includes("/auth/refreshAccessToken")
+      ) {
+        return response;
       }
 
-      const data = await response.json().catch(() => ({}));
+      if (response.status !== 401) {
+        return response;
+      }
+
+      console.log(
+        "Protected request returned 401. Refreshing token..."
+      );
+
+      const refreshed = await handleRefreshAccessToken();
+
+      if (!refreshed) {
+        return response;
+      }
+
+      // Retry the original request only once.
+      response = await makeRequest();
+
+      return response;
+    },
+    [handleRefreshAccessToken]
+  );
+
+  const getUser = useCallback(async () => {
+    if (authCheckPromiseRef.current) {
+      return authCheckPromiseRef.current;
+    }
+
+    authCheckPromiseRef.current = (async () => {
+      try {
+        console.log("Checking authentication session...");
+
+        const readCurrentAccount = async () => {
+
+          const userResponse = await fetch(
+            `${API_URL}/auth/fetchUser`,
+            {
+              method: "GET",
+              credentials: "include",
+            }
+          );
+
+          const userData = await parseResponse(userResponse);
+
+          if (userResponse.ok) {
+            const account = userData?.data;
+
+            if (!account?._id) {
+              throw new Error(
+                "User data missing from server response."
+              );
+            }
+
+            return {
+              authenticated: true,
+              type:
+                account.role === "recruiter"
+                  ? "recruiter"
+                  : "user",
+              account,
+              userStatus: userResponse.status,
+              adminStatus: null,
+            };
+          }
+
+          const adminResponse = await fetch(
+            ADMIN_PROFILE_URL,
+            {
+              method: "GET",
+              credentials: "include",
+            }
+          );
+
+          const adminData = await parseResponse(adminResponse);
+
+          if (adminResponse.ok) {
+            const account = adminData?.data?.admin;
+
+            if (!account?._id) {
+              throw new Error(
+                "Admin data missing from server response."
+              );
+            }
+
+            return {
+              authenticated: true,
+              type: "admin",
+              account,
+              userStatus: userResponse.status,
+              adminStatus: adminResponse.status,
+            };
+          }
+
+          return {
+            authenticated: false,
+            account: null,
+            userStatus: userResponse.status,
+            adminStatus: adminResponse.status,
+            userMessage: userData?.message,
+            adminMessage: adminData?.message,
+          };
+        };
+
+    
+        let result = await readCurrentAccount();
+
+
+        if (
+          !result.authenticated &&
+          (
+            result.userStatus === 401 ||
+            result.adminStatus === 401
+          )
+        ) {
+          console.log(
+            "Access token invalid or expired. Trying refresh..."
+          );
+
+          const refreshed = await handleRefreshAccessToken();
+
+          if (refreshed) {
+            result = await readCurrentAccount();
+          } else {
+            throw new Error(
+              "Session expired. Please log in again."
+            );
+          }
+        }
+
+        if (!result.authenticated || !result.account) {
+          throw new Error(
+            result.userMessage ||
+            result.adminMessage ||
+            "Authentication session could not be restored."
+          );
+        }
+
+        if (!mountedRef.current) {
+          return null;
+        }
+
+        setAuthenticatedAccount(
+          result.type,
+          result.account
+        );
+
+        console.log(
+          `${result.type} authentication restored successfully.`
+        );
+
+        return result.account;
+      } catch (error) {
+        console.error(
+          "Session restoration failed:",
+          error
+        );
+
+        clearLocalAuth();
+
+        return null;
+      } finally {
+        authCheckPromiseRef.current = null;
+
+        if (mountedRef.current) {
+          setAuthLoading(false);
+        }
+      }
+    })();
+
+    return authCheckPromiseRef.current;
+  }, [
+    handleRefreshAccessToken,
+    setAuthenticatedAccount,
+    clearLocalAuth,
+  ]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+
+    getUser();
+
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [getUser]);
+
+  const handleLogin = async (details) => {
+    try {
+      const {
+        email,
+        password,
+        phoneNo,
+      } = details || {};
+
+      if ((!email && !phoneNo) || !password) {
+        throw new Error(
+          "Please enter email/phone number and password."
+        );
+      }
+
+      const response = await fetch(
+        `${API_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            email: email || null,
+            phoneNo: phoneNo || null,
+            password,
+          }),
+        }
+      );
+
+      const data = await parseResponse(response);
 
       if (!response.ok) {
         throw new Error(
-          data?.message || `Authentication failed (${response.status})`
+          getErrorMessage(data, "Login failed.")
         );
       }
 
       const account = data?.data;
 
       if (!account) {
-        throw new Error("User data was not returned by the server");
-      }
-
-      if (!mountedRef.current) return null;
-
-      if (account.role === "recruiter") {
-        setRecruiter(account);
-        setUser(null);
-      } else {
-        setUser(account);
-        setRecruiter(null);
-      }
-
-      return account;
-
-    } catch (error) {
-      console.error("Session restoration failed:", error);
-
-      if (mountedRef.current) {
-        setUser(null);
-        setRecruiter(null);
-      }
-
-      return null;
-
-    } finally {
-      authCheckPromiseRef.current = null;
-
-      if (mountedRef.current) {
-        setAuthLoading(false);
-      }
-    }
-  })();
-
-  return authCheckPromiseRef.current;
-
-}, [handleRefreshAccessToken]);
-
-
-useEffect(() => {
-  mountedRef.current = true;
-
-  return () => {
-    mountedRef.current = false;
-  };
-}, []);
-
-const handleLogin = async (details) => {
-    try {
-        const { email, password, phoneNo } = details;
-
-        if ((!email && !phoneNo) || !password) {
-            throw new Error(
-                "Please enter email/phone number and password."
-            );
-        }
-
-        const response = await fetch(
-            "http://localhost:9000/api/v1/auth/login",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    email: email || null,
-                    password,
-                    phoneNo: phoneNo || null,
-                }),
-            }
+        throw new Error(
+          "Invalid login response from server."
         );
+      }
 
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data?.message || "Login failed.");
+      if (account.twoFactorRequired) {
+        if (!account.twoFactorToken) {
+          throw new Error(
+            "Temporary 2FA token was not returned by server."
+          );
         }
-
-        const account = data?.data;
-
-        if (!account) {
-            throw new Error("Invalid login response from server.");
-        }
-
-        // Two-factor authentication required
-        if (account.twoFactorRequired) {
-            if (!account.twoFactorToken) {
-                throw new Error(
-                    "The server requires 2FA but did not return a temporary token."
-                );
-            }
-
-            return {
-                requires2FA: true,
-                twoFactorToken: account.twoFactorToken,
-                userId: account.userId,
-                type: account.type,
-            };
-        }
-
-        // Admin login
-        if (account.type === "admin") {
-            setUser(null);
-            setRecruiter(null);
-            setAdmin(account);
-
-            navigate("/admin", { replace: true });
-
-            return {
-                success: true,
-                requires2FA: false,
-            };
-        }
-
-        // Recruiter login
-        if (account.type === "recruiter") {
-            if (!account.recruiter) {
-                throw new Error("Recruiter data missing from server response.");
-            }
-
-            setUser(null);
-            setAdmin(null);
-            setRecruiter(account.recruiter);
-
-            navigate("/recruiter", { replace: true });
-
-            return {
-                success: true,
-                requires2FA: false,
-            };
-        }
-
-        // Normal user login
-        if (account.type === "user") {
-            if (!account.user) {
-                throw new Error("User data missing from server response.");
-            }
-
-            setAdmin(null);
-            setRecruiter(null);
-            setUser(account.user);
-
-            navigate("/", { replace: true });
-
-            return {
-                success: true,
-                requires2FA: false,
-            };
-        }
-
-        throw new Error("Unknown account type returned by server.");
-    } catch (error) {
-        console.error("Login error:", error);
-        throw error;
-    }
-};
-
-
-const handleGoogleAuth = async ({ credential, role = null }) => {
-    try {
-        if (!credential) {
-            throw new Error("Google credential is required");
-        }
-
-        const response = await fetch(
-            "http://localhost:9000/api/v1/auth/google",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    credential,
-                    ...(role ? { role } : {}),
-                }),
-            }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(
-                data?.message || "Google Authentication Failed"
-            );
-        }
-
-        console.log(
-            "Google Authentication Successfully:",
-            data
-        );
-
-        const account = data?.data?.user;
-
-        if (!account) {
-            throw new Error("User data was not returned");
-        }
-
-        // RECRUITER
-        if (account.role === "recruiter") {
-            setRecruiter(account);
-            setUser(null);
-
-            navigate("/recruiter");
-
-            return {
-                success: true,
-                requires2FA: false,
-                type: "recruiter",
-                user: account,
-            };
-        }
-
-        // NORMAL USER
-        setUser(account);
-        setRecruiter(null);
-
-        navigate("/");
 
         return {
-            success: true,
-            requires2FA: false,
-            type: "user",
-            user: account,
+          success: true,
+          requires2FA: true,
+          twoFactorToken: account.twoFactorToken,
+          userId: account.userId,
+          type: account.type,
         };
-
-    } catch (error) {
-        console.error(
-            "Google Authentication Error:",
-            error
-        );
-
-        throw error;
-    }
-};
-
-    
-const handleSignup = async (details) => {
-    try {
-        const {
-            name,
-            email,
-            password,
-            avatar,
-            coverImage,
-            role,
-            phoneNo,
-        } = details;
-
-        if (!role) {
-            alert("Please select your role.");
-            return;
-        }
-
-        if (!(avatar instanceof File)) {
-            alert("Please select a valid avatar image.");
-            console.log("Avatar value:", avatar);
-            return;
-        }
-
-        if (!(coverImage instanceof File)) {
-            alert("Please select a valid cover image.");
-            console.log("Cover image value:", coverImage);
-            return;
-        }
-
-        const formData = new FormData();
-
-        formData.append("name", name);
-        formData.append("email", email);
-        formData.append("password", password);
-        formData.append("phoneNo", phoneNo ?? "");
-        formData.append("avatar", avatar);
-        formData.append("coverImage", coverImage);
-        formData.append("role", role);
-
-        // Debug: verify the files before sending
-        console.log("Avatar:", formData.get("avatar"));
-        console.log("Cover image:", formData.get("coverImage"));
-
-        const response = await fetch(
-            "http://localhost:9000/api/v1/auth/register",
-            {
-                method: "POST",
-                body: formData,
-                // Do not manually set Content-Type for FormData.
-            }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.message || "Signup failed");
-        }
-
-        alert(
-            `Hello ${data?.data?.user?.name || name}, your account has been created! Welcome to Peer Hiring.`
-        );
-
-        navigate("/login");
-    } catch (error) {
-        console.error("Signup error:", error);
-        alert(error.message || "Something went wrong.");
-    }
-};
-
-
-    const handlePasswordResetOtp = async({email}) => {
-        try {
-            const response = await fetch("http://localhost:9000/api/v1/auth/SendPasswordResetOtp", {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                method: "POST",
-                body: JSON.stringify({email})
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Otp Sending Failed");
-            }
-    
-            console.log("Otp Send Successfully");
-            navigate("/forgetPassword");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
-    }
-
-    const handleForgetPassword = async({password, confirmPassword, otp}) => {
-
-        const otpValue = otp.join("");
-
-    if (otpValue.length !== 6) {
-      alert("Please enter the 6-digit OTP");
-      return;
-    }
-
-    if (!password) {
-      alert("Please enter your new password");
-      return;
-    }
-
-    if (!confirmPassword) {
-      alert("Please confirm your password");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      alert("Password and Confirm Password do not match");
-      return;
-    }
-
-        try {
-            const response = await fetch("http://localhost:9000/api/v1/auth/forgetPassword", {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                method: "POST",
-                body: JSON.stringify({password, confirmPassword, otp: otpValue}),
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Password Reset Failed");
-            }
-
-            alert("Password changed successfully");
-            navigate("/login");
-    
-            console.log("Password Reset Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
-    }
-
-    const changeName = async({name}) => {
-            try {
-                const response = await fetch("http://localhost:9000/api/v1/auth/changeName", {
-                    headers: {
-                        "Content-Type":"application/json",
-                    },
-                    method: "PATCH",
-                    credentials: "include",
-                    body: JSON.stringify({name})
-                });
-    
-                const data = await response.json();
-    
-                if(!response.ok) {
-                    throw new Error(data.message || "NameChange Failed"); 
-                }
-    
-                console.log("NameChange Successully");
-            } catch (error) {
-                console.log(error);
-                alert(error.message);
-            }
-    }
-
-   
-const handleLogout = async () => {
-  try {
-    const response = await fetch(
-      "http://localhost:9000/api/v1/auth/logoutCurrentUser",
-      {
-        method: "POST",
-        credentials: "include",
       }
-    );
 
-    const data = await response.json().catch(() => ({}));
+      if (account.type === "admin") {
+        if (!account.admin?._id) {
+          throw new Error(
+            "Admin data missing from server response."
+          );
+        }
 
-    if (!response.ok) {
-      throw new Error(data.message || "Logout failed");
-    }
-
-    console.log("Logout successful");
-
-    // Clear every account type from React state.
-    setUser(null);
-    setRecruiter(null);
-    setAdmin(null);
-
-    // Clear any cached authentication-check promise.
-    authCheckPromiseRef.current = null;
-
-    navigate("/login", { replace: true });
-  } catch (error) {
-    console.error("Logout error:", error);
-    alert(error.message || "Logout failed");
-  }
-};
-
-
-   const handleDeleteAccount = async ({ otp, password }) => {
-    try {
-        const response = await fetch(
-            "http://localhost:9000/api/v1/auth/deleteAccount",
-            {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    otp,
-                    password,
-                }),
-            }
+        setAuthenticatedAccount(
+          "admin",
+          account.admin
         );
 
-        const data = await response.json();
+        authCheckPromiseRef.current = null;
 
-        if (!response.ok) {
-            throw new Error(
-                data?.message || "Account deletion failed"
-            );
+        navigate("/admin", { replace: true });
+
+        return {
+          success: true,
+          requires2FA: false,
+          type: "admin",
+        };
+      }
+
+      if (account.type === "recruiter") {
+        if (!account.recruiter?._id) {
+          throw new Error(
+            "Recruiter data missing from server response."
+          );
         }
 
-        console.log("Account deleted successfully");
-        navigate("/login");
-
-    } catch (error) {
-        console.error("Delete account error:", error);
-        alert(error.message || "Account deletion failed");
-    }
-};
-
-    const handleEmailVerificationOtp = async() => {
-        try {
-            const response = await fetch("http://localhost:9000/api/v1/auth/sendEmailVerificationOtp", {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                method: "POST",
-                credentials: "include",
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "EmailVerificationOTP Failed TO Send");
-            }
-    
-            console.log("EmailVerificationOTPSend");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
-    }
-
-    const handleVerifyEmail = async({otp}) => {
-        try {
-            const response = await fetch("http://localhost:9000/api/v1/auth/VerifyEmail", {
-                headers: {
-                    "Content-Type":"application/json",
-                },
-                method: "POST",
-                credentials: "include",
-                body: JSON.stringify({otp})
-            })
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "EmailVerification Failed");
-            }
-    
-            console.log("Email Verified Successfully");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
-    }
-
-    const handleSendDeleteAccountOtp = async() => {
-        try {
-            const response = await fetch("http://localhost:9000/api/v1/auth/sendDeleteAccountOtp", {
-                headers: {
-                    "Content-Type":"application/json",
-                },
-                method: "POST",
-                credentials: "include"
-            });
-    
-            const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "DeleteAccountOtpSending Failed");
-            }
-    
-            console.log("DeleteAccountOtpSend");
-        } catch (error) {
-            console.log(error);
-            alert(error.message);
-        }
-    }
-
-const handleUpdateAvatar = async (formData) => {
-    try {
-        const response = await fetch(
-            "http://localhost:9000/api/v1/auth/update-avatar",
-            {
-                method: "PATCH",
-                credentials: "include",
-                body: formData,
-            }
+        setAuthenticatedAccount(
+          "recruiter",
+          account.recruiter
         );
 
-        const data = await response.json();
+        authCheckPromiseRef.current = null;
 
-        if (!response.ok) {
-            throw new Error(
-                data?.message || "Avatar Updating Failed"
-            );
+        navigate("/recruiter", { replace: true });
+
+        return {
+          success: true,
+          requires2FA: false,
+          type: "recruiter",
+        };
+      }
+
+      if (account.type === "user") {
+        if (!account.user?._id) {
+          throw new Error(
+            "User data missing from server response."
+          );
         }
 
-        console.log("Avatar Updated Successfully");
-
-        return data;
-    } catch (error) {
-        console.error("Avatar update failed:", error);
-        throw error;
-    }
-};
-
-const handleUpdateCoverImage = async (formData) => {
-    try {
-        const response = await fetch(
-            "http://localhost:9000/api/v1/auth/update-coverImage",
-            {
-                method: "PATCH",
-                credentials: "include",
-                body: formData,
-            }
+        setAuthenticatedAccount(
+          "user",
+          account.user
         );
 
-        const data = await response.json();
+        authCheckPromiseRef.current = null;
 
-        if (!response.ok) {
-            throw new Error(
-                data?.message || "Cover Image Updating Failed"
-            );
-        }
+        navigate("/", { replace: true });
 
-        console.log("Cover Image Updated Successfully");
+        return {
+          success: true,
+          requires2FA: false,
+          type: "user",
+        };
+      }
 
-        return data;
-    } catch (error) {
-        console.error("Cover image update failed:", error);
-        throw error;
-    }
-};  
-
-   const handleEnable2FA = async () => {
-    try {
-        const response = await fetch(
-            "http://localhost:9000/api/v1/auth/2fa/enable",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-            }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(
-                data?.message || "2FA Enable Failed"
-            );
-        }
-
-        console.log("2FA Enable Successfully:", data);
-
-        return data;
-    } catch (error) {
-        console.error("2FA Enable Error:", error);
-        throw error;
-    }
-};
-
-const handleVerify2fa = async ({ token }) => {
-    try {
-        const response = await fetch(
-            "http://localhost:9000/api/v1/auth/2fa/verify-setup",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({ token }),
-            }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(
-                data?.message || "2FA Verify Failed"
-            );
-        }
-
-        console.log("2FA Verify Successfully:", data);
-
-        return data;
-    } catch (error) {
-        console.error("2FA Verify Error:", error);
-        throw error;
-    }
-};
-
- 
-
-const handleLoginWith2FA = async ({ twoFactorToken, userId, token }) => {
-  try {
-    if (!twoFactorToken || !token) {
       throw new Error(
-        "Two-factor login token and authentication code are required."
+        "Unknown account type returned by server."
       );
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
     }
+  };
 
-    const response = await axios.post(
-      `${API_URL}/auth/login/2fa`,
-      {
-        twoFactorToken,
-        userId,
-        token: String(token).trim(),
-      },
-      { withCredentials: true }
-    );
 
-    const data = response.data?.data;
+  const handleGoogleAuth = async ({ credential } = {}) => {
+    try {
+      if (!credential) {
+        throw new Error(
+          "Google credential is required."
+        );
+      }
 
-    if (!data?.user) {
-      throw new Error("User data missing from login response.");
-    }
+      const response = await fetch(
+        `${API_URL}/auth/google`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            credential,
+          }),
+        }
+      );
 
-    if (data.type === "recruiter") {
-      setRecruiter(data.user);
-      setUser(null);
-      setAdmin(null);
+      const data = await parseResponse(response);
 
-      navigate("/recruiter", { replace: true });
-    } else if (data.type === "user") {
-      setUser(data.user);
-      setRecruiter(null);
-      setAdmin(null);
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(
+            data,
+            "Google authentication failed."
+          )
+        );
+      }
+
+      const accountData = data?.data;
+
+      if (!accountData) {
+        throw new Error(
+          "Invalid Google authentication response."
+        );
+      }
+
+      if (accountData.twoFactorRequired) {
+        if (!accountData.twoFactorToken) {
+          throw new Error(
+            "Google 2FA token missing from response."
+          );
+        }
+
+        return {
+          success: true,
+          requires2FA: true,
+          twoFactorToken: accountData.twoFactorToken,
+          userId: accountData.userId,
+          type: accountData.type,
+        };
+      }
+
+      // Backend may return user or recruiter.
+      const account =
+        accountData.user ||
+        accountData.recruiter;
+
+      if (!account?._id) {
+        throw new Error(
+          "Account data missing from Google response."
+        );
+      }
+
+      if (account.role === "recruiter") {
+        setAuthenticatedAccount(
+          "recruiter",
+          account
+        );
+
+        navigate("/recruiter", {
+          replace: true,
+        });
+
+        return {
+          success: true,
+          requires2FA: false,
+          type: "recruiter",
+          user: account,
+        };
+      }
+
+      setAuthenticatedAccount("user", account);
 
       navigate("/", { replace: true });
-    } else {
-      throw new Error("Unknown account type returned by server.");
+
+      return {
+        success: true,
+        requires2FA: false,
+        type: "user",
+        user: account,
+      };
+    } catch (error) {
+      console.error(
+        "Google authentication error:",
+        error
+      );
+
+      throw error;
     }
-
-    return {
-      success: true,
-      requires2FA: false,
-      data,
-    };
-  } catch (error) {
-    const message =
-      error.response?.data?.message ||
-      error.message ||
-      "Two-factor login failed.";
-
-    console.error("Login with 2FA error:", message);
-    throw new Error(message);
-  }
-};
+  };
 
 
+  const handleSignup = async (details) => {
+    try {
+      const {
+        name,
+        email,
+        password,
+        avatar,
+        coverImage,
+        phoneNo,
+      } = details || {};
 
- 
+      if (!name?.trim() || !email?.trim() || !password) {
+        throw new Error(
+          "Name, email and password are required."
+        );
+      }
+
+      if (!(avatar instanceof File)) {
+        throw new Error(
+          "Please select a valid avatar image."
+        );
+      }
+
+      if (!(coverImage instanceof File)) {
+        throw new Error(
+          "Please select a valid cover image."
+        );
+      }
+
+      const formData = new FormData();
+
+      formData.append("name", name.trim());
+      formData.append("email", email.trim());
+      formData.append("password", password);
+
+      if (phoneNo?.trim()) {
+        formData.append("phoneNo", phoneNo.trim());
+      }
+
+      formData.append("avatar", avatar);
+      formData.append("coverImage", coverImage);
+
+      const response = await fetch(
+        `${API_URL}/auth/register`,
+        {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        }
+      );
+
+      const data = await parseResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(data, "Signup failed.")
+        );
+      }
+
+      const createdName =
+        data?.data?.user?.name || name;
+
+      alert(
+        `Hello ${createdName}, your account has been created! Welcome to Peer.Hiring.`
+      );
+
+      navigate("/login", { replace: true });
+
+      return data;
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert(error.message || "Signup failed.");
+      throw error;
+    }
+  };
+
+  const handlePasswordResetOtp = async ({ email } = {}) => {
+    try {
+      if (!email?.trim()) {
+        throw new Error("Email is required.");
+      }
+
+      const response = await fetch(
+        `${API_URL}/auth/SendPasswordResetOtp`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            email: email.trim().toLowerCase(),
+          }),
+        }
+      );
+
+      const data = await parseResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(data, "OTP sending failed.")
+        );
+      }
+
+      console.log("Password reset OTP request completed.");
+
+      navigate("/forgetPassword");
+
+      return data;
+    } catch (error) {
+      console.error("Password reset OTP error:", error);
+      alert(error.message);
+      throw error;
+    }
+  };
+
+  const handleForgetPassword = async ({
+    password,
+    confirmPassword,
+    otp,
+  } = {}) => {
+    try {
+      const otpValue = Array.isArray(otp)
+        ? otp.join("")
+        : String(otp || "").trim();
+
+      if (!/^\d{6}$/.test(otpValue)) {
+        throw new Error(
+          "Please enter the valid six-digit OTP."
+        );
+      }
+
+      if (!password || !confirmPassword) {
+        throw new Error(
+          "Please enter and confirm your new password."
+        );
+      }
+
+      if (password !== confirmPassword) {
+        throw new Error(
+          "Password and confirm password do not match."
+        );
+      }
+
+      const response = await fetch(
+        `${API_URL}/auth/forgetPassword`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            password,
+            confirmPassword,
+            otp: otpValue,
+          }),
+        }
+      );
+
+      const data = await parseResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(data, "Password reset failed.")
+        );
+      }
+
+      clearLocalAuth();
+
+      alert("Password changed successfully.");
+
+      navigate("/login", { replace: true });
+
+      return data;
+    } catch (error) {
+      console.error("Password reset error:", error);
+      alert(error.message);
+      throw error;
+    }
+  };
+
+  const changeName = async ({ name } = {}) => {
+    try {
+      if (!name?.trim()) {
+        throw new Error("Name is required.");
+      }
+
+      const response = await authenticatedFetch(
+        `${API_URL}/auth/changeName`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: name.trim(),
+          }),
+        }
+      );
+
+      const data = await parseResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(data, "Name update failed.")
+        );
+      }
+
+      const updatedUser = data?.data;
+
+      if (updatedUser?._id) {
+        if (recruiter) {
+          setRecruiter((previous) =>
+            previous
+              ? { ...previous, ...updatedUser }
+              : previous
+          );
+        } else if (user) {
+          setUser((previous) =>
+            previous
+              ? { ...previous, ...updatedUser }
+              : previous
+          );
+        }
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Name update error:", error);
+      alert(error.message);
+      throw error;
+    }
+  };
+
+  const handleLogout = async () => {
+    const logoutURL = admin
+      ? ADMIN_LOGOUT_URL
+      : `${API_URL}/auth/logoutCurrentUser`;
+
+    try {
+      let response = await fetch(logoutURL, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      // Retry once if access token has expired.
+      if (response.status === 401) {
+        const refreshed =
+          await handleRefreshAccessToken();
+
+        if (refreshed) {
+          response = await fetch(logoutURL, {
+            method: "POST",
+            credentials: "include",
+          });
+        }
+      }
+
+      const data = await parseResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(data, "Logout failed.")
+        );
+      }
+
+      console.log("Logout successful.");
+
+      return true;
+    } catch (error) {
+      console.error("Logout error:", error);
+
+      alert(
+        error.message ||
+        "Logout failed. The local session will be cleared."
+      );
+
+      return false;
+    } finally {
+      clearLocalAuth();
+
+      authCheckPromiseRef.current = null;
+
+      navigate("/login", { replace: true });
+    }
+  };
+
+  const handleDeleteAccount = async ({
+    otp,
+    password,
+  } = {}) => {
+    try {
+      const response = await authenticatedFetch(
+        `${API_URL}/auth/deleteAccount`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            otp,
+            password,
+          }),
+        }
+      );
+
+      const data = await parseResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(
+            data,
+            "Account deletion failed."
+          )
+        );
+      }
+
+      clearLocalAuth();
+
+      authCheckPromiseRef.current = null;
+
+      alert("Account deleted successfully.");
+
+      navigate("/login", { replace: true });
+
+      return data;
+    } catch (error) {
+      console.error("Delete account error:", error);
+      alert(error.message);
+      throw error;
+    }
+  };
+
+  const handleEmailVerificationOtp = async () => {
+    try {
+      const response = await authenticatedFetch(
+        `${API_URL}/auth/sendEmailVerificationOtp`,
+        {
+          method: "POST",
+        }
+      );
+
+      const data = await parseResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(
+            data,
+            "Email verification OTP sending failed."
+          )
+        );
+      }
+
+      console.log("Email verification OTP request completed.");
+
+      return data;
+    } catch (error) {
+      console.error("Email verification OTP error:", error);
+      alert(error.message);
+      throw error;
+    }
+  };
+
+  const handleVerifyEmail = async ({ otp } = {}) => {
+    try {
+      const response = await authenticatedFetch(
+        `${API_URL}/auth/VerifyEmail`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ otp }),
+        }
+      );
+
+      const data = await parseResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(
+            data,
+            "Email verification failed."
+          )
+        );
+      }
+
+      await getUser();
+
+      console.log("Email verified successfully.");
+
+      return data;
+    } catch (error) {
+      console.error("Email verification error:", error);
+      alert(error.message);
+      throw error;
+    }
+  };
+
+  const handleSendDeleteAccountOtp = async () => {
+    try {
+      const response = await authenticatedFetch(
+        `${API_URL}/auth/sendDeleteAccountOtp`,
+        {
+          method: "POST",
+        }
+      );
+
+      const data = await parseResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(
+            data,
+            "Delete account OTP sending failed."
+          )
+        );
+      }
+
+      console.log("Delete account OTP request completed.");
+
+      return data;
+    } catch (error) {
+      console.error("Delete account OTP error:", error);
+      alert(error.message);
+      throw error;
+    }
+  };
+
+  const handleUpdateAvatar = async (formData) => {
+    try {
+      const response = await authenticatedFetch(
+        `${API_URL}/auth/update-avatar`,
+        {
+          method: "PATCH",
+          body: formData,
+        }
+      );
+
+      const data = await parseResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(data, "Avatar update failed.")
+        );
+      }
+
+      const avatar = data?.data?.avatar;
+
+      if (avatar) {
+        setUser((previous) =>
+          previous
+            ? { ...previous, avatar }
+            : previous
+        );
+
+        setRecruiter((previous) =>
+          previous
+            ? { ...previous, avatar }
+            : previous
+        );
+      }
+
+      console.log("Avatar updated successfully.");
+
+      return data;
+    } catch (error) {
+      console.error("Avatar update failed:", error);
+      throw error;
+    }
+  };
+  const handleUpdateCoverImage = async (formData) => {
+    try {
+      const response = await authenticatedFetch(
+        `${API_URL}/auth/update-coverImage`,
+        {
+          method: "PATCH",
+          body: formData,
+        }
+      );
+
+      const data = await parseResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(
+            data,
+            "Cover image update failed."
+          )
+        );
+      }
+
+      const coverImage = data?.data?.coverImage;
+
+      if (coverImage) {
+        setUser((previous) =>
+          previous
+            ? { ...previous, coverImage }
+            : previous
+        );
+
+        setRecruiter((previous) =>
+          previous
+            ? { ...previous, coverImage }
+            : previous
+        );
+      }
+
+      console.log("Cover image updated successfully.");
+
+      return data;
+    } catch (error) {
+      console.error("Cover image update failed:", error);
+      throw error;
+    }
+  };
 
 
-    return (
-        <AuthContext.Provider value={{user, admin, recruiter, handleGoogleAuth, authLoading, getUser, handleLogin, handleForgetPassword, handleDeleteAccount, handleLogout ,handleSignup, changeName, handlePasswordResetOtp, handleEnable2FA, handleLoginWith2FA, handleVerify2fa, handleEmailVerificationOtp, handleVerifyEmail, handleUpdateAvatar, handleUpdateCoverImage, handleSendDeleteAccountOtp, handleRefreshAccessToken}}>
-            {children}
-        </AuthContext.Provider>
-    )
+  const handleEnable2FA = async () => {
+    try {
+      const response = await authenticatedFetch(
+        `${API_URL}/auth/2fa/enable`,
+        {
+          method: "POST",
+        }
+      );
+
+      const data = await parseResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(data, "2FA enable failed.")
+        );
+      }
+
+      return data;
+    } catch (error) {
+      console.error("2FA enable error:", error);
+      throw error;
+    }
+  };
+
+
+  const handleVerify2fa = async ({ token } = {}) => {
+    try {
+      const response = await authenticatedFetch(
+        `${API_URL}/auth/2fa/verify-setup`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token }),
+        }
+      );
+
+      const data = await parseResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(data, "2FA verification failed.")
+        );
+      }
+
+      await getUser();
+
+      return data;
+    } catch (error) {
+      console.error("2FA verification error:", error);
+      throw error;
+    }
+  };
+
+
+  const handleLoginWith2FA = async ({
+    twoFactorToken,
+    userId,
+    token,
+  } = {}) => {
+    try {
+      if (!twoFactorToken || !token) {
+        throw new Error(
+          "Two-factor login token and authentication code are required."
+        );
+      }
+
+      const response = await fetch(
+        `${API_URL}/auth/login/2fa`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            twoFactorToken,
+            userId,
+            token: String(token).trim(),
+          }),
+        }
+      );
+
+      const responseData = await parseResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(
+            responseData,
+            "Two-factor login failed."
+          )
+        );
+      }
+
+      const data = responseData?.data;
+
+      const account =
+        data?.user ||
+        data?.recruiter;
+
+      if (!account?._id) {
+        throw new Error(
+          "Account data missing from 2FA login response."
+        );
+      }
+
+      const accountType =
+        data.type === "recruiter" ||
+        account.role === "recruiter"
+          ? "recruiter"
+          : "user";
+
+      setAuthenticatedAccount(
+        accountType,
+        account
+      );
+
+      authCheckPromiseRef.current = null;
+
+      if (accountType === "recruiter") {
+        navigate("/recruiter", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+
+      return {
+        success: true,
+        requires2FA: false,
+        type: accountType,
+        data,
+      };
+    } catch (error) {
+      console.error("2FA login error:", error);
+      throw error;
+    }
+  };
+
+  const contextValue = {
+    // Account state
+    user,
+    admin,
+    recruiter,
+    authLoading,
+
+    // Session functions
+    getUser,
+    handleRefreshAccessToken,
+    authenticatedFetch,
+
+    // Authentication
+    handleLogin,
+    handleGoogleAuth,
+    handleSignup,
+    handleLogout,
+
+    // Password and account
+    handlePasswordResetOtp,
+    handleForgetPassword,
+    changeName,
+    handleDeleteAccount,
+
+    // Email verification
+    handleEmailVerificationOtp,
+    handleVerifyEmail,
+
+    // Images
+    handleUpdateAvatar,
+    handleUpdateCoverImage,
+
+    // Account deletion OTP
+    handleSendDeleteAccountOtp,
+
+    // 2FA
+    handleEnable2FA,
+    handleVerify2fa,
+    handleLoginWith2FA,
+  };
+
+  return (
+    <AuthContext.Provider value={contextValue}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export default AuthProvider;
