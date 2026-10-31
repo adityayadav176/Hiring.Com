@@ -1,5 +1,10 @@
-
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useApplication, useInterview } from "../../hooks/Hook";
 import { useNavigate } from "react-router-dom";
 import {
@@ -50,7 +55,8 @@ const STATUS_STYLES = {
   Cancelled: "bg-rose-50 text-rose-700 ring-rose-200",
   Rejected: "bg-rose-50 text-rose-700 ring-rose-200",
   Rescheduled: "bg-amber-50 text-amber-700 ring-amber-200",
-  "Reschedule Requested": "bg-orange-50 text-orange-700 ring-orange-200",
+  "Reschedule Requested":
+    "bg-orange-50 text-orange-700 ring-orange-200",
   "No Show": "bg-slate-100 text-slate-700 ring-slate-200",
 };
 
@@ -66,14 +72,247 @@ const EMPTY_FORM = {
   description: "",
 };
 
-const ACTIVE_STATUSES = ["Scheduled", "Accepted", "Rescheduled"];
+const ACTIVE_STATUSES = [
+  "Scheduled",
+  "Accepted",
+  "Rescheduled",
+  "Reschedule Requested",
+];
 
 const fieldClass =
   "mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
 
+function normalizeStatus(value) {
+  if (typeof value !== "string") return "";
+
+  const normalized = value
+    .trim()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+
+  const knownStatuses = [
+    "scheduled",
+    "accepted",
+    "rescheduled",
+    "reschedule requested",
+    "completed",
+    "cancelled",
+    "rejected",
+    "no show",
+  ];
+
+  const match = knownStatuses.find(
+    (status) => status === normalized
+  );
+
+  if (!match) return value.trim();
+
+  return match
+    .split(" ")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function isActiveStatus(status) {
+  return ACTIVE_STATUSES.includes(normalizeStatus(status));
+}
+
+function normalizeInterviewType(value) {
+  if (typeof value !== "string") return "";
+
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized === "online") return "Online";
+  if (normalized === "offline") return "Offline";
+  if (normalized === "phone") return "Phone";
+
+  return value.trim();
+}
+
+function isValidObjectId(value) {
+  return (
+    typeof value === "string" &&
+    /^[a-f\d]{24}$/i.test(value.trim())
+  );
+}
+
+function getMongoInterviewId(item) {
+  // Deliberately use ONLY MongoDB _id.
+  // Never fall back to item.id or interviewRoomId.
+  const rawId = item?._id;
+
+  let id = "";
+
+  if (typeof rawId === "string") {
+    id = rawId.trim();
+  } else if (
+    rawId &&
+    typeof rawId === "object" &&
+    typeof rawId.toString === "function"
+  ) {
+    const converted = rawId.toString();
+
+    if (converted !== "[object Object]") {
+      id = converted.trim();
+    }
+  }
+
+  return isValidObjectId(id) ? id : "";
+}
+
+function isValidCalendarDate(value) {
+  if (
+    typeof value !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(value)
+  ) {
+    return false;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day) ||
+    year < 1000 ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31
+  ) {
+    return false;
+  }
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
+function isValidTime(value) {
+  if (
+    typeof value !== "string" ||
+    !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function isValidTimezone(timezone) {
+  if (typeof timezone !== "string" || !timezone.trim()) {
+    return false;
+  }
+
+  try {
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+    });
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isValidScheduledAt(value) {
+  if (value instanceof Date) {
+    return Number.isFinite(value.getTime());
+  }
+
+  if (typeof value !== "string") return false;
+
+  const trimmed = value.trim();
+
+  // Require a complete timestamp with an explicit timezone.
+  // Date-only values and timestamps without Z/offset are rejected.
+  const isoTimestamp =
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:\d{2})$/i;
+
+  if (!isoTimestamp.test(trimmed)) return false;
+
+  const parsed = new Date(trimmed);
+
+  return Number.isFinite(parsed.getTime());
+}
+
+function getInterviewTimestamp(item) {
+  if (!item || typeof item !== "object") return null;
+
+  const hasScheduledAt =
+    item.scheduledAt !== undefined &&
+    item.scheduledAt !== null &&
+    item.scheduledAt !== "";
+
+  if (hasScheduledAt) {
+    if (!isValidScheduledAt(item.scheduledAt)) return null;
+
+    const timestamp = new Date(item.scheduledAt).getTime();
+
+    return Number.isFinite(timestamp) ? timestamp : null;
+  }
+
+  // Fallback for records where scheduledAt is genuinely absent.
+  if (
+    !isValidCalendarDate(item.date) ||
+    !isValidTime(item.time)
+  ) {
+    return null;
+  }
+
+  const timezone = isValidTimezone(item.timezone)
+    ? item.timezone
+    : "Asia/Kolkata";
+
+  const iso = toScheduledAt(item.date, item.time, timezone);
+
+  if (!iso || !isValidScheduledAt(iso)) return null;
+
+  const timestamp = new Date(iso).getTime();
+
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function canJoinInterview(item) {
+  if (!item || typeof item !== "object") return false;
+
+  // 1. Require the actual MongoDB document ID.
+  const interviewId = getMongoInterviewId(item);
+
+  if (!interviewId) return false;
+
+  // 2. Only online interviews support the video room.
+  const interviewType = normalizeInterviewType(
+    item.interviewType ?? item.type
+  );
+
+  if (interviewType !== "Online") return false;
+
+  // 3. Only active interview statuses can join.
+  const status = normalizeStatus(item.status);
+
+  if (!ACTIVE_STATUSES.includes(status)) return false;
+
+  // 4. Require a valid scheduled timestamp.
+  const timestamp = getInterviewTimestamp(item);
+
+  if (timestamp === null) return false;
+
+  // Do not reject an interview just because its start time has passed.
+  // The backend remains responsible for authorization.
+  return true;
+}
+
 function getId(value) {
   if (!value) return "";
+
   if (typeof value === "string") return value;
+
   return String(value._id || value.id || "");
 }
 
@@ -103,9 +342,11 @@ function unwrapInterviewList(value) {
 
   if (Array.isArray(value.interviews)) return value.interviews;
   if (Array.isArray(value.data)) return unwrapInterviewList(value.data);
+
   if (value.data && typeof value.data === "object") {
     return unwrapInterviewList(value.data);
   }
+
   if (value.interview) return [value.interview];
 
   return [];
@@ -122,7 +363,8 @@ function normalizeInterview(raw = {}) {
       ? raw.candidate
       : raw.candidateId && typeof raw.candidateId === "object"
         ? raw.candidateId
-        : application.candidate && typeof application.candidate === "object"
+        : application.candidate &&
+            typeof application.candidate === "object"
           ? application.candidate
           : application.candidateId &&
               typeof application.candidateId === "object"
@@ -143,7 +385,8 @@ function normalizeInterview(raw = {}) {
         ? raw.jobId
         : application.job && typeof application.job === "object"
           ? application.job
-          : application.jobId && typeof application.jobId === "object"
+          : application.jobId &&
+              typeof application.jobId === "object"
             ? application.jobId
             : {};
 
@@ -154,15 +397,23 @@ function normalizeInterview(raw = {}) {
         ? raw.companyId
         : {};
 
-  const scheduledAt = raw.scheduledAt || null;
-  const timezone = raw.timezone || "Asia/Kolkata";
-  const dateObj = scheduledAt ? new Date(scheduledAt) : null;
-  const validDate = dateObj && !Number.isNaN(dateObj.getTime());
+  const scheduledAt = raw.scheduledAt ?? null;
+const timezone =
+  typeof raw.timezone === "string" && raw.timezone.trim()
+    ? raw.timezone.trim()
+    : "Asia/Kolkata";
+
+  const dateObj = isValidScheduledAt(scheduledAt)
+    ? new Date(scheduledAt)
+    : null;
+
+  const validDate =
+    dateObj && Number.isFinite(dateObj.getTime());
 
   let formattedDate = "";
   let formattedTime = "";
 
-  if (validDate) {
+  if (validDate && isValidTimezone(timezone)) {
     try {
       formattedDate = new Intl.DateTimeFormat("en-CA", {
         timeZone: timezone,
@@ -202,20 +453,24 @@ function normalizeInterview(raw = {}) {
   const recruiterAvatar = getAvatarUrl(recruiter.avatar);
 
   const rawDate =
-    typeof raw.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.date)
+    typeof raw.date === "string" &&
+    isValidCalendarDate(raw.date)
       ? raw.date
       : "";
 
   const rawTime =
-    typeof raw.time === "string" && /^\d{2}:\d{2}$/.test(raw.time)
+    typeof raw.time === "string" && isValidTime(raw.time)
       ? raw.time
       : "";
 
+  const rawId =
+    typeof raw._id === "string"
+      ? raw._id
+      : raw._id?.toString?.() || "";
+
   return {
     ...raw,
-    id: typeof raw._id === "string"
-      ? raw._id
-      : raw._id?.toString?.() || "",
+    id: rawId,
     candidate,
     recruiter,
     job,
@@ -229,8 +484,7 @@ function normalizeInterview(raw = {}) {
     candidateEmail: candidate.email || raw.candidateEmail || "",
     candidateAvatar,
     recruiterId:
-      getId(recruiter) ||
-      getId(raw.recruiterId),
+      getId(recruiter) || getId(raw.recruiterId),
     recruiterName,
     recruiterEmail: recruiter.email || raw.recruiterEmail || "",
     recruiterAvatar,
@@ -243,8 +497,10 @@ function normalizeInterview(raw = {}) {
       getId(application) ||
       getId(raw.applicationId) ||
       getId(raw.application),
-    type: raw.interviewType || raw.type || "Online",
-    status: raw.status || "Scheduled",
+    type: normalizeInterviewType(
+      raw.interviewType ?? raw.type
+    ),
+    status: normalizeStatus(raw.status) || "Unknown",
     date: rawDate || formattedDate,
     time: rawTime || formattedTime,
     scheduledAt,
@@ -258,9 +514,10 @@ function normalizeInterview(raw = {}) {
 }
 
 function formatDate(date) {
-  if (!date) return "Date not set";
+  if (!isValidCalendarDate(date)) return "Date not set";
 
   const parsed = new Date(`${date}T12:00:00`);
+
   if (Number.isNaN(parsed.getTime())) return "Date not set";
 
   return parsed.toLocaleDateString("en-IN", {
@@ -271,13 +528,9 @@ function formatDate(date) {
 }
 
 function formatTime(time) {
-  if (!time) return "Time not set";
+  if (!isValidTime(time)) return "Time not set";
 
   const [hours, minutes] = time.split(":").map(Number);
-
-  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
-    return "Time not set";
-  }
 
   const parsed = new Date();
   parsed.setHours(hours, minutes, 0, 0);
@@ -301,14 +554,26 @@ function initials(name = "") {
 }
 
 function toScheduledAt(date, time, timezone = "Asia/Kolkata") {
-  if (!date || !time || !timezone) return "";
+  if (
+    !isValidCalendarDate(date) ||
+    !isValidTime(time) ||
+    !isValidTimezone(timezone)
+  ) {
+    return "";
+  }
 
   const [year, month, day] = date.split("-").map(Number);
   const [hour, minute] = time.split(":").map(Number);
 
-  if (![year, month, day, hour, minute].every(Number.isFinite)) return "";
+  const targetUtc = Date.UTC(
+    year,
+    month - 1,
+    day,
+    hour,
+    minute,
+    0
+  );
 
-  const targetUtc = Date.UTC(year, month - 1, day, hour, minute, 0);
   let candidate = targetUtc;
 
   try {
@@ -323,7 +588,7 @@ function toScheduledAt(date, time, timezone = "Asia/Kolkata") {
       hourCycle: "h23",
     });
 
-    for (let i = 0; i < 4; i += 1) {
+    for (let i = 0; i < 6; i += 1) {
       const parts = Object.fromEntries(
         formatter
           .formatToParts(new Date(candidate))
@@ -341,13 +606,35 @@ function toScheduledAt(date, time, timezone = "Asia/Kolkata") {
       );
 
       const difference = targetUtc - representedUtc;
+
       candidate += difference;
 
       if (difference === 0) break;
     }
 
     const result = new Date(candidate);
-    return Number.isNaN(result.getTime()) ? "" : result.toISOString();
+
+    if (!Number.isFinite(result.getTime())) return "";
+
+    // Round-trip validation rejects nonexistent local times during DST changes.
+    const parts = Object.fromEntries(
+      formatter
+        .formatToParts(result)
+        .filter((part) => part.type !== "literal")
+        .map((part) => [part.type, Number(part.value)])
+    );
+
+    if (
+      parts.year !== year ||
+      parts.month !== month ||
+      parts.day !== day ||
+      parts.hour !== hour ||
+      parts.minute !== minute
+    ) {
+      return "";
+    }
+
+    return result.toISOString();
   } catch {
     return "";
   }
@@ -422,7 +709,7 @@ function getApplicationJob(application) {
 }
 
 function getStatusActions(status) {
-  if (ACTIVE_STATUSES.includes(status)) {
+  if (isActiveStatus(status)) {
     return [
       { status: "Completed", label: "Mark Completed", icon: CheckCircle2 },
       { status: "No Show", label: "Mark No Show", icon: XCircle },
@@ -463,18 +750,6 @@ function ProfileIdentity({ avatar, name, email, size = "h-12 w-12" }) {
   );
 }
 
-function getMongoInterviewId(item) {
-  const rawId = item?._id ?? item?.id;
-  const id =
-    typeof rawId === "string"
-      ? rawId
-      : rawId && typeof rawId.toString === "function"
-        ? rawId.toString()
-        : "";
-
-  return /^[a-f\d]{24}$/i.test(id) ? id : "";
-}
-
 export default function RecruiterInterviews() {
   const {
     interviews: contextInterviews,
@@ -510,31 +785,65 @@ export default function RecruiterInterviews() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState("");
+  const [joiningInterviewId, setJoiningInterviewId] = useState("");
+
+  const joiningTimeoutRef = useRef(null);
+  const joiningLockRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+
+    return () => {
+      mountedRef.current = false;
+      joiningLockRef.current = false;
+
+      if (joiningTimeoutRef.current) {
+        clearTimeout(joiningTimeoutRef.current);
+        joiningTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const handleJoinInterview = useCallback(
     (item) => {
-      const interviewId = getMongoInterviewId(item);
-
-      if (!interviewId) {
+      // Revalidate at click time. A record may have become invalid
+      // after the button was rendered.
+      if (!canJoinInterview(item)) {
         setNotice(
-          "A valid MongoDB interview ID is missing. Refresh the interview list and try again."
+          "This interview cannot be joined. Check its ID, online format, status, date, time, and timezone."
         );
         return;
       }
 
-      const interviewType = item?.interviewType ?? item?.type;
+      const interviewId = getMongoInterviewId(item);
 
-      if (interviewType !== "Online") {
-        setNotice("Only online interviews can be joined through the video room.");
-        return;
+      if (!interviewId || joiningLockRef.current) return;
+
+      joiningLockRef.current = true;
+      setNotice("");
+      setJoiningInterviewId(interviewId);
+
+      if (joiningTimeoutRef.current) {
+        clearTimeout(joiningTimeoutRef.current);
       }
 
-      if (!ACTIVE_STATUSES.includes(item?.status)) {
-        setNotice("This interview is no longer active.");
-        return;
-      }
+      joiningTimeoutRef.current = setTimeout(() => {
+        joiningTimeoutRef.current = null;
 
-      navigate(`/interview/${encodeURIComponent(interviewId)}`);
+        try {
+          navigate(`/interview/${encodeURIComponent(interviewId)}`);
+        } catch (err) {
+          joiningLockRef.current = false;
+
+          if (mountedRef.current) {
+            setJoiningInterviewId("");
+            setNotice(
+              err?.message || "Could not open the interview room. Please try again."
+            );
+          }
+        }
+      }, 300);
     },
     [navigate]
   );
@@ -554,14 +863,20 @@ export default function RecruiterInterviews() {
       handleGetRecruiterInterviewStats(),
     ]);
 
-    const failed = results.find((result) => result.status === "rejected");
+    const failed = results.find(
+      (result) => result.status === "rejected"
+    );
 
     if (failed) {
       setNotice(
-        failed.reason?.message || "Some interview data could not be loaded."
+        failed.reason?.message ||
+          "Some interview data could not be loaded."
       );
     }
-  }, [handleGetRecruiterInterviews, handleGetRecruiterInterviewStats]);
+  }, [
+    handleGetRecruiterInterviews,
+    handleGetRecruiterInterviewStats,
+  ]);
 
   useEffect(() => {
     refresh();
@@ -570,30 +885,33 @@ export default function RecruiterInterviews() {
   const sourceInterviews = useMemo(() => {
     const recruiterSource = unwrapInterviewList(recruiterInterviews);
     const contextSource = unwrapInterviewList(contextInterviews);
+
     const source =
       recruiterSource.length > 0 ? recruiterSource : contextSource;
+
     const unique = new Map();
 
     source.forEach((item) => {
       const normalized = normalizeInterview(item);
-      if (normalized.id) unique.set(normalized.id, normalized);
+
+      if (normalized.id) {
+        unique.set(normalized.id, normalized);
+      }
     });
 
     return [...unique.values()];
   }, [recruiterInterviews, contextInterviews]);
 
   const metrics = useMemo(() => {
-    const now = new Date();
+    const now = Date.now();
 
     const upcoming = sourceInterviews.filter((item) => {
-      const scheduled = item.scheduledAt
-        ? new Date(item.scheduledAt)
-        : new Date(`${item.date}T${item.time || "00:00"}:00`);
+      const scheduled = getInterviewTimestamp(item);
 
       return (
-        ACTIVE_STATUSES.includes(item.status) &&
-        !Number.isNaN(scheduled.getTime()) &&
-        scheduled >= now
+        isActiveStatus(item.status) &&
+        scheduled !== null &&
+        scheduled > now
       );
     });
 
@@ -602,10 +920,13 @@ export default function RecruiterInterviews() {
       upcoming: recruiterInterviewStats?.upcoming ?? upcoming.length,
       completed:
         recruiterInterviewStats?.completed ??
-        sourceInterviews.filter((item) => item.status === "Completed").length,
+        sourceInterviews.filter(
+          (item) => item.status === "Completed"
+        ).length,
       online: sourceInterviews.filter(
         (item) =>
-          item.type === "Online" && ACTIVE_STATUSES.includes(item.status)
+          item.type === "Online" &&
+          isActiveStatus(item.status)
       ).length,
     };
   }, [sourceInterviews, recruiterInterviewStats]);
@@ -632,7 +953,8 @@ export default function RecruiterInterviews() {
         );
 
       const matchesStatus =
-        activeFilter === "All interviews" || item.status === activeFilter;
+        activeFilter === "All interviews" ||
+        item.status === activeFilter;
 
       const matchesType =
         typeFilter === "All types" || item.type === typeFilter;
@@ -652,10 +974,10 @@ export default function RecruiterInterviews() {
         );
       }
 
-      const aDate = a.scheduledAt || `${a.date}T${a.time}`;
-      const bDate = b.scheduledAt || `${b.date}T${b.time}`;
+      const aDate = getInterviewTimestamp(a) ?? 0;
+      const bDate = getInterviewTimestamp(b) ?? 0;
 
-      return String(aDate).localeCompare(String(bDate));
+      return aDate - bDate;
     });
 
     return result;
@@ -727,7 +1049,9 @@ export default function RecruiterInterviews() {
         job?.title,
         job?.jobTitle,
         item?.status,
-      ].some((value) => String(value || "").toLowerCase().includes(query));
+      ].some((value) =>
+        String(value || "").toLowerCase().includes(query)
+      );
     });
   }, [applicationList, applicationSearch]);
 
@@ -748,7 +1072,7 @@ export default function RecruiterInterviews() {
       ...EMPTY_FORM,
       applicationId: normalized.applicationId,
       round: String(normalized.round || 1),
-      interviewType: normalized.type,
+      interviewType: normalized.type || "Online",
       date: normalized.date,
       time: normalized.time,
       duration: String(normalized.duration || 60),
@@ -773,12 +1097,23 @@ export default function RecruiterInterviews() {
       return;
     }
 
-    if (!form.date || !form.time) {
-      setFormError("Please select an interview date and start time.");
+    if (
+      !isValidCalendarDate(form.date) ||
+      !isValidTime(form.time)
+    ) {
+      setFormError("Please select a valid interview date and start time.");
       return;
     }
 
-    if (form.interviewType === "Offline" && !form.location.trim()) {
+    if (!isValidTimezone(form.timezone)) {
+      setFormError("Please select a valid time zone.");
+      return;
+    }
+
+    if (
+      form.interviewType === "Offline" &&
+      !form.location.trim()
+    ) {
       setFormError("Please enter the office location.");
       return;
     }
@@ -810,7 +1145,14 @@ export default function RecruiterInterviews() {
       form.timezone
     );
 
-    if (!scheduledAt || new Date(scheduledAt) <= new Date()) {
+    if (!scheduledAt) {
+      setFormError(
+        "The selected date and time are invalid for this time zone."
+      );
+      return;
+    }
+
+    if (new Date(scheduledAt).getTime() <= Date.now()) {
       setFormError("The interview must be scheduled for a future time.");
       return;
     }
@@ -833,10 +1175,12 @@ export default function RecruiterInterviews() {
           round: roundNumber,
           interviewType: form.interviewType,
           location:
-            form.interviewType === "Offline" ? form.location.trim() : "",
+            form.interviewType === "Offline"
+              ? form.location.trim()
+              : "",
           scheduledAt,
           duration: durationNumber,
-          timezone: form.timezone || "Asia/Kolkata",
+          timezone: form.timezone,
           description: form.description.trim(),
         };
 
@@ -848,7 +1192,9 @@ export default function RecruiterInterviews() {
       setModal("");
       await refresh();
     } catch (err) {
-      setFormError(err?.message || "The interview could not be saved.");
+      setFormError(
+        err?.message || "The interview could not be saved."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -868,7 +1214,8 @@ export default function RecruiterInterviews() {
       });
 
       if (result) {
-        const record = unwrapInterviewList(result)[0] ||
+        const record =
+          unwrapInterviewList(result)[0] ||
           result?.data?.interview ||
           result?.data ||
           result?.interview ||
@@ -877,7 +1224,9 @@ export default function RecruiterInterviews() {
         setSelected(normalizeInterview(record));
       }
     } catch (err) {
-      setNotice(err?.message || "Could not load interview details.");
+      setNotice(
+        err?.message || "Could not load interview details."
+      );
     }
   }
 
@@ -892,7 +1241,9 @@ export default function RecruiterInterviews() {
     if (statusUpdatingId) return;
 
     if (item.status === status) {
-      setNotice(`Interview is already marked ${status.toLowerCase()}.`);
+      setNotice(
+        `Interview is already marked ${status.toLowerCase()}.`
+      );
       return;
     }
 
@@ -906,7 +1257,7 @@ export default function RecruiterInterviews() {
 
     if (
       ["Completed", "No Show"].includes(status) &&
-      !ACTIVE_STATUSES.includes(item.status)
+      !isActiveStatus(item.status)
     ) {
       setNotice(
         `An interview marked ${item.status} cannot be updated to ${status}.`
@@ -946,7 +1297,8 @@ export default function RecruiterInterviews() {
           });
 
           if (result) {
-            const record = unwrapInterviewList(result)[0] ||
+            const record =
+              unwrapInterviewList(result)[0] ||
               result?.data?.interview ||
               result?.data ||
               result?.interview ||
@@ -964,7 +1316,8 @@ export default function RecruiterInterviews() {
       }
     } catch (err) {
       setNotice(
-        err?.message || `Could not mark interview ${status.toLowerCase()}.`
+        err?.message ||
+          `Could not mark interview ${status.toLowerCase()}.`
       );
     } finally {
       setStatusUpdatingId("");
@@ -987,7 +1340,9 @@ export default function RecruiterInterviews() {
 
   function InterviewCard({ item }) {
     const [menuOpen, setMenuOpen] = useState(false);
-    const canCancel = ACTIVE_STATUSES.includes(item.status);
+
+    const canCancel = isActiveStatus(item.status);
+    const canJoin = canJoinInterview(item);
     const actions = getStatusActions(item.status);
     const isUpdating = statusUpdatingId === item.id;
 
@@ -1091,7 +1446,10 @@ export default function RecruiterInterviews() {
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-slate-700 hover:bg-violet-50 disabled:opacity-50"
                   >
                     {isUpdating ? (
-                      <LoaderCircle size={15} className="animate-spin" />
+                      <LoaderCircle
+                        size={15}
+                        className="animate-spin"
+                      />
                     ) : (
                       <Icon size={15} />
                     )}
@@ -1120,7 +1478,7 @@ export default function RecruiterInterviews() {
         <div className="mt-5 flex flex-wrap items-center gap-2">
           <span
             className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset ${
-              STATUS_STYLES[item.status] || STATUS_STYLES.Scheduled
+              STATUS_STYLES[item.status] || "bg-slate-100 text-slate-600 ring-slate-200"
             }`}
           >
             {item.status}
@@ -1134,7 +1492,7 @@ export default function RecruiterInterviews() {
             ) : (
               <MapPin size={12} />
             )}
-            {item.type}
+            {item.type || "Unknown"}
           </span>
 
           <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700">
@@ -1190,35 +1548,48 @@ export default function RecruiterInterviews() {
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
-  <button
-    type="button"
-    onClick={() => openDetails(item)}
-    className="min-h-11 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-700 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
-  >
-    View details
-  </button>
+          <button
+            type="button"
+            onClick={() => openDetails(item)}
+            className="min-h-11 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-700 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
+          >
+            View details
+          </button>
 
-  <button
-    type="button"
-    disabled={!canCancel}
-    onClick={() => openEdit(item)}
-    className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-  >
-    <CalendarClock size={15} />
-    Reschedule
-  </button>
+          <button
+            type="button"
+            disabled={!canCancel}
+            onClick={() => openEdit(item)}
+            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <CalendarClock size={15} />
+            Reschedule
+          </button>
 
-  {item.type === "Online" && canCancel && (
-    <button
-      type="button"
-      onClick={() => handleJoinInterview(item)}
-      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-violet-200 transition hover:bg-violet-800"
-    >
-      <Video size={16} />
-      Join Interview
-    </button>
-  )}
-</div>
+          {canJoin && (
+            <button
+              type="button"
+              disabled={Boolean(joiningInterviewId)}
+              onClick={() => handleJoinInterview(item)}
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-violet-200 transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {joiningInterviewId === getMongoInterviewId(item) ? (
+                <>
+                  <LoaderCircle
+                    size={16}
+                    className="animate-spin"
+                  />
+                  Joining...
+                </>
+              ) : (
+                <>
+                  <Video size={16} />
+                  Join Interview
+                </>
+              )}
+            </button>
+          )}
+        </div>
       </article>
     );
   }
@@ -1660,13 +2031,17 @@ export default function RecruiterInterviews() {
                                   candidate,
                                   candidate?.email || "Candidate"
                                 );
-                                const avatarUrl = getAvatarUrl(candidate?.avatar);
+                                const avatarUrl = getAvatarUrl(
+                                  candidate?.avatar
+                                );
 
                                 return (
                                   <button
                                     key={id}
                                     type="button"
-                                    onClick={() => handleApplicationSelect(id)}
+                                    onClick={() =>
+                                      handleApplicationSelect(id)
+                                    }
                                     className="flex w-full items-center gap-3 rounded-xl p-3 text-left hover:bg-violet-50"
                                   >
                                     {avatarUrl ? (
@@ -1874,11 +2249,17 @@ export default function RecruiterInterviews() {
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting || (!editingId && !form.applicationId)}
+                  disabled={
+                    submitting ||
+                    (!editingId && !form.applicationId)
+                  }
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-200 hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? (
-                    <LoaderCircle size={17} className="animate-spin" />
+                    <LoaderCircle
+                      size={17}
+                      className="animate-spin"
+                    />
                   ) : (
                     <Check size={17} />
                   )}
@@ -1949,13 +2330,13 @@ export default function RecruiterInterviews() {
                   ["Date", formatDate(selected.date), CalendarDays],
                   [
                     "Time",
-                    `${formatTime(selected.time)} (${selected.timezone})`,
+                    `${formatTime(selected.time)} (${selected.timezone || "Timezone unavailable"})`,
                     Clock3,
                   ],
                   ["Duration", `${selected.duration} minutes`, CalendarClock],
                   [
                     "Format",
-                    selected.type,
+                    selected.type || "Unknown",
                     selected.type === "Online"
                       ? Video
                       : selected.type === "Phone"
@@ -2026,17 +2407,31 @@ export default function RecruiterInterviews() {
               </div>
 
               <div className="space-y-3 border-t border-slate-100 pt-5">
-                {selected.type === "Online" &&
-                  ACTIVE_STATUSES.includes(selected.status) && (
-    <button
-      type="button"
-      onClick={() => handleJoinInterview(selected)}
-      className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-violet-200 transition hover:bg-violet-800"
-    >
-      <Video size={17} />
-      Join Interview
-    </button>
-  )}
+                {canJoinInterview(selected) && (
+                  <button
+                    type="button"
+                    disabled={Boolean(joiningInterviewId)}
+                    onClick={() => handleJoinInterview(selected)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-violet-200 transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {joiningInterviewId ===
+                    getMongoInterviewId(selected) ? (
+                      <>
+                        <LoaderCircle
+                          size={17}
+                          className="animate-spin"
+                        />
+                        Joining interview...
+                      </>
+                    ) : (
+                      <>
+                        <Video size={17} />
+                        Join Interview
+                      </>
+                    )}
+                  </button>
+                )}
+
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   Recruiter actions
                 </p>
@@ -2045,7 +2440,7 @@ export default function RecruiterInterviews() {
                   <button
                     type="button"
                     disabled={
-                      !ACTIVE_STATUSES.includes(selected.status) ||
+                      !isActiveStatus(selected.status) ||
                       statusUpdatingId === selected.id
                     }
                     onClick={() => openEdit(selected)}
@@ -2057,14 +2452,17 @@ export default function RecruiterInterviews() {
                   <button
                     type="button"
                     disabled={
-                      !ACTIVE_STATUSES.includes(selected.status) ||
+                      !isActiveStatus(selected.status) ||
                       statusUpdatingId === selected.id
                     }
                     onClick={() => changeStatus(selected, "Cancelled")}
                     className="flex items-center justify-center gap-2 rounded-xl border border-rose-200 px-4 py-3 text-sm font-bold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {statusUpdatingId === selected.id ? (
-                      <LoaderCircle size={16} className="animate-spin" />
+                      <LoaderCircle
+                        size={16}
+                        className="animate-spin"
+                      />
                     ) : (
                       <XCircle size={16} />
                     )}
@@ -2074,14 +2472,17 @@ export default function RecruiterInterviews() {
                   <button
                     type="button"
                     disabled={
-                      !ACTIVE_STATUSES.includes(selected.status) ||
+                      !isActiveStatus(selected.status) ||
                       statusUpdatingId === selected.id
                     }
                     onClick={() => changeStatus(selected, "Completed")}
                     className="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {statusUpdatingId === selected.id ? (
-                      <LoaderCircle size={16} className="animate-spin" />
+                      <LoaderCircle
+                        size={16}
+                        className="animate-spin"
+                      />
                     ) : (
                       <CheckCircle2 size={16} />
                     )}
@@ -2091,14 +2492,17 @@ export default function RecruiterInterviews() {
                   <button
                     type="button"
                     disabled={
-                      !ACTIVE_STATUSES.includes(selected.status) ||
+                      !isActiveStatus(selected.status) ||
                       statusUpdatingId === selected.id
                     }
                     onClick={() => changeStatus(selected, "No Show")}
                     className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {statusUpdatingId === selected.id ? (
-                      <LoaderCircle size={16} className="animate-spin" />
+                      <LoaderCircle
+                        size={16}
+                        className="animate-spin"
+                      />
                     ) : (
                       <XCircle size={16} />
                     )}
@@ -2106,9 +2510,11 @@ export default function RecruiterInterviews() {
                   </button>
                 </div>
 
-                {!ACTIVE_STATUSES.includes(selected.status) && (
+                {!isActiveStatus(selected.status) && (
                   <p className="text-xs leading-5 text-slate-500">
-                    This interview is already {selected.status.toLowerCase()}.
+                    This interview is already {String(
+                      selected.status || "inactive"
+                    ).toLowerCase()}.
                     Status actions are disabled to prevent conflicting updates.
                   </p>
                 )}
@@ -2123,7 +2529,9 @@ export default function RecruiterInterviews() {
               <CheckCircle2 size={17} />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-slate-900">Peer.Hiring</p>
+              <p className="text-sm font-bold text-slate-900">
+                Peer.Hiring
+              </p>
               <p className="mt-1 break-words text-xs leading-5 text-slate-500">
                 {notice}
               </p>

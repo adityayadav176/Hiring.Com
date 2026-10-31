@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { useHome, useJob, useResume, useTitle } from "../../hooks/Hook";
+import { useJob, useResume } from "../../hooks/Hook";
 import ApplyJob from "../applications/ApplyJob";
 
 function JobDetails({ job }) {
@@ -26,36 +26,40 @@ function JobDetails({ job }) {
     formatSalary,
   } = useJob();
 
-  const getCompanyLogo = (job) => {
-  const company = job?.companyId || job?.company;
-  const logo = company?.logo;
-
-  if (typeof logo === "string") return logo;
-  return logo?.url || company?.logoUrl || job?.companyLogo || "";
-};
-
-const getCompanyName = (job) => {
-  const company = job?.companyId || job?.company;
-
-  if (company && typeof company === "object") {
-    return company.name || company.companyName || "Company";
-  }
-
-  return job?.companyName || "Company";
-};
-
-const companyName = getCompanyName(job);
-const companyLogo = getCompanyLogo(job);
+  const { resumes, handleGetAllResumes } = useResume();
 
   const [showApplyModal, setShowApplyModal] = useState(false);
 
-  const { setTitle } = useTitle();
-  const { setActivePage } = useHome();
-  const { resumes, handleGetAllResumes } = useResume();
+  useEffect(() => {
+    handleGetAllResumes();
+  }, []);
 
-   useEffect(() => {
-      handleGetAllResumes();
-    }, [])
+  const getCompanyLogo = (currentJob) => {
+    const company = currentJob?.companyId || currentJob?.company;
+    const logo = company?.logo;
+
+    if (typeof logo === "string") return logo;
+
+    return (
+      logo?.url ||
+      company?.logoUrl ||
+      currentJob?.companyLogo ||
+      ""
+    );
+  };
+
+  const getCompanyName = (currentJob) => {
+    const company = currentJob?.companyId || currentJob?.company;
+
+    if (company && typeof company === "object") {
+      return company.name || company.companyName || "Company";
+    }
+
+    return currentJob?.companyName || "Company";
+  };
+
+  const companyName = getCompanyName(job);
+  const companyLogo = getCompanyLogo(job);
 
   const location = FormatLocation
     ? FormatLocation(job?.location)
@@ -83,14 +87,22 @@ const companyLogo = getCompanyLogo(job);
     job?.salary?.min != null &&
     job?.salary?.max != null &&
     (job.salary.min > 0 || job.salary.max > 0)
-      ? `₹${formatSalary ? formatSalary(job.salary.min) : job.salary.min.toLocaleString("en-IN")} - ₹${formatSalary ? formatSalary(job.salary.max) : job.salary.max.toLocaleString("en-IN")}`
+      ? `₹${
+          formatSalary
+            ? formatSalary(job.salary.min)
+            : Number(job.salary.min).toLocaleString("en-IN")
+        } - ₹${
+          formatSalary
+            ? formatSalary(job.salary.max)
+            : Number(job.salary.max).toLocaleString("en-IN")
+        }`
       : "Salary Not Disclosed";
 
   const isNegotiable =
     job?.salary?.isNegotiable ?? job?.salary?.isNagotiable;
 
   const isOpen =
-    job?.status === "OPEN" &&
+    String(job?.status || "").toUpperCase() === "OPEN" &&
     !job?.isDeleted &&
     !job?.isBlocked &&
     (job?.openings ?? 0) > 0 &&
@@ -122,38 +134,53 @@ const companyLogo = getCompanyLogo(job);
       ? formatApplicants(job.applicantsCount)
       : job?.applicantsCount ?? 0;
 
+  const handleCloseDetails = () => {
+    setShowApplyModal(false);
+    setSelectedJobs(null);
+  };
+
+  const handleApplySuccess = () => {
+    setShowApplyModal(false);
+    console.log("Application submitted successfully");
+  };
+
+  if (!job) return null;
+
   return (
     <>
-    <div onClick={() => setSelectedJobs(null)} aria-hidden="true" className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-[2px]">
-        <aside
-      className="fixed right-0 top-0 z-50 flex h-dvh w-[650px] max-w-[92vw] flex-col overflow-hidden bg-white shadow-2xl"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Job details"
-    >
+      <div
+        className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-[2px]"
+        onClick={handleCloseDetails}
+      />
+
+      <aside
+        className="fixed right-0 top-0 z-50 flex h-dvh w-[650px] max-w-[92vw] flex-col overflow-hidden bg-white shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Job details"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="shrink-0 border-b border-slate-200 bg-white px-5 py-5 sm:px-7">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center
-                overflow-hidden rounded-xl border border-slate-200
-                bg-white text-lg font-bold text-violet-700">
-  {companyLogo ? (
-    <img
-      src={companyLogo}
-      alt={`${companyName} logo`}
-      className="h-full w-full object-contain p-1"
-      onError={(event) => {
-        event.currentTarget.style.display = "none";
-      }}
-    />
-  ) : (
-    companyName.charAt(0).toUpperCase()
-  )}
-</div>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white text-lg font-bold text-violet-700">
+                {companyLogo ? (
+                  <img
+                    src={companyLogo}
+                    alt={`${companyName} logo`}
+                    className="h-full w-full object-contain p-1"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  companyName.charAt(0).toUpperCase()
+                )}
+              </div>
 
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-slate-500">
-                  {companyName || "Company not specified"}
+                  {companyName}
                 </p>
                 <h1 className="mt-1 break-words text-xl font-bold tracking-tight text-slate-900">
                   {job?.title || "Untitled position"}
@@ -173,7 +200,7 @@ const companyLogo = getCompanyLogo(job);
               <button
                 type="button"
                 aria-label="Close job details"
-                onClick={() => setSelectedJobs(null)}
+                onClick={handleCloseDetails}
                 className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-violet-200 hover:bg-violet-50 hover:text-[#6D28D9]"
               >
                 <X size={19} />
@@ -202,7 +229,9 @@ const companyLogo = getCompanyLogo(job);
               }`}
             >
               <CheckCircle2 size={13} />
-              {isOpen ? "Accepting applications" : "Not accepting applications"}
+              {isOpen
+                ? "Accepting applications"
+                : "Not accepting applications"}
             </span>
           </div>
         </div>
@@ -221,7 +250,7 @@ const companyLogo = getCompanyLogo(job);
                     <span className="text-xs font-medium">Location</span>
                   </div>
                   <p className="mt-2 break-words text-sm font-semibold text-slate-800">
-                    {location || "Location not specified"}
+                    {location}
                   </p>
                 </div>
 
@@ -321,7 +350,9 @@ const companyLogo = getCompanyLogo(job);
             </section>
 
             <section className="mt-8">
-              <h2 className="text-base font-bold text-slate-900">Skills</h2>
+              <h2 className="text-base font-bold text-slate-900">
+                Skills
+              </h2>
               <div className="mt-4 flex flex-wrap gap-2">
                 {skills.length > 0 ? (
                   skills.map((item, index) => (
@@ -404,17 +435,15 @@ const companyLogo = getCompanyLogo(job);
 
         <div className="shrink-0 border-t border-slate-200 bg-white px-5 py-4 sm:px-7">
           <div className="flex items-center gap-3">
-            
-<button
-onClick={() => {setShowApplyModal(true)}}
-  type="button"
-  disabled={!isOpen}
-  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#6D28D9] px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-violet-200 transition-all hover:bg-[#5B21B6] hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
->
-  <Send size={18} />
-  {isOpen ? "Apply Now" : "Applications Closed"}
-</button>
-
+            <button
+              onClick={() => setShowApplyModal(true)}
+              type="button"
+              disabled={!isOpen}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#6D28D9] px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-violet-200 transition-all hover:bg-[#5B21B6] hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Send size={18} />
+              {isOpen ? "Apply Now" : "Applications Closed"}
+            </button>
 
             <button
               type="button"
@@ -425,22 +454,27 @@ onClick={() => {setShowApplyModal(true)}}
             </button>
           </div>
         </div>
-        
       </aside>
-               
-{showApplyModal && (
-  <ApplyJob
-    job={job}
-    onClose={() => setShowApplyModal(false)}
-    onSuccess={() => {
-      setShowApplyModal(false);
-      console.log("Application submitted successfully");
-    }}
-    resumes={resumes}
-  />
-)}
-    </div>
-  </>
+
+      {showApplyModal && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4"
+          onClick={() => setShowApplyModal(false)}
+        >
+          <div
+            className="w-full max-w-3xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <ApplyJob
+              job={job}
+              onClose={() => setShowApplyModal(false)}
+              onSuccess={handleApplySuccess}
+              resumes={resumes}
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

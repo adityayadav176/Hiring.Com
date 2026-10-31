@@ -1,8 +1,8 @@
-
 import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -21,6 +21,7 @@ import {
   Code2,
   FileText,
   Globe2,
+  LoaderCircle,
   MapPin,
   MessageSquare,
   RefreshCw,
@@ -35,8 +36,8 @@ import {
   X,
   XCircle,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
+import { useNavigate } from "react-router-dom";
 import { useInterview } from "../../hooks/Hook";
 
 const TABS = ["All", "Upcoming", "Completed", "Cancelled"];
@@ -47,6 +48,14 @@ const TERMINAL_STATUSES = [
   "rejected",
   "no show",
 ];
+
+const JOINABLE_STATUSES = [
+  "scheduled",
+  "accepted",
+  "rescheduled",
+];
+
+const JOIN_BEFORE_MINUTES = 15;
 
 const STATUS_STYLES = {
   scheduled: "border-blue-100 bg-blue-50 text-blue-700",
@@ -170,9 +179,7 @@ function getTimezone(interview) {
 }
 
 function getScheduledDate(interview) {
-  const rawDate =
-    interview?.scheduledAt ||
-    interview?.date;
+  const rawDate = interview?.scheduledAt || interview?.date;
 
   if (!rawDate) return null;
 
@@ -182,45 +189,111 @@ function getScheduledDate(interview) {
 }
 
 function getInterviewTimestamp(interview) {
-  const date = getScheduledDate(interview);
-
-  if (!date) return null;
-
-  if (interview?.scheduledAt) {
-    return date.getTime();
+  if (!interview || typeof interview !== "object") {
+    return null;
   }
 
-  const time = getText(interview?.time);
+  if (interview.scheduledAt) {
+    const scheduledDate = new Date(interview.scheduledAt);
 
-  if (time) {
-    const match = time.match(
-      /^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/i
-    );
+    return Number.isNaN(scheduledDate.getTime())
+      ? null
+      : scheduledDate.getTime();
+  }
 
-    if (match) {
-      let hours = Number(match[1]);
-      const minutes = Number(match[2]);
-      const meridiem = match[3]?.toUpperCase();
+  if (!interview.date) return null;
 
-      if (meridiem === "PM" && hours < 12) hours += 12;
-      if (meridiem === "AM" && hours === 12) hours = 0;
+  const date = new Date(interview.date);
 
-      if (
-        hours >= 0 &&
-        hours <= 23 &&
-        minutes >= 0 &&
-        minutes <= 59
-      ) {
-        const result = new Date(date);
+  if (Number.isNaN(date.getTime())) return null;
 
-        result.setHours(hours, minutes, 0, 0);
+  const time = getText(interview.time);
 
-        return result.getTime();
-      }
+  if (!time) return null;
+
+  const match = time.match(
+    /^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/i
+  );
+
+  if (!match) return null;
+
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const meridiem = match[3]?.toUpperCase();
+
+  if (minutes < 0 || minutes > 59) return null;
+
+  if (meridiem) {
+    if (hours < 1 || hours > 12) return null;
+
+    if (meridiem === "PM" && hours < 12) {
+      hours += 12;
     }
+
+    if (meridiem === "AM" && hours === 12) {
+      hours = 0;
+    }
+  } else if (hours < 0 || hours > 23) {
+    return null;
   }
 
-  return date.getTime();
+  const result = new Date(date);
+
+  result.setHours(hours, minutes, 0, 0);
+
+  const timestamp = result.getTime();
+
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function getInterviewDuration(interview) {
+  const duration = Number(interview?.duration);
+
+  if (!Number.isFinite(duration) || duration <= 0) {
+    return null;
+  }
+
+  return duration;
+}
+
+function canJoinInterview(interview, now = Date.now()) {
+  if (!interview || typeof interview !== "object") {
+    return false;
+  }
+
+  const interviewId = getText(interview._id);
+
+  if (!/^[a-f\d]{24}$/i.test(interviewId)) {
+    return false;
+  }
+
+  if (normalize(interview.interviewType) !== "online") {
+    return false;
+  }
+
+  const status = getStatus(interview);
+
+  if (!JOINABLE_STATUSES.includes(status)) {
+    return false;
+  }
+
+  const startTime = getInterviewTimestamp(interview);
+
+  if (startTime === null || !Number.isFinite(startTime)) {
+    return false;
+  }
+
+  const duration = getInterviewDuration(interview);
+
+  if (duration === null) {
+    return false;
+  }
+
+  const endTime = startTime + duration * 60 * 1000;
+  const joinStartTime =
+    startTime - JOIN_BEFORE_MINUTES * 60 * 1000;
+
+  return now >= joinStartTime && now < endTime;
 }
 
 function formatDate(interview) {
@@ -241,29 +314,27 @@ function formatDate(interview) {
 }
 
 function formatTime(interview) {
-  const date = getScheduledDate(interview);
+  const timestamp = getInterviewTimestamp(interview);
 
-  if (!date) {
+  if (timestamp === null) {
     return getText(interview?.time) || "Time unavailable";
   }
 
-  if (interview?.scheduledAt) {
-    try {
-      return new Intl.DateTimeFormat("en-IN", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-        timeZone: getTimezone(interview),
-      }).format(date);
-    } catch {
-      return date.toLocaleTimeString("en-IN", {
-        hour: "numeric",
-        minute: "2-digit",
-      });
-    }
-  }
+  const date = new Date(timestamp);
 
-  return getText(interview?.time) || "Time unavailable";
+  try {
+    return new Intl.DateTimeFormat("en-IN", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: getTimezone(interview),
+    }).format(date);
+  } catch {
+    return date.toLocaleTimeString("en-IN", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
 }
 
 function formatDuration(minutes) {
@@ -394,9 +465,17 @@ function getApplicationReference(interview) {
 
 function isUpcoming(interview, now = Date.now()) {
   const timestamp = getInterviewTimestamp(interview);
+  const duration = getInterviewDuration(interview);
+
+  if (timestamp === null) return false;
+
+  const endTime =
+    duration === null
+      ? timestamp
+      : timestamp + duration * 60 * 1000;
 
   return (
-    timestamp !== null &&
+    endTime > now &&
     timestamp > now &&
     !TERMINAL_STATUSES.includes(getStatus(interview))
   );
@@ -540,7 +619,49 @@ function DetailRow({ label, children }) {
   );
 }
 
-function InterviewCard({ interview, onView, onJoin }) {
+function JoinInterviewButton({
+  interview,
+  onJoin,
+  joiningInterviewId,
+  now,
+  className = "",
+}) {
+  if (!canJoinInterview(interview, now)) {
+    return null;
+  }
+
+  const interviewId = getText(interview?._id);
+  const isJoining = joiningInterviewId === interviewId;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onJoin(interview)}
+      disabled={Boolean(joiningInterviewId)}
+      className={`inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-70 ${className}`}
+    >
+      {isJoining ? (
+        <>
+          <LoaderCircle size={15} className="animate-spin" />
+          Joining...
+        </>
+      ) : (
+        <>
+          <Video size={15} />
+          Join Interview
+        </>
+      )}
+    </button>
+  );
+}
+
+function InterviewCard({
+  interview,
+  onView,
+  onJoin,
+  joiningInterviewId,
+  now,
+}) {
   const companyName = getCompanyName(interview);
   const jobTitle = getJobTitle(interview);
   const recruiterName = getDisplayName(interview?.recruiter);
@@ -626,28 +747,22 @@ function InterviewCard({ interview, onView, onJoin }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-{normalize(interview?.interviewType) === "online" &&
-  getText(interview?._id) &&
-  !TERMINAL_STATUSES.includes(getStatus(interview)) && (
-    <button
-      type="button"
-      onClick={() => onJoin(interview)}
-      className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-violet-800"
-    >
-      <Video size={15} />
-      Join Interview
-    </button>
-  )}
+          <JoinInterviewButton
+            interview={interview}
+            onJoin={onJoin}
+            joiningInterviewId={joiningInterviewId}
+            now={now}
+          />
 
-  <button
-    type="button"
-    onClick={() => onView(interview)}
-    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-violet-100 px-3.5 py-2.5 text-xs font-bold text-violet-700 transition hover:border-violet-300 hover:bg-violet-50"
-  >
-    View details
-    <ArrowUpRight size={14} />
-  </button>
-</div>
+          <button
+            type="button"
+            onClick={() => onView(interview)}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-violet-100 px-3.5 py-2.5 text-xs font-bold text-violet-700 transition hover:border-violet-300 hover:bg-violet-50"
+          >
+            View details
+            <ArrowUpRight size={14} />
+          </button>
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-slate-500">
@@ -665,7 +780,13 @@ function InterviewCard({ interview, onView, onJoin }) {
   );
 }
 
-function DetailModal({ interview, onClose, onJoin  }) {
+function DetailModal({
+  interview,
+  onClose,
+  onJoin,
+  joiningInterviewId,
+  now,
+}) {
   useEffect(() => {
     if (!interview) return undefined;
 
@@ -749,30 +870,28 @@ function DetailModal({ interview, onClose, onJoin  }) {
         </div>
 
         <div className="max-h-[calc(92vh-90px)] overflow-y-auto p-5 sm:p-6">
-{normalize(interview?.interviewType) === "online" &&
-  getText(interview?._id) &&
-  !TERMINAL_STATUSES.includes(getStatus(interview)) && (
-    <div className="mb-5 flex flex-col justify-between gap-3 rounded-2xl border border-violet-100 bg-violet-50/70 p-4 sm:flex-row sm:items-center">
-      <div>
-        <h3 className="text-sm font-bold text-slate-900">
-          Ready for your interview?
-        </h3>
+          {canJoinInterview(interview, now) && (
+            <div className="mb-5 flex flex-col justify-between gap-3 rounded-2xl border border-violet-100 bg-violet-50/70 p-4 sm:flex-row sm:items-center">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">
+                  Ready for your interview?
+                </h3>
 
-        <p className="mt-1 text-xs text-slate-500">
-          Join the online interview with your camera and microphone.
-        </p>
-      </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  Join the online interview with your camera and microphone.
+                </p>
+              </div>
 
-      <button
-        type="button"
-        onClick={() => onJoin(interview)}
-        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-violet-800"
-      >
-        <Video size={16} />
-        Join Interview
-      </button>
-    </div>
-  )}
+              <JoinInterviewButton
+                interview={interview}
+                onJoin={onJoin}
+                joiningInterviewId={joiningInterviewId}
+                now={now}
+                className="py-3 text-sm"
+              />
+            </div>
+          )}
+
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <InfoItem
               icon={CalendarDays}
@@ -1110,8 +1229,11 @@ export default function InterviewPage() {
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [joiningInterviewId, setJoiningInterviewId] = useState("");
+  const [now, setNow] = useState(() => Date.now());
 
   const navigate = useNavigate();
+  const joinTimeoutRef = useRef(null);
 
   const [calendarMonth, setCalendarMonth] = useState(
     () =>
@@ -1122,25 +1244,50 @@ export default function InterviewPage() {
       )
   );
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
 
-const handleJoinInterview = useCallback(
-  (interview) => {
-    const interviewId = getText(interview?._id);
+    return () => clearInterval(interval);
+  }, []);
 
-    if (!interviewId) {
-      setError("The interview ID is missing. Please refresh your interviews.");
-      return;
-    }
-
-    setError("");
-    navigate(`/interview/${encodeURIComponent(interviewId)}`);
-  },
-  [navigate]
-);
+  useEffect(() => {
+    return () => {
+      if (joinTimeoutRef.current) {
+        clearTimeout(joinTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const interviews = useMemo(
     () => (Array.isArray(interviewData) ? interviewData : []),
     [interviewData]
+  );
+
+  const handleJoinInterview = useCallback(
+    (interview) => {
+      if (joiningInterviewId) return;
+
+      const currentTime = Date.now();
+
+      if (!canJoinInterview(interview, currentTime)) {
+        setError(
+          "This interview is not currently available to join. You can join 15 minutes before its scheduled start time and until its duration expires."
+        );
+        return;
+      }
+
+      const interviewId = getText(interview?._id);
+
+      setError("");
+      setJoiningInterviewId(interviewId);
+
+      joinTimeoutRef.current = setTimeout(() => {
+        navigate(`/interview/${encodeURIComponent(interviewId)}`);
+      }, 500);
+    },
+    [navigate, joiningInterviewId]
   );
 
   const refreshInterviews = useCallback(async () => {
@@ -1169,8 +1316,6 @@ const handleJoinInterview = useCallback(
   useEffect(() => {
     refreshInterviews();
   }, [refreshInterviews, refreshKey]);
-
-  const now = Date.now();
 
   const upcomingInterviews = useMemo(
     () =>
@@ -1208,7 +1353,7 @@ const handleJoinInterview = useCallback(
 
         if (
           activeTab === "Upcoming" &&
-          !isUpcoming(interview)
+          !isUpcoming(interview, now)
         ) {
           return false;
         }
@@ -1254,7 +1399,7 @@ const handleJoinInterview = useCallback(
 
         return second - first;
       });
-  }, [interviews, activeTab, search]);
+  }, [interviews, activeTab, search, now]);
 
   const calendarData = useMemo(() => {
     const year = calendarMonth.getFullYear();
@@ -1383,11 +1528,11 @@ const handleJoinInterview = useCallback(
           </div>
         </header>
 
-       <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-[#211044] via-[#48218E] to-[#6D28D9] p-6 text-white shadow-lg shadow-violet-200/40 sm:p-8">
-        <div className="pointer-events-none absolute -right-16 -top-20 -z-10 h-64 w-64 rounded-full border border-white/10" />
-        <div className="pointer-events-none absolute -bottom-24 right-1/3 -z-10 h-52 w-52 rounded-full bg-fuchsia-400/20 blur-3xl" />
+        <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-[#211044] via-[#48218E] to-[#6D28D9] p-6 text-white shadow-lg shadow-violet-200/40 sm:p-8">
+          <div className="pointer-events-none absolute -right-16 -top-20 -z-10 h-64 w-64 rounded-full border border-white/10" />
+          <div className="pointer-events-none absolute -bottom-24 right-1/3 -z-10 h-52 w-52 rounded-full bg-fuchsia-400/20 blur-3xl" />
 
-        <div className="relative flex flex-col justify-between gap-7 lg:flex-row lg:items-center">
+          <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-violet-100">
                 <Sparkles size={14} />
@@ -1507,7 +1652,7 @@ const handleJoinInterview = useCallback(
 
               <div>
                 <h3 className="text-sm font-bold text-rose-800">
-                  Couldn't load interviews
+                  Interview notice
                 </h3>
 
                 <p className="mt-1 text-sm leading-5 text-rose-700">
@@ -1680,15 +1825,19 @@ const handleJoinInterview = useCallback(
 
                     const count = interviews.filter((interview) => {
                       if (tab === "All") return true;
+
                       if (tab === "Upcoming") {
-                        return isUpcoming(interview);
+                        return isUpcoming(interview, now);
                       }
+
                       if (tab === "Completed") {
                         return getStatus(interview) === "completed";
                       }
+
                       if (tab === "Cancelled") {
                         return getStatus(interview) === "cancelled";
                       }
+
                       return false;
                     }).length;
 
@@ -1800,10 +1949,12 @@ const handleJoinInterview = useCallback(
                       className="min-w-0"
                     >
                       <InterviewCard
-  interview={interview}
-  onView={setSelectedInterview}
-  onJoin={handleJoinInterview}
-/>
+                        interview={interview}
+                        onView={setSelectedInterview}
+                        onJoin={handleJoinInterview}
+                        joiningInterviewId={joiningInterviewId}
+                        now={now}
+                      />
                     </div>
                   ))
                 ) : (
@@ -2026,10 +2177,12 @@ const handleJoinInterview = useCallback(
       </div>
 
       <DetailModal
-  interview={selectedInterview}
-  onClose={() => setSelectedInterview(null)}
-  onJoin={handleJoinInterview}
-/>
+        interview={selectedInterview}
+        onClose={() => setSelectedInterview(null)}
+        onJoin={handleJoinInterview}
+        joiningInterviewId={joiningInterviewId}
+        now={now}
+      />
     </div>
   );
 }
