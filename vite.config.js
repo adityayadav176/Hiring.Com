@@ -8,4 +8,13 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+
+  esbuild: {
+    drop: ["debugger"],
+    pure: [
+      "console.log",
+      "console.debug",
+      "console.info",
+    ],
+  },
 })
