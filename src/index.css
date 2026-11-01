@@ -1,20 +1,22 @@
+
 @import "tailwindcss";
 
-:root{
-  background:#e5e5ec;
+/* Global background */
+:root {
+  background: #e5e5ec;
 }
 
-/* Hide scrollbars but keep scrolling functional */
+/* Hide scrollbars globally while preserving scrolling */
 * {
   scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer / Edge Legacy */
+  -ms-overflow-style: none; /* IE and Edge Legacy */
 }
 
 *::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Edge */
 }
 
-
+/* Hide horizontal scrollbar */
 .hide-horizontal-scrollbar {
   overflow-x: auto;
   overflow-y: hidden;
@@ -26,6 +28,7 @@
   display: none;
 }
 
+/* Hide vertical scrollbar */
 .hide-vertical-scrollbar {
   overflow-y: auto;
   overflow-x: hidden;
@@ -39,8 +42,8 @@
 
 /* Reusable hidden-scrollbar utility */
 .hide-scrollbar {
-  -ms-overflow-style: none;
   scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .hide-scrollbar::-webkit-scrollbar {

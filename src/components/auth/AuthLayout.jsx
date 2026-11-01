@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Sparkles } from "lucide-react";
-import peerLogo from "../../assests/peerLogo.png";
 
 function AuthLayout({ children }) {
   return (
