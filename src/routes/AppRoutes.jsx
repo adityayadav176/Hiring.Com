@@ -8,10 +8,8 @@ import ADashboard from "../pages/admin/ADashboard";
 import ProtectedRoutes from "./ProtectedRoutes";
 import NotFound from "../pages/NotFound";
 import RecruiterLayout from '../pages/recruiter/RecruiterLayout';
-import RecruiterProfileS from "../components/RecruiterProfile";
 import RecruiterProfile from "../components/RecruiterProfile";
 import InterviewRoom from "../pages/interview/InterviewRoom";
-import ChatPage from '../components/chat/ChatPage';
 const AppRoutes = () => {
     return (
         <Routes>
@@ -19,9 +17,8 @@ const AppRoutes = () => {
             <Route path="/forgetPassword" element={<ForgetPassword/>}/>
             <Route path="/login" element={<Login/>}/>
             <Route path="/signup" element={<Signup/>}/>
-            <Route path="rp" element={<RecruiterProfileS/>}/>
             <Route path="/recruiterP" element={<RecruiterProfile/>}/>
-            <Route path="/chatpage" element={<ChatPage/>}/>
+        
  <Route
     element={<ProtectedRoutes allowedType="both" />}
 >

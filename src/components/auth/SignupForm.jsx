@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Building2, User } from "lucide-react";
@@ -10,8 +11,6 @@ function SignupForm() {
     const [password, setPassword] = useState("");
     const [name, setName] = useState("");
     const [phoneNo, setPhoneNo] = useState("");
-    const [avatar, setAvatar] = useState(null);
-    const [coverImage, setCoverImage] = useState(null);
     const [loading, setLoading] = useState(false);
 
     const { handleSignup } = useAuth();
@@ -30,8 +29,6 @@ function SignupForm() {
                 password,
                 name,
                 phoneNo,
-                avatar,
-                coverImage,
             });
         } finally {
             setLoading(false);
@@ -41,7 +38,7 @@ function SignupForm() {
     return (
         <form
             onSubmit={handleSubmit}
-            className="bg-white w-full max-w-sm rounded-xl border border-slate-200 p-5 sm:p-6 mt-2 mb-2"
+            className="bg-white w-full max-w-sm min-w-0 rounded-xl border border-slate-200 p-5 sm:p-6 mt-2 mb-2"
         >
             <div className="flex gap-8 border-b border-slate-200">
                 <NavLink
@@ -219,104 +216,6 @@ function SignupForm() {
                         placeholder="••••••••"
                         className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl disabled:bg-slate-50 disabled:cursor-not-allowed"
                     />
-                </div>
-
-                <div className="grid grid-cols-2 mt-8 gap-3">
-                    <div>
-                        <label className="text-sm font-medium text-gray-700">
-                            Profile Photo
-                        </label>
-
-                        <label
-                            className={`mt-1 flex items-center gap-3 border border-dashed border-gray-300 rounded-lg p-2 ${
-                                loading
-                                    ? "cursor-not-allowed opacity-60"
-                                    : "cursor-pointer hover:bg-gray-50"
-                            }`}
-                        >
-                            {avatar ? (
-                                <img
-                                    src={URL.createObjectURL(avatar)}
-                                    alt="Avatar preview"
-                                    className="w-10 h-10 rounded-full object-cover"
-                                />
-                            ) : (
-                                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                                    <User size={18} />
-                                </div>
-                            )}
-
-                            <div className="min-w-0">
-                                <p className="text-xs font-medium text-gray-700">
-                                    {avatar ? "Change photo" : "Choose photo"}
-                                </p>
-
-                                <p className="text-[10px] text-gray-400 truncate">
-                                    {avatar ? avatar.name : "PNG, JPG"}
-                                </p>
-                            </div>
-
-                            <input
-                                type="file"
-                                accept="image/*"
-                                disabled={loading}
-                                className="hidden"
-                                onChange={(e) =>
-                                    setAvatar(e.target.files[0])
-                                }
-                            />
-                        </label>
-                    </div>
-
-                    <div>
-                        <label className="text-sm font-medium text-gray-700">
-                            Cover Image
-                        </label>
-
-                        <label
-                            className={`mt-1 flex items-center gap-3 border border-dashed border-gray-300 rounded-lg p-2 ${
-                                loading
-                                    ? "cursor-not-allowed opacity-60"
-                                    : "cursor-pointer hover:bg-gray-50"
-                            }`}
-                        >
-                            {coverImage ? (
-                                <img
-                                    src={URL.createObjectURL(coverImage)}
-                                    alt="Cover preview"
-                                    className="w-14 h-10 rounded-md object-cover"
-                                />
-                            ) : (
-                                <div className="w-14 h-10 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
-                                    Cover
-                                </div>
-                            )}
-
-                            <div className="min-w-0">
-                                <p className="text-xs font-medium text-gray-700">
-                                    {coverImage
-                                        ? "Change cover"
-                                        : "Choose cover"}
-                                </p>
-
-                                <p className="text-[10px] text-gray-400 truncate">
-                                    {coverImage
-                                        ? coverImage.name
-                                        : "PNG, JPG"}
-                                </p>
-                            </div>
-
-                            <input
-                                type="file"
-                                accept="image/*"
-                                disabled={loading}
-                                className="hidden"
-                                onChange={(e) =>
-                                    setCoverImage(e.target.files[0])
-                                }
-                            />
-                        </label>
-                    </div>
                 </div>
 
                 <button

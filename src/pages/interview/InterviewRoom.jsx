@@ -133,10 +133,6 @@ export default function InterviewRoom() {
         [interviewId]
     );
 
-    // --------------------------------------------------
-    // ATTACH REMOTE STREAM
-    // --------------------------------------------------
-
     const attachRemoteStream = useCallback(async () => {
         const video = stageVideoRef.current;
         const stream = remoteStreamRef.current;
@@ -154,10 +150,6 @@ export default function InterviewRoom() {
             setNotice("Click the remote video to start playback.");
         }
     }, []);
-
-    // --------------------------------------------------
-    // CLOSE PEER CONNECTION
-    // --------------------------------------------------
 
     const closePeerConnection = useCallback(() => {
         const pc = peerRef.current;

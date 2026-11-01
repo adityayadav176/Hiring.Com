@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../hooks/Hook";
 
@@ -8,6 +9,8 @@ function GoogleButton({ role = null, onError }) {
     const googleButtonRef = useRef(null);
     const roleRef = useRef(role);
     const onErrorRef = useRef(onError);
+    const resizeObserverRef = useRef(null);
+    const renderButtonRef = useRef(null);
 
     const { handleGoogleAuth } = useAuth();
 
@@ -25,19 +28,28 @@ function GoogleButton({ role = null, onError }) {
 
     useEffect(() => {
         let interval;
+        let isMounted = true;
 
         const renderButton = () => {
             if (
+                !isMounted ||
                 !window.google?.accounts?.id ||
                 !googleButtonRef.current
             ) {
-                console.log("Google is not ready");
                 return;
             }
 
-            console.log("Rendering Google button");
+            const container = googleButtonRef.current;
 
-            googleButtonRef.current.innerHTML = "";
+            const buttonWidth = Math.floor(
+                Math.min(container.clientWidth, 400)
+            );
+
+            if (buttonWidth <= 0) return;
+
+            console.log("Rendering Google button:", buttonWidth);
+
+            container.innerHTML = "";
 
             window.google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
@@ -67,10 +79,7 @@ function GoogleButton({ role = null, onError }) {
                             payload.role = roleRef.current;
                         }
 
-                        console.log(
-                            "Google payload:",
-                            payload
-                        );
+                        console.log("Google payload:", payload);
 
                         await handleGoogleAuth(payload);
                     } catch (error) {
@@ -81,7 +90,7 @@ function GoogleButton({ role = null, onError }) {
 
                         onErrorRef.current?.(
                             error?.message ||
-                                "Google authentication failed."
+                            "Google authentication failed."
                         );
                     } finally {
                         setLoading(false);
@@ -90,11 +99,11 @@ function GoogleButton({ role = null, onError }) {
             });
 
             window.google.accounts.id.renderButton(
-                googleButtonRef.current,
+                container,
                 {
                     theme: "outline",
                     size: "large",
-                    width: 350,
+                    width: buttonWidth,
                     text: "continue_with",
                     shape: "rectangular",
                 }
@@ -103,68 +112,89 @@ function GoogleButton({ role = null, onError }) {
             console.log("Google button rendered");
         };
 
+        renderButtonRef.current = renderButton;
+
         // Google already loaded
         if (window.google?.accounts?.id) {
             renderButton();
-            return;
+        } else {
+            // Find existing Google script
+            let script = document.querySelector(
+                'script[src="https://accounts.google.com/gsi/client"]'
+            );
+
+            // Script doesn't exist
+            if (!script) {
+                script = document.createElement("script");
+
+                script.src =
+                    "https://accounts.google.com/gsi/client";
+
+                script.async = true;
+                script.defer = true;
+
+                script.onload = () => {
+                    console.log("Google script loaded");
+                    renderButton();
+                };
+
+                script.onerror = () => {
+                    console.error("Google script failed to load");
+
+                    onErrorRef.current?.(
+                        "Unable to load Google Sign-In."
+                    );
+                };
+
+                document.head.appendChild(script);
+            } else {
+                // Script exists but Google hasn't initialized yet
+                interval = setInterval(() => {
+                    if (window.google?.accounts?.id) {
+                        clearInterval(interval);
+                        renderButton();
+                    }
+                }, 100);
+            }
         }
 
-        // Find existing Google script
-        let script = document.querySelector(
-            'script[src="https://accounts.google.com/gsi/client"]'
-        );
-
-        // Script doesn't exist
-        if (!script) {
-            script = document.createElement("script");
-
-            script.src =
-                "https://accounts.google.com/gsi/client";
-
-            script.async = true;
-            script.defer = true;
-
-            script.onload = () => {
-                console.log("Google script loaded");
-                renderButton();
-            };
-
-            script.onerror = () => {
-                console.error(
-                    "Google script failed to load"
-                );
-
-                onErrorRef.current?.(
-                    "Unable to load Google Sign-In."
-                );
-            };
-
-            document.head.appendChild(script);
-        }
-
-        // Script exists but Google hasn't initialized yet
-        else {
-            interval = setInterval(() => {
+        // Observe form/container width changes
+        if (googleButtonRef.current) {
+            resizeObserverRef.current = new ResizeObserver(() => {
                 if (window.google?.accounts?.id) {
-                    clearInterval(interval);
-
                     renderButton();
                 }
-            }, 100);
+            });
+
+            resizeObserverRef.current.observe(
+                googleButtonRef.current
+            );
         }
 
         return () => {
+            isMounted = false;
+
             if (interval) {
                 clearInterval(interval);
             }
+
+            resizeObserverRef.current?.disconnect();
+            resizeObserverRef.current = null;
         };
-    }, []);
+    }, [handleGoogleAuth]);
 
     return (
-        <div className="relative w-full">
+        <div className="relative w-full min-w-0">
             <div
                 ref={googleButtonRef}
-                className="flex min-h-[44px] w-full justify-center"
+                className="
+                    flex
+                    min-h-[44px]
+                    w-full
+                    min-w-0
+                    justify-center
+                    overflow-hidden
+                "
             />
 
             {loading && (
