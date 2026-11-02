@@ -10,7 +10,6 @@ const JobLayout = lazy(() => import("../../components/jobs/JobLayout"));
 const Settings = lazy(() => import("./Settings"));
 const Application = lazy(() => import("./Application"));
 const Overview = lazy(() => import("./../pubic/Overview"));
-const ADashboard = lazy(() => import("./../admin/ADashboard"));
 const InterviewPage = lazy(() => import("./InterviewPage"));
 const ResumePage = lazy(() => import("./ResumePage"));
 const ChatPage = lazy(() => import("../../components/chat/ChatPage"));
