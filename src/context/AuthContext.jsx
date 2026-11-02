@@ -10,38 +10,30 @@ import { useNavigate } from "react-router-dom";
 
 export const AuthContext = createContext(null);
 
-const API_URL = (
-  import.meta.env.VITE_API_URL
-).replace(/\/$/, "");
+const API_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 
 const ADMIN_PROFILE_URL = `${API_URL}/admin/profile`;
-
 const REFRESH_URL = `${API_URL}/auth/refreshAccessToken`;
 
 const parseResponse = async (response) => {
   return response.json().catch(() => ({}));
 };
 
-const getErrorMessage = (data, fallback = "Something went wrong.") => {
+const getErrorMessage = (
+  data,
+  fallback = "Something went wrong."
+) => {
   return data?.message || data?.error || fallback;
 };
 
-// Normalize frontend account types.
-// Do not modify the actual database role.
 const normalizeAccountType = (type, account) => {
   const role = account?.role;
 
-  if (
-    type === "admin" ||
-    role === "admin"
-  ) {
+  if (type === "admin" || role === "admin") {
     return "admin";
   }
 
-  if (
-    type === "recruiter" ||
-    role === "recruiter"
-  ) {
+  if (type === "recruiter" || role === "recruiter") {
     return "recruiter";
   }
 
@@ -63,7 +55,6 @@ function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [admin, setAdmin] = useState(null);
   const [recruiter, setRecruiter] = useState(null);
-
   const [authLoading, setAuthLoading] = useState(true);
 
   const refreshPromiseRef = useRef(null);
@@ -114,10 +105,6 @@ function AuthProvider({ children }) {
     [clearLocalAuth]
   );
 
-  // --------------------------------------------------
-  // REFRESH ACCESS TOKEN
-  // --------------------------------------------------
-
   const handleRefreshAccessToken = useCallback(async () => {
     if (refreshPromiseRef.current) {
       return refreshPromiseRef.current;
@@ -158,10 +145,6 @@ function AuthProvider({ children }) {
     }
   }, []);
 
-  // --------------------------------------------------
-  // AUTHENTICATED FETCH
-  // --------------------------------------------------
-
   const authenticatedFetch = useCallback(
     async (url, options = {}) => {
       const makeRequest = () =>
@@ -179,7 +162,6 @@ function AuthProvider({ children }) {
             ? url.toString()
             : "";
 
-      // Never refresh recursively.
       if (
         requestUrl.includes("/auth/refreshAccessToken")
       ) {
@@ -196,10 +178,7 @@ function AuthProvider({ children }) {
         return response;
       }
 
-      // Retry original request once.
-      response = await makeRequest();
-
-      return response;
+      return makeRequest();
     },
     [handleRefreshAccessToken]
   );
@@ -212,7 +191,6 @@ function AuthProvider({ children }) {
     authCheckPromiseRef.current = (async () => {
       try {
         const readCurrentAccount = async () => {
-          // First check User / Recruiter.
           const userResponse = await fetch(
             `${API_URL}/auth/fetchUser`,
             {
@@ -252,7 +230,6 @@ function AuthProvider({ children }) {
             };
           }
 
-          // If user authentication fails, check Admin.
           const adminResponse = await fetch(
             ADMIN_PROFILE_URL,
             {
@@ -295,7 +272,6 @@ function AuthProvider({ children }) {
 
         let result = await readCurrentAccount();
 
-        // Refresh only when authentication failed with 401.
         if (
           !result.authenticated &&
           (
@@ -370,149 +346,147 @@ function AuthProvider({ children }) {
     };
   }, [getUser]);
 
-  
-const handleLogin = async (details = {}) => {
+  const handleLogin = async (details = {}) => {
     try {
-        const {
-            email,
+      const {
+        email,
+        password,
+        phoneNo,
+      } = details;
+
+      const normalizedEmail =
+        typeof email === "string"
+          ? email.trim().toLowerCase()
+          : "";
+
+      const normalizedPhone =
+        typeof phoneNo === "string"
+          ? phoneNo.trim()
+          : "";
+
+      if (!password || typeof password !== "string") {
+        throw new Error(
+          "Please enter your password."
+        );
+      }
+
+      if (!normalizedEmail && !normalizedPhone) {
+        throw new Error(
+          "Please enter your email or phone number."
+        );
+      }
+
+      if (normalizedEmail && normalizedPhone) {
+        throw new Error(
+          "Please enter either email or phone number, not both."
+        );
+      }
+
+      const response = await fetch(
+        `${API_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            ...(normalizedEmail
+              ? { email: normalizedEmail }
+              : {}),
+            ...(normalizedPhone
+              ? { phoneNo: normalizedPhone }
+              : {}),
             password,
-            phoneNo,
-        } = details;
-
-        const normalizedEmail =
-            typeof email === "string"
-                ? email.trim().toLowerCase()
-                : "";
-
-        const normalizedPhone =
-            typeof phoneNo === "string"
-                ? phoneNo.trim()
-                : "";
-
-        if (!password || typeof password !== "string") {
-            throw new Error(
-                "Please enter your password."
-            );
+          }),
         }
+      );
 
-        // Only one login identifier should be provided.
-        if (!normalizedEmail && !normalizedPhone) {
-            throw new Error(
-                "Please enter your email or phone number."
-            );
-        }
+      const responseData = await parseResponse(response);
 
-        if (normalizedEmail && normalizedPhone) {
-            throw new Error(
-                "Please enter either email or phone number, not both."
-            );
-        }
-
-        const response = await fetch(
-            `${API_URL}/auth/login`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    ...(normalizedEmail
-                        ? { email: normalizedEmail }
-                        : {}),
-                    ...(normalizedPhone
-                        ? { phoneNo: normalizedPhone }
-                        : {}),
-                    password,
-                }),
-            }
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(responseData, "Login failed.")
         );
+      }
 
-        const responseData = await parseResponse(response);
+      const accountData = responseData?.data;
 
-        if (!response.ok) {
-            throw new Error(
-                getErrorMessage(responseData, "Login failed.")
-            );
-        }
-
-        const accountData = responseData?.data;
-
-        if (!accountData) {
-            throw new Error(
-                "Invalid login response from server."
-            );
-        }
-
-        // Two-factor authentication required.
-        if (accountData.twoFactorRequired) {
-            if (!accountData.twoFactorToken || !accountData.userId) {
-                throw new Error(
-                    "Invalid 2FA response from server."
-                );
-            }
-
-            return {
-                success: true,
-                requires2FA: true,
-                twoFactorToken: accountData.twoFactorToken,
-                userId: accountData.userId,
-                type: normalizeAccountType(accountData.type),
-            };
-        }
-
-        // Normal login response.
-        const account =
-            accountData.user ||
-            accountData.recruiter ||
-            accountData.admin;
-
-        const accountType = normalizeAccountType(
-            accountData.type,
-            account
+      if (!accountData) {
+        throw new Error(
+          "Invalid login response from server."
         );
+      }
 
-        if (!account?._id || !accountType) {
-            throw new Error(
-                "Account data or account type missing from login response."
-            );
-        }
-
-        setAuthenticatedAccount(
-            accountType,
-            account
-        );
-
-        authCheckPromiseRef.current = null;
-        setAuthLoading(false);
-
-        if (accountType === "admin") {
-            navigate("/admin", { replace: true });
-        } else if (accountType === "recruiter") {
-            navigate("/recruiter", { replace: true });
-        } else {
-            navigate("/", { replace: true });
+      if (accountData.twoFactorRequired) {
+        if (
+          !accountData.twoFactorToken ||
+          !accountData.userId
+        ) {
+          throw new Error(
+            "Invalid 2FA response from server."
+          );
         }
 
         return {
-            success: true,
-            requires2FA: false,
-            type: accountType,
+          success: true,
+          requires2FA: true,
+          twoFactorToken: accountData.twoFactorToken,
+          userId: accountData.userId,
+          type: normalizeAccountType(accountData.type),
         };
+      }
 
+      const account =
+        accountData.user ||
+        accountData.recruiter ||
+        accountData.admin;
+
+      const accountType = normalizeAccountType(
+        accountData.type,
+        account
+      );
+
+      if (!account?._id || !accountType) {
+        throw new Error(
+          "Account data or account type missing from login response."
+        );
+      }
+
+      setAuthenticatedAccount(
+        accountType,
+        account
+      );
+
+      authCheckPromiseRef.current = null;
+      setAuthLoading(false);
+
+      if (accountType === "admin") {
+        navigate("/admin", { replace: true });
+      } else if (accountType === "recruiter") {
+        navigate("/recruiter", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+
+      return {
+        success: true,
+        requires2FA: false,
+        type: accountType,
+      };
     } catch (error) {
-        console.error("Login error:", error);
-        throw error;
+      console.error("Login error:", error);
+      throw error;
     }
-};
+  };
 
-
-  const handleGoogleAuth = async ({ credential } = {}) => {
+  const handleGoogleAuth = async ({
+    credential,
+    role,
+  } = {}) => {
     try {
       if (!credential) {
-        throw new Error(
-          "Google credential is required."
-        );
+        throw new Error("Google credential is required.");
       }
 
       const response = await fetch(
@@ -525,6 +499,7 @@ const handleLogin = async (details = {}) => {
           credentials: "include",
           body: JSON.stringify({
             credential,
+            ...(role ? { role } : {}),
           }),
         }
       );
@@ -560,9 +535,7 @@ const handleLogin = async (details = {}) => {
           requires2FA: true,
           twoFactorToken: accountData.twoFactorToken,
           userId: accountData.userId,
-          type: normalizeAccountType(
-            accountData.type
-          ),
+          type: normalizeAccountType(accountData.type),
         };
       }
 
@@ -583,10 +556,7 @@ const handleLogin = async (details = {}) => {
         );
       }
 
-      setAuthenticatedAccount(
-        accountType,
-        account
-      );
+      setAuthenticatedAccount(accountType, account);
 
       authCheckPromiseRef.current = null;
       setAuthLoading(false);
@@ -606,103 +576,84 @@ const handleLogin = async (details = {}) => {
         user: account,
       };
     } catch (error) {
-      console.error(
-        "Google authentication error:",
-        error
-      );
-
+      console.error("Google authentication error:", error);
       throw error;
     }
   };
 
-  // --------------------------------------------------
-  // SIGNUP
-  // --------------------------------------------------
-
-
-const handleSignup = async (details = {}) => {
+  const handleSignup = async (details = {}) => {
     try {
-        const {
-            role,
-            name,
-            email,
+      const {
+        role,
+        name,
+        email,
+        password,
+        phoneNo,
+      } = details;
+
+      if (
+        !name?.trim() ||
+        !email?.trim() ||
+        !password
+      ) {
+        throw new Error(
+          "Name, email and password are required."
+        );
+      }
+
+      if (!["User", "recruiter"].includes(role)) {
+        throw new Error(
+          "Please select a valid account type."
+        );
+      }
+
+      const response = await fetch(
+        `${API_URL}/auth/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
             password,
-            phoneNo,
-        } = details;
-
-        // Required field validation
-        if (
-            !name?.trim() ||
-            !email?.trim() ||
-            !password
-        ) {
-            throw new Error(
-                "Name, email and password are required."
-            );
+            role,
+            ...(phoneNo?.trim()
+              ? { phoneNo: phoneNo.trim() }
+              : {}),
+          }),
         }
+      );
 
-        // Role validation — exact backend values
-        if (!["User", "recruiter"].includes(role)) {
-            throw new Error(
-                "Please select a valid account type."
-            );
-        }
+      const data = await parseResponse(response);
 
-        const response = await fetch(
-            `${API_URL}/auth/register`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    name: name.trim(),
-                    email: email.trim().toLowerCase(),
-                    password,
-                    role,
-                    ...(phoneNo?.trim()
-                        ? { phoneNo: phoneNo.trim() }
-                        : {}),
-                }),
-            }
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(data, "Signup failed.")
         );
+      }
 
-        const data = await parseResponse(response);
+      const createdName =
+        data?.data?.user?.name ||
+        name.trim();
 
-        if (!response.ok) {
-            throw new Error(
-                getErrorMessage(data, "Signup failed.")
-            );
-        }
+      alert(
+        `Hello ${createdName}, your account has been created! Welcome to Peer.Hiring.`
+      );
 
-        const createdName =
-            data?.data?.user?.name ||
-            name.trim();
+      navigate("/login", {
+        replace: true,
+      });
 
-        alert(
-            `Hello ${createdName}, your account has been created! Welcome to Peer.Hiring.`
-        );
-
-        navigate("/login", {
-            replace: true,
-        });
-
-        return data;
-
+      return data;
     } catch (error) {
-        console.error("Signup error:", error);
-
-        alert(error.message || "Signup failed.");
-
-        throw error;
+      console.error("Signup error:", error);
+      alert(error.message || "Signup failed.");
+      throw error;
     }
-};
-
-
-  // --------------------------------------------------
-  // FORGOT PASSWORD - SEND OTP
-  // --------------------------------------------------
+  };
 
   const handlePasswordResetOtp = async ({ email } = {}) => {
     try {
@@ -744,10 +695,6 @@ const handleSignup = async (details = {}) => {
       throw error;
     }
   };
-
-  // --------------------------------------------------
-  // FORGOT PASSWORD - RESET
-  // --------------------------------------------------
 
   const handleForgetPassword = async ({
     password,
@@ -818,10 +765,6 @@ const handleSignup = async (details = {}) => {
     }
   };
 
-  // --------------------------------------------------
-  // CHANGE NAME
-  // --------------------------------------------------
-
   const changeName = async ({ name } = {}) => {
     try {
       if (!name?.trim()) {
@@ -867,6 +810,12 @@ const handleSignup = async (details = {}) => {
               ? { ...previous, ...updatedAccount }
               : previous
           );
+        } else if (admin) {
+          setAdmin((previous) =>
+            previous
+              ? { ...previous, ...updatedAccount }
+              : previous
+          );
         }
       }
 
@@ -882,45 +831,41 @@ const handleSignup = async (details = {}) => {
     const logoutURL = `${API_URL}/auth/logoutCurrentUser`;
 
     try {
-        let response = await fetch(logoutURL, {
+      let response = await fetch(logoutURL, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (response.status === 401) {
+        const refreshed =
+          await handleRefreshAccessToken();
+
+        if (refreshed) {
+          response = await fetch(logoutURL, {
             method: "POST",
             credentials: "include",
-        });
-
-        // Retry once if the access token has expired.
-        if (response.status === 401) {
-            const refreshed = await handleRefreshAccessToken();
-
-            if (refreshed) {
-                response = await fetch(logoutURL, {
-                    method: "POST",
-                    credentials: "include",
-                });
-            }
+          });
         }
+      }
 
-        const data = await parseResponse(response);
+      const data = await parseResponse(response);
 
-        if (!response.ok) {
-            throw new Error(
-                getErrorMessage(data, "Logout failed.")
-            );
-        }
+      if (!response.ok) {
+        throw new Error(
+          getErrorMessage(data, "Logout failed.")
+        );
+      }
 
-        return true;
+      return true;
     } catch (error) {
-        console.error("Logout error:", error);
-
-        return false;
+      console.error("Logout error:", error);
+      return false;
     } finally {
-        // Always clear local authentication.
-        clearLocalAuth();
-
-        authCheckPromiseRef.current = null;
-
-        navigate("/login", { replace: true });
+      clearLocalAuth();
+      authCheckPromiseRef.current = null;
+      navigate("/login", { replace: true });
     }
-};
+  };
 
   const handleDeleteAccount = async ({
     otp,
@@ -968,10 +913,6 @@ const handleSignup = async (details = {}) => {
     }
   };
 
-  // --------------------------------------------------
-  // EMAIL VERIFICATION - SEND OTP
-  // --------------------------------------------------
-
   const handleEmailVerificationOtp = async () => {
     try {
       const response = await authenticatedFetch(
@@ -994,19 +935,11 @@ const handleSignup = async (details = {}) => {
 
       return data;
     } catch (error) {
-      console.error(
-        "Email verification OTP error:",
-        error
-      );
-
+      console.error("Email verification OTP error:", error);
       alert(error.message);
       throw error;
     }
   };
-
-  // --------------------------------------------------
-  // EMAIL VERIFICATION - VERIFY OTP
-  // --------------------------------------------------
 
   const handleVerifyEmail = async ({ otp } = {}) => {
     try {
@@ -1042,10 +975,6 @@ const handleSignup = async (details = {}) => {
     }
   };
 
-  // --------------------------------------------------
-  // DELETE ACCOUNT - SEND OTP
-  // --------------------------------------------------
-
   const handleSendDeleteAccountOtp = async () => {
     try {
       const response = await authenticatedFetch(
@@ -1068,19 +997,11 @@ const handleSignup = async (details = {}) => {
 
       return data;
     } catch (error) {
-      console.error(
-        "Delete account OTP error:",
-        error
-      );
-
+      console.error("Delete account OTP error:", error);
       alert(error.message);
       throw error;
     }
   };
-
-  // --------------------------------------------------
-  // UPDATE AVATAR
-  // --------------------------------------------------
 
   const handleUpdateAvatar = async (formData) => {
     try {
@@ -1100,15 +1021,9 @@ const handleSignup = async (details = {}) => {
         );
       }
 
-      // Backend may return { avatar: {...} }
-      // or return the image object directly.
       const avatar =
         data?.data?.avatar ||
-        (
-          data?.data?.url
-            ? data.data
-            : null
-        );
+        (data?.data?.url ? data.data : null);
 
       if (avatar) {
         setUser((previous) =>
@@ -1122,6 +1037,12 @@ const handleSignup = async (details = {}) => {
             ? { ...previous, avatar }
             : previous
         );
+
+        setAdmin((previous) =>
+          previous
+            ? { ...previous, avatar }
+            : previous
+        );
       }
 
       return data;
@@ -1130,10 +1051,6 @@ const handleSignup = async (details = {}) => {
       throw error;
     }
   };
-
-  // --------------------------------------------------
-  // UPDATE COVER IMAGE
-  // --------------------------------------------------
 
   const handleUpdateCoverImage = async (formData) => {
     try {
@@ -1158,11 +1075,7 @@ const handleSignup = async (details = {}) => {
 
       const coverImage =
         data?.data?.coverImage ||
-        (
-          data?.data?.url
-            ? data.data
-            : null
-        );
+        (data?.data?.url ? data.data : null);
 
       if (coverImage) {
         setUser((previous) =>
@@ -1176,22 +1089,20 @@ const handleSignup = async (details = {}) => {
             ? { ...previous, coverImage }
             : previous
         );
+
+        setAdmin((previous) =>
+          previous
+            ? { ...previous, coverImage }
+            : previous
+        );
       }
 
       return data;
     } catch (error) {
-      console.error(
-        "Cover image update failed:",
-        error
-      );
-
+      console.error("Cover image update failed:", error);
       throw error;
     }
   };
-
-  // --------------------------------------------------
-  // ENABLE 2FA
-  // --------------------------------------------------
 
   const handleEnable2FA = async () => {
     try {
@@ -1216,10 +1127,6 @@ const handleSignup = async (details = {}) => {
       throw error;
     }
   };
-
-  // --------------------------------------------------
-  // VERIFY 2FA SETUP
-  // --------------------------------------------------
 
   const handleVerify2fa = async ({ token } = {}) => {
     try {
@@ -1261,10 +1168,6 @@ const handleSignup = async (details = {}) => {
       throw error;
     }
   };
-
-  // --------------------------------------------------
-  // LOGIN WITH 2FA
-  // --------------------------------------------------
 
   const handleLoginWith2FA = async ({
     twoFactorToken,
@@ -1358,41 +1261,26 @@ const handleSignup = async (details = {}) => {
   };
 
   const contextValue = {
-    // Account state
     user,
     admin,
     recruiter,
     authLoading,
-
-    // Session
     getUser,
     handleRefreshAccessToken,
     authenticatedFetch,
-
-    // Authentication
     handleLogin,
     handleGoogleAuth,
     handleSignup,
     handleLogout,
-
-    // Password and account
     handlePasswordResetOtp,
     handleForgetPassword,
     changeName,
     handleDeleteAccount,
-
-    // Email verification
     handleEmailVerificationOtp,
     handleVerifyEmail,
-
-    // Images
     handleUpdateAvatar,
     handleUpdateCoverImage,
-
-    // Account deletion OTP
     handleSendDeleteAccountOtp,
-
-    // 2FA
     handleEnable2FA,
     handleVerify2fa,
     handleLoginWith2FA,

@@ -418,7 +418,7 @@ export default function ChatPage() {
   setRecruiterActivePage,
 } = useHome();
 
-  const { user, recruiter, getUser } = useAuth();
+  const { user, recruiter } = useAuth();
 
   const currentUser = recruiter || user;
   const currentUserId = getId(currentUser);
@@ -438,7 +438,6 @@ export default function ChatPage() {
     }
   };
 
-  const getUserCalledRef = useRef(false);
   const activeRequestRef = useRef(0);
   const endRef = useRef(null);
   const textareaRef = useRef(null);
@@ -697,16 +696,6 @@ useEffect(() => {
   },
   [lastSeenByUserId]
 );
-
-  useEffect(() => {
-    if (getUserCalledRef.current) return;
-
-    getUserCalledRef.current = true;
-
-    Promise.resolve(getUser?.()).catch((err) => {
-      console.error("Failed to fetch current user:", err);
-    });
-  }, [getUser]);
 
   useEffect(() => {
     Promise.resolve(handleGetMyConversations?.()).catch((err) => {
