@@ -412,9 +412,7 @@ export default function ChatPage() {
   } = appContext;
 
   const {
-  activePage,
   setActivePage,
-  recruiterActivePage,
   setRecruiterActivePage,
 } = useHome();
 

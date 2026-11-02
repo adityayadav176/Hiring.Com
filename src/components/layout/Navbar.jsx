@@ -5,7 +5,7 @@ import {
   CircleQuestionMark
 } from 'lucide-react'
 
-import { useAuth, useHome, useTitle } from '../../hooks/Hook'
+import { useAdmin, useAuth, useHome, useTitle } from '../../hooks/Hook'
 
 function Navbar() {
   const { user, admin, recruiter } = useAuth()

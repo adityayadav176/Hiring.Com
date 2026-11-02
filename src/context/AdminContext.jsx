@@ -2,12 +2,10 @@
 import {
   createContext,
   useCallback,
-  useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export const AdminContext = createContext(null);
 

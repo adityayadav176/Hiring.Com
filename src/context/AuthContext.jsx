@@ -11,8 +11,6 @@ import { useNavigate } from "react-router-dom";
 export const AuthContext = createContext(null);
 
 const API_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
-
-const ADMIN_PROFILE_URL = `${API_URL}/admin/profile`;
 const REFRESH_URL = `${API_URL}/auth/refreshAccessToken`;
 
 const parseResponse = async (response) => {
@@ -183,168 +181,90 @@ function AuthProvider({ children }) {
     [handleRefreshAccessToken]
   );
 
-  const getUser = useCallback(async () => {
-    if (authCheckPromiseRef.current) {
-      return authCheckPromiseRef.current;
-    }
+  
+const getUser = useCallback(async () => {
+  if (authCheckPromiseRef.current) {
+    return authCheckPromiseRef.current;
+  }
 
-    authCheckPromiseRef.current = (async () => {
-      try {
-        const readCurrentAccount = async () => {
-          const userResponse = await fetch(
-            `${API_URL}/auth/fetchUser`,
-            {
-              method: "GET",
-              credentials: "include",
-            }
-          );
+  authCheckPromiseRef.current = (async () => {
+    setAuthLoading(true);
 
-          const userData = await parseResponse(userResponse);
+    try {
+      const fetchCurrentUser = async () => {
+        return fetch(`${API_URL}/auth/fetchUser`, {
+          method: "GET",
+          credentials: "include",
+        });
+      };
 
-          if (userResponse.ok) {
-            const account = userData?.data;
+      let response = await fetchCurrentUser();
 
-            if (!account?._id) {
-              throw new Error(
-                "User account missing from fetchUser response."
-              );
-            }
+      if (response.status === 401) {
+        const refreshed = await handleRefreshAccessToken();
 
-            const type = normalizeAccountType(
-              account.role,
-              account
-            );
-
-            if (!type || type === "admin") {
-              throw new Error(
-                "Invalid user account type."
-              );
-            }
-
-            return {
-              authenticated: true,
-              type,
-              account,
-              userStatus: userResponse.status,
-              adminStatus: null,
-            };
-          }
-
-          const adminResponse = await fetch(
-            ADMIN_PROFILE_URL,
-            {
-              method: "GET",
-              credentials: "include",
-            }
-          );
-
-          const adminData = await parseResponse(adminResponse);
-
-          if (adminResponse.ok) {
-            const account =
-              adminData?.data?.admin ||
-              adminData?.data;
-
-            if (!account?._id) {
-              throw new Error(
-                "Admin account missing from profile response."
-              );
-            }
-
-            return {
-              authenticated: true,
-              type: "admin",
-              account,
-              userStatus: userResponse.status,
-              adminStatus: adminResponse.status,
-            };
-          }
-
-          return {
-            authenticated: false,
-            account: null,
-            userStatus: userResponse.status,
-            adminStatus: adminResponse.status,
-            userMessage: userData?.message,
-            adminMessage: adminData?.message,
-          };
-        };
-
-        let result = await readCurrentAccount();
-
-        if (
-          !result.authenticated &&
-          (
-            result.userStatus === 401 ||
-            result.adminStatus === 401
-          )
-        ) {
-          const refreshed =
-            await handleRefreshAccessToken();
-
-          if (refreshed) {
-            result = await readCurrentAccount();
-          } else {
-            throw new Error(
-              "Session expired. Please log in again."
-            );
-          }
-        }
-
-        if (!result.authenticated || !result.account) {
-          throw new Error(
-            result.userMessage ||
-            result.adminMessage ||
-            "Authentication session could not be restored."
-          );
-        }
-
-        if (!mountedRef.current) {
+        if (!refreshed) {
+          clearLocalAuth();
           return null;
         }
 
-        setAuthenticatedAccount(
-          result.type,
-          result.account
-        );
-
-        return result.account;
-      } catch (error) {
-        console.error(
-          "Session restoration failed:",
-          error
-        );
-
-        if (mountedRef.current) {
-          clearLocalAuth();
-        }
-
-        return null;
-      } finally {
-        authCheckPromiseRef.current = null;
-
-        if (mountedRef.current) {
-          setAuthLoading(false);
-        }
+        response = await fetchCurrentUser();
       }
-    })();
 
-    return authCheckPromiseRef.current;
-  }, [
-    handleRefreshAccessToken,
-    setAuthenticatedAccount,
-    clearLocalAuth,
-  ]);
+      const data = await parseResponse(response);
 
-  useEffect(() => {
-    mountedRef.current = true;
+      if (!response.ok) {
+        clearLocalAuth();
+        return null;
+      }
 
-    getUser();
+      const account = data?.data;
 
-    return () => {
-      mountedRef.current = false;
-    };
-  }, [getUser]);
+      if (!account?._id) {
+        clearLocalAuth();
+        return null;
+      }
+
+      const type = normalizeAccountType(account.role, account);
+
+      if (type !== "user" && type !== "recruiter") {
+        clearLocalAuth();
+        return null;
+      }
+
+      if (mountedRef.current) {
+        setAuthenticatedAccount(type, account);
+      }
+
+      return account;
+    } catch (error) {
+      console.error("User session restoration failed:", error);
+      clearLocalAuth();
+      return null;
+    } finally {
+      authCheckPromiseRef.current = null;
+
+      if (mountedRef.current) {
+        setAuthLoading(false);
+      }
+    }
+  })();
+
+  return authCheckPromiseRef.current;
+}, [
+  handleRefreshAccessToken,
+  setAuthenticatedAccount,
+  clearLocalAuth,
+]);
+
+
+useEffect(() => {
+  mountedRef.current = true;
+
+  return () => {
+    mountedRef.current = false;
+  };
+}, []);
 
   const handleLogin = async (details = {}) => {
     try {
@@ -810,12 +730,6 @@ function AuthProvider({ children }) {
               ? { ...previous, ...updatedAccount }
               : previous
           );
-        } else if (admin) {
-          setAdmin((previous) =>
-            previous
-              ? { ...previous, ...updatedAccount }
-              : previous
-          );
         }
       }
 
@@ -1038,11 +952,6 @@ function AuthProvider({ children }) {
             : previous
         );
 
-        setAdmin((previous) =>
-          previous
-            ? { ...previous, avatar }
-            : previous
-        );
       }
 
       return data;
@@ -1085,12 +994,6 @@ function AuthProvider({ children }) {
         );
 
         setRecruiter((previous) =>
-          previous
-            ? { ...previous, coverImage }
-            : previous
-        );
-
-        setAdmin((previous) =>
           previous
             ? { ...previous, coverImage }
             : previous
