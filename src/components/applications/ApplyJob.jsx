@@ -1,6 +1,6 @@
-import { AlertCircle, ArrowLeft, ArrowRight, BriefcaseBusiness, Building2, CalendarDays, Check, CheckCircle2, Circle, CircleDollarSign, Clock3, ExternalLink, FileText, LoaderCircle, MapPin, MessageSquareCheck, MessageSquareText, Send, ShieldCheck, Sparkle, Sparkles, Upload, X } from 'lucide-react'
-import React, { useEffect, useMemo, useState } from 'react'
-import {useApplication, useResume} from "../../hooks/Hook"
+import { AlertCircle, ArrowLeft, ArrowRight, BriefcaseBusiness, Building2, CalendarDays, Check, CheckCircle2, Circle, CircleDollarSign, Clock3, ExternalLink, FileText, LoaderCircle, MapPin, MessageSquareText, Send, ShieldCheck, Sparkles, Upload, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import {useApplication} from "../../hooks/Hook"
 
 function ApplyJob({job, resumes, onClose, onSuccess}) {
   const [step, setStep] = useState(1);
@@ -53,8 +53,6 @@ function ApplyJob({job, resumes, onClose, onSuccess}) {
   const companyName = company?.name ? company.name : "Hiring company";
   const companyLogo = company?.logo || "";
   const jobTitle = job?.title || "Job Opportunity";
-
-  console.log(selectedResume?.resume?.url);
 
   const location = (() => {
     const value = job?.location ?? null

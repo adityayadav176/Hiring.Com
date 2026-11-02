@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 
 const SOCKET_URL =
-    import.meta.env.VITE_SOCKET_URL || "http://localhost:9000";
+    import.meta.env.VITE_SOCKET_URL;
 
 export function createInterviewSocket() {
     const socket = io(SOCKET_URL, {

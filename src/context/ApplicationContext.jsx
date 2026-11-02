@@ -48,10 +48,6 @@ const ApplicationProvider = ({ children }) => {
 
   const APPLICATIONS_URL = `${API_URL}/applications`;
 
-  // --------------------------------------------------
-  // STATE
-  // --------------------------------------------------
-
   const [application, setApplication] = useState(null);
   const [applications, setApplications] = useState([]);
   const [deletedApplications, setDeletedApplications] =
@@ -301,10 +297,6 @@ const ApplicationProvider = ({ children }) => {
     },
     [APPLICATIONS_URL, request]
   );
-
-  // --------------------------------------------------
-  // GET DELETED APPLICATIONS
-  // --------------------------------------------------
 
   const handleGetDeletedApplications = useCallback(
     async ({

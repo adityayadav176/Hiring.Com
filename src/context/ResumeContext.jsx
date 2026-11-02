@@ -88,8 +88,6 @@ const handleGetAllResumes = useCallback(
 
       const url = `${BASE_URL}/userResumes?page=${page}&limit=${limit}`;
 
-      console.log("Fetching all resumes:", url);
-
       const response = await fetch(url, {
         method: "GET",
         credentials: "include",

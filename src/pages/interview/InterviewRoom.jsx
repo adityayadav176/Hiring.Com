@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -25,19 +24,10 @@ import {
 
 import { createInterviewSocket } from "../../services/interviewSocket";
 
-// Add TURN credentials here before production deployment.
-// STUN alone cannot connect every network.
 const RTC_CONFIG = {
     iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
         { urls: "stun:stun1.l.google.com:19302" },
-
-        // Example TURN configuration:
-        // {
-        //     urls: "turn:YOUR_TURN_SERVER:3478",
-        //     username: "YOUR_USERNAME",
-        //     credential: "YOUR_PASSWORD",
-        // },
     ],
     iceCandidatePoolSize: 10,
 };
@@ -66,7 +56,6 @@ export default function InterviewRoom() {
             ? routeInterviewId
             : null;
 
-    // Media refs
     const localVideoRef = useRef(null);
     const stageVideoRef = useRef(null);
 
@@ -74,52 +63,37 @@ export default function InterviewRoom() {
     const screenStreamRef = useRef(null);
     const remoteStreamRef = useRef(null);
 
-    // Socket and WebRTC refs
     const socketRef = useRef(null);
     const peerRef = useRef(null);
     const pendingIceRef = useRef([]);
 
-    // Room state refs
     const roleRef = useRef("");
     const activeRef = useRef(false);
     const makingOfferRef = useRef(false);
     const leavingRef = useRef(false);
     const remoteDescriptionReadyRef = useRef(false);
 
-    // Local media state
     const [cameraOn, setCameraOn] = useState(true);
     const [micOn, setMicOn] = useState(true);
     const [sharing, setSharing] = useState(false);
 
-    // Room state
     const [joined, setJoined] = useState(false);
     const [remoteConnected, setRemoteConnected] = useState(false);
 
-    // Remote participant state
     const [remoteCameraOn, setRemoteCameraOn] = useState(true);
     const [remoteMicOn, setRemoteMicOn] = useState(true);
     const [remoteSharing, setRemoteSharing] = useState(false);
 
-    // UI state
     const [status, setStatus] = useState("Connecting");
     const [error, setError] = useState("");
     const [notice, setNotice] = useState("");
     const [copied, setCopied] = useState(false);
-
-    // --------------------------------------------------
-    // SOCKET EMITTER
-    // --------------------------------------------------
 
     const emitSignal = useCallback(
         (event, payload = {}) => {
             const socket = socketRef.current;
 
             if (!socket?.connected || !interviewId) {
-                console.warn("[WebRTC] Cannot emit:", event, {
-                    socketConnected: socket?.connected,
-                    interviewId,
-                });
-
                 return false;
             }
 
@@ -146,7 +120,6 @@ export default function InterviewRoom() {
         try {
             await video.play();
         } catch (err) {
-            console.warn("[WebRTC] Remote autoplay blocked:", err);
             setNotice("Click the remote video to start playback.");
         }
     }, []);
@@ -167,9 +140,7 @@ export default function InterviewRoom() {
                 });
 
                 pc.close();
-            } catch (err) {
-                console.warn("[WebRTC] Error closing peer:", err);
-            }
+            } catch (err) {}
         }
 
         peerRef.current = null;
@@ -188,10 +159,6 @@ export default function InterviewRoom() {
         setRemoteSharing(false);
     }, []);
 
-    // --------------------------------------------------
-    // CREATE PEER CONNECTION
-    // --------------------------------------------------
-
     const createPeerConnection = useCallback(() => {
         if (peerRef.current) {
             return peerRef.current;
@@ -203,30 +170,20 @@ export default function InterviewRoom() {
             throw new Error("Camera and microphone are not ready.");
         }
 
-        console.log("[WebRTC] Creating RTCPeerConnection");
-
         const pc = new RTCPeerConnection(RTC_CONFIG);
 
         peerRef.current = pc;
 
-        // Add local audio and video tracks.
         localStream.getTracks().forEach((track) => {
             if (track.readyState === "live") {
                 pc.addTrack(track, localStream);
             }
         });
 
-        // Remote tracks.
         pc.ontrack = async (event) => {
             if (!activeRef.current || peerRef.current !== pc) {
                 return;
             }
-
-            console.log("[WebRTC] Remote track received:", {
-                kind: event.track.kind,
-                id: event.track.id,
-                streams: event.streams?.length,
-            });
 
             let remoteStream = remoteStreamRef.current;
 
@@ -235,7 +192,6 @@ export default function InterviewRoom() {
                 remoteStreamRef.current = remoteStream;
             }
 
-            // Use the incoming stream when available.
             const incomingStream = event.streams?.[0];
 
             const tracks = incomingStream
@@ -255,11 +211,13 @@ export default function InterviewRoom() {
             await attachRemoteStream();
 
             setRemoteConnected(true);
+
             setRemoteCameraOn(
                 remoteStream.getVideoTracks().some(
                     (track) => track.enabled && track.readyState === "live"
                 )
             );
+
             setRemoteMicOn(
                 remoteStream.getAudioTracks().some(
                     (track) => track.enabled && track.readyState === "live"
@@ -279,44 +237,26 @@ export default function InterviewRoom() {
                 }
             };
 
-            event.track.onmute = () => {
-                console.log("[WebRTC] Remote track muted:", event.track.kind);
-            };
+            event.track.onmute = () => {};
 
             event.track.onunmute = () => {
-                console.log("[WebRTC] Remote track unmuted:", event.track.kind);
                 attachRemoteStream();
             };
         };
 
-        // ICE candidates.
         pc.onicecandidate = (event) => {
             if (!event.candidate || !activeRef.current) {
                 return;
             }
-
-            console.log("[WebRTC] Sending ICE candidate");
 
             emitSignal("ice_candidate", {
                 candidate: event.candidate.toJSON(),
             });
         };
 
-        pc.onicecandidateerror = (event) => {
-            console.error("[WebRTC] ICE candidate error:", {
-                code: event.errorCode,
-                text: event.errorText,
-                url: event.url,
-            });
-        };
+        pc.onicecandidateerror = (event) => {};
 
-        // ICE connection state.
         pc.oniceconnectionstatechange = () => {
-            console.log(
-                "[WebRTC] ICE connection state:",
-                pc.iceConnectionState
-            );
-
             if (pc.iceConnectionState === "failed") {
                 setStatus("ICE connection failed");
                 setError(
@@ -328,23 +268,19 @@ export default function InterviewRoom() {
                 setStatus("Connection interrupted");
             }
 
-            if (pc.iceConnectionState === "connected" ||
-                pc.iceConnectionState === "completed") {
+            if (
+                pc.iceConnectionState === "connected" ||
+                pc.iceConnectionState === "completed"
+            ) {
                 setStatus("Video call connected");
                 setError("");
             }
         };
 
-        // Peer connection state.
         pc.onconnectionstatechange = () => {
             if (!activeRef.current || peerRef.current !== pc) {
                 return;
             }
-
-            console.log(
-                "[WebRTC] Peer connection state:",
-                pc.connectionState
-            );
 
             switch (pc.connectionState) {
                 case "connected":
@@ -378,19 +314,10 @@ export default function InterviewRoom() {
             }
         };
 
-        pc.onsignalingstatechange = () => {
-            console.log(
-                "[WebRTC] Signaling state:",
-                pc.signalingState
-            );
-        };
+        pc.onsignalingstatechange = () => {};
 
         return pc;
     }, [emitSignal, attachRemoteStream]);
-
-    // --------------------------------------------------
-    // APPLY QUEUED ICE CANDIDATES
-    // --------------------------------------------------
 
     const flushPendingIce = useCallback(async (pc) => {
         if (!pc?.remoteDescription) {
@@ -399,28 +326,14 @@ export default function InterviewRoom() {
 
         const queued = pendingIceRef.current.splice(0);
 
-        console.log(
-            "[WebRTC] Applying queued ICE candidates:",
-            queued.length
-        );
-
         for (const candidate of queued) {
             try {
                 await pc.addIceCandidate(
                     new RTCIceCandidate(candidate)
                 );
-            } catch (err) {
-                console.error(
-                    "[WebRTC] Could not apply queued ICE candidate:",
-                    err
-                );
-            }
+            } catch (err) {}
         }
     }, []);
-
-    // --------------------------------------------------
-    // RECRUITER CREATES OFFER
-    // --------------------------------------------------
 
     const makeOffer = useCallback(async () => {
         if (roleRef.current !== "recruiter") return;
@@ -428,7 +341,6 @@ export default function InterviewRoom() {
         const socket = socketRef.current;
 
         if (!socket?.connected || !cameraStreamRef.current) {
-            console.warn("[WebRTC] Offer postponed: media/socket not ready");
             return;
         }
 
@@ -438,10 +350,6 @@ export default function InterviewRoom() {
             peerRef.current &&
             peerRef.current.signalingState !== "stable"
         ) {
-            console.warn(
-                "[WebRTC] Offer skipped. Signaling state:",
-                peerRef.current.signalingState
-            );
             return;
         }
 
@@ -449,8 +357,6 @@ export default function InterviewRoom() {
 
         try {
             const pc = createPeerConnection();
-
-            console.log("[WebRTC] Recruiter creating offer");
 
             const offer = await pc.createOffer();
 
@@ -466,11 +372,7 @@ export default function InterviewRoom() {
 
             setStatus("Calling participant");
             setError("");
-
-            console.log("[WebRTC] Offer sent successfully");
         } catch (err) {
-            console.error("[WebRTC] Offer creation failed:", err);
-
             setError(
                 err.message || "Unable to start the video call."
             );
@@ -478,10 +380,6 @@ export default function InterviewRoom() {
             makingOfferRef.current = false;
         }
     }, [createPeerConnection, emitSignal]);
-
-    // --------------------------------------------------
-    // INTERVIEW SOCKET INITIALIZATION
-    // --------------------------------------------------
 
     useEffect(() => {
         if (!interviewId) {
@@ -521,14 +419,8 @@ export default function InterviewRoom() {
             );
         };
 
-        // ----------------------------------------------
-        // ROOM JOIN CONFIRMATION
-        // ----------------------------------------------
-
         const onJoined = async (data = {}) => {
             if (!active || !isCurrentInterview(data)) return;
-
-            console.log("[INTERVIEW] Room confirmation:", data);
 
             clearJoinTimeout();
 
@@ -548,8 +440,6 @@ export default function InterviewRoom() {
             setJoined(true);
             setError("");
 
-            console.log("[INTERVIEW] Joined as:", normalizedRole);
-
             if (data.peerPresent) {
                 setStatus("Participant found");
 
@@ -559,7 +449,6 @@ export default function InterviewRoom() {
                         : "Recruiter is already in the room. Waiting for the video offer..."
                 );
 
-                // Only recruiter creates the initial offer.
                 if (normalizedRole === "recruiter") {
                     await makeOffer();
                 }
@@ -574,19 +463,12 @@ export default function InterviewRoom() {
             }
         };
 
-        // ----------------------------------------------
-        // OTHER PARTICIPANT JOINED
-        // ----------------------------------------------
-
         const onUserJoined = async (data = {}) => {
             if (!active || !isCurrentInterview(data)) return;
 
             const participantRole = normalizeRole(data.role);
 
-            console.log("[INTERVIEW] Other participant joined:", data);
-
             if (!participantRole) {
-                console.warn("[INTERVIEW] Unknown participant role:", data.role);
                 return;
             }
 
@@ -608,10 +490,6 @@ export default function InterviewRoom() {
             }
         };
 
-        // ----------------------------------------------
-        // CANDIDATE RECEIVES OFFER
-        // ----------------------------------------------
-
         const onOffer = async (data = {}) => {
             if (
                 !active ||
@@ -622,17 +500,13 @@ export default function InterviewRoom() {
             }
 
             if (roleRef.current !== "candidate") {
-                console.warn("[WebRTC] Offer received by non-candidate.");
                 return;
             }
-
-            console.log("[WebRTC] Candidate received offer");
 
             try {
                 let pc = peerRef.current;
 
                 if (pc && pc.signalingState !== "stable") {
-                    console.warn("[WebRTC] Replacing existing peer connection.");
                     closePeerConnection();
                     pc = null;
                 }
@@ -661,20 +535,12 @@ export default function InterviewRoom() {
 
                 setStatus("Answer sent");
                 setError("");
-
-                console.log("[WebRTC] Candidate answer sent");
             } catch (err) {
-                console.error("[WebRTC] Could not handle offer:", err);
-
                 setError(
                     err.message || "Unable to answer the call."
                 );
             }
         };
-
-        // ----------------------------------------------
-        // RECRUITER RECEIVES ANSWER
-        // ----------------------------------------------
 
         const onAnswer = async (data = {}) => {
             if (
@@ -687,21 +553,14 @@ export default function InterviewRoom() {
 
             if (roleRef.current !== "recruiter") return;
 
-            console.log("[WebRTC] Recruiter received answer");
-
             try {
                 const pc = peerRef.current;
 
                 if (!pc) {
-                    console.error("[WebRTC] Answer arrived without peer connection.");
                     return;
                 }
 
                 if (pc.signalingState !== "have-local-offer") {
-                    console.warn(
-                        "[WebRTC] Unexpected signaling state for answer:",
-                        pc.signalingState
-                    );
                     return;
                 }
 
@@ -715,20 +574,12 @@ export default function InterviewRoom() {
 
                 setStatus("Answer received");
                 setError("");
-
-                console.log("[WebRTC] Remote answer applied");
             } catch (err) {
-                console.error("[WebRTC] Could not handle answer:", err);
-
                 setError(
                     err.message || "Unable to complete video handshake."
                 );
             }
         };
-
-        // ----------------------------------------------
-        // ICE CANDIDATE RECEIVED
-        // ----------------------------------------------
 
         const onIceCandidate = async (data = {}) => {
             if (
@@ -741,15 +592,8 @@ export default function InterviewRoom() {
 
             const pc = peerRef.current;
 
-            // Queue until peer connection and remote description exist.
             if (!pc || !pc.remoteDescription) {
                 pendingIceRef.current.push(data.candidate);
-
-                console.log(
-                    "[WebRTC] Queued incoming ICE candidate:",
-                    pendingIceRef.current.length
-                );
-
                 return;
             }
 
@@ -757,16 +601,8 @@ export default function InterviewRoom() {
                 await pc.addIceCandidate(
                     new RTCIceCandidate(data.candidate)
                 );
-
-                console.log("[WebRTC] Incoming ICE candidate applied");
-            } catch (err) {
-                console.error("[WebRTC] Could not add ICE candidate:", err);
-            }
+            } catch (err) {}
         };
-
-        // ----------------------------------------------
-        // OTHER PARTICIPANT LEFT
-        // ----------------------------------------------
 
         const onUserLeft = (data = {}) => {
             if (!active || !isCurrentInterview(data)) return;
@@ -781,10 +617,6 @@ export default function InterviewRoom() {
                     : "The other participant left the interview."
             );
         };
-
-        // ----------------------------------------------
-        // REMOTE DEVICE STATES
-        // ----------------------------------------------
 
         const onRemoteCamera = (data = {}) => {
             if (
@@ -820,14 +652,8 @@ export default function InterviewRoom() {
             setNotice("The other participant stopped sharing their screen.");
         };
 
-        // ----------------------------------------------
-        // SOCKET ERRORS
-        // ----------------------------------------------
-
         const onSocketError = (data = {}) => {
             if (!active) return;
-
-            console.error("[INTERVIEW] Socket error:", data);
 
             setError(data.message || "Socket operation failed.");
         };
@@ -840,19 +666,11 @@ export default function InterviewRoom() {
             setJoined(false);
             setStatus("Unable to join room");
 
-            console.error("[INTERVIEW] Join error:", data);
-
             setError(data.message || "Unable to join interview.");
         };
 
-        // ----------------------------------------------
-        // DISCONNECT
-        // ----------------------------------------------
-
         const onDisconnect = (reason) => {
             if (!active) return;
-
-            console.warn("[INTERVIEW] Socket disconnected:", reason);
 
             clearJoinTimeout();
 
@@ -866,8 +684,6 @@ export default function InterviewRoom() {
             if (!active) return;
 
             setStatus("Connection failed");
-
-            console.error("[INTERVIEW] Socket connection error:", err);
 
             setError(
                 err.message || "Unable to connect to interview server."
@@ -883,14 +699,8 @@ export default function InterviewRoom() {
             setNotice("The interview call has ended.");
         };
 
-        // ----------------------------------------------
-        // SOCKET CONNECTED
-        // ----------------------------------------------
-
         const onConnect = () => {
             if (!active || !socket) return;
-
-            console.log("[INTERVIEW] Socket connected:", socket.id);
 
             clearJoinTimeout();
 
@@ -914,10 +724,6 @@ export default function InterviewRoom() {
             }, 12000);
         };
 
-        // ----------------------------------------------
-        // INITIALIZE
-        // ----------------------------------------------
-
         const initialize = async () => {
             try {
                 if (!navigator.mediaDevices?.getUserMedia) {
@@ -925,8 +731,6 @@ export default function InterviewRoom() {
                         "Camera access requires HTTPS or localhost."
                     );
                 }
-
-                console.log("[INTERVIEW] Requesting local media");
 
                 localStream =
                     await navigator.mediaDevices.getUserMedia({
@@ -954,17 +758,9 @@ export default function InterviewRoom() {
 
                     try {
                         await localVideoRef.current.play();
-                    } catch (err) {
-                        console.warn("[INTERVIEW] Local autoplay blocked:", err);
-                    }
+                    } catch (err) {}
                 }
 
-                console.log("[INTERVIEW] Local media ready:", {
-                    audioTracks: localStream.getAudioTracks().length,
-                    videoTracks: localStream.getVideoTracks().length,
-                });
-
-                // Initialize socket after media is ready.
                 socket = createInterviewSocket();
 
                 socketRef.current = socket;
@@ -989,8 +785,6 @@ export default function InterviewRoom() {
 
                 socket.on("connect", onConnect);
 
-                console.log("[INTERVIEW] Connecting interview socket");
-
                 if (socket.connected) {
                     onConnect();
                 } else {
@@ -998,8 +792,6 @@ export default function InterviewRoom() {
                 }
             } catch (err) {
                 if (!active) return;
-
-                console.error("[INTERVIEW] Initialization failed:", err);
 
                 setStatus("Setup needs attention");
 
@@ -1020,10 +812,6 @@ export default function InterviewRoom() {
         };
 
         initialize();
-
-        // ----------------------------------------------
-        // CLEANUP
-        // ----------------------------------------------
 
         return () => {
             active = false;
@@ -1086,10 +874,6 @@ export default function InterviewRoom() {
         emitSignal,
     ]);
 
-    // --------------------------------------------------
-    // CAMERA CONTROL
-    // --------------------------------------------------
-
     const toggleCamera = () => {
         const next = !cameraOn;
 
@@ -1104,10 +888,6 @@ export default function InterviewRoom() {
         });
     };
 
-    // --------------------------------------------------
-    // MICROPHONE CONTROL
-    // --------------------------------------------------
-
     const toggleMic = () => {
         const next = !micOn;
 
@@ -1121,10 +901,6 @@ export default function InterviewRoom() {
             enabled: next,
         });
     };
-
-    // --------------------------------------------------
-    // STOP SCREEN SHARING
-    // --------------------------------------------------
 
     const stopScreenShare = async () => {
         const screen = screenStreamRef.current;
@@ -1147,7 +923,6 @@ export default function InterviewRoom() {
                 }
             }
         } catch (err) {
-            console.error("[INTERVIEW] Could not restore camera:", err);
             setError("Unable to restore the camera track.");
         }
 
@@ -1161,10 +936,6 @@ export default function InterviewRoom() {
 
         setNotice("Screen sharing stopped.");
     };
-
-    // --------------------------------------------------
-    // START SCREEN SHARING
-    // --------------------------------------------------
 
     const toggleScreenShare = async () => {
         if (screenStreamRef.current) {
@@ -1237,10 +1008,6 @@ export default function InterviewRoom() {
         }
     };
 
-    // --------------------------------------------------
-    // COPY INTERVIEW ID
-    // --------------------------------------------------
-
     const copyRoom = async () => {
         if (!interviewId) {
             setError("A valid interview ID is unavailable.");
@@ -1257,10 +1024,6 @@ export default function InterviewRoom() {
             setError("Unable to copy the interview ID.");
         }
     };
-
-    // --------------------------------------------------
-    // LEAVE ROOM
-    // --------------------------------------------------
 
     const leaveRoom = () => {
         if (leavingRef.current) return;
@@ -1295,10 +1058,6 @@ export default function InterviewRoom() {
 
         navigate(-1);
     };
-
-    // --------------------------------------------------
-    // SIDEBAR ITEMS
-    // --------------------------------------------------
 
     const railItems = [
         {
@@ -1340,13 +1099,8 @@ export default function InterviewRoom() {
               ? "Waiting for candidate"
               : "Waiting for your participant";
 
-    // --------------------------------------------------
-    // UI
-    // --------------------------------------------------
-
     return (
         <div className="flex h-dvh w-full overflow-hidden bg-[#090A12] text-white">
-            {/* LEFT SIDEBAR */}
             <aside className="z-20 flex w-[60px] shrink-0 flex-col items-center border-r border-white/[0.07] bg-[#0D0E17] py-3 sm:w-[68px]">
                 <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 shadow-lg shadow-violet-600/20">
                     <Video size={20} />
@@ -1394,9 +1148,7 @@ export default function InterviewRoom() {
                 </button>
             </aside>
 
-            {/* MAIN CONTENT */}
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                {/* HEADER */}
                 <header className="flex h-[62px] shrink-0 items-center justify-between gap-3 border-b border-white/[0.07] px-3 sm:px-5">
                     <div className="flex min-w-0 items-center gap-3">
                         <div className="hidden h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10 text-violet-300 sm:flex">
@@ -1435,7 +1187,6 @@ export default function InterviewRoom() {
                     </div>
                 </header>
 
-                {/* INTERVIEW MAIN */}
                 <main className="flex min-h-0 flex-1 flex-col p-2 sm:p-4">
                     {error && (
                         <div className="mb-2 flex shrink-0 items-center gap-2 rounded-lg border border-red-400/20 bg-red-400/[0.06] px-3 py-2 text-xs text-red-200">
@@ -1482,11 +1233,9 @@ export default function InterviewRoom() {
                         </div>
                     )}
 
-                    {/* VIDEO STAGE */}
                     <section className="relative min-h-0 flex-1 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#11121D]">
                         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#21183A_0%,_#131421_46%,_#0D0E16_100%)]" />
 
-                        {/* REMOTE VIDEO */}
                         <video
                             ref={stageVideoRef}
                             autoPlay
@@ -1497,7 +1246,6 @@ export default function InterviewRoom() {
                             }`}
                         />
 
-                        {/* WAITING SCREEN */}
                         {!remoteConnected && (
                             <div className="absolute inset-0 z-[1] flex items-center justify-center overflow-hidden px-4 pb-20 text-center">
                                 <div className="absolute h-64 w-64 rounded-full bg-violet-500/[0.08] blur-3xl" />
@@ -1548,7 +1296,6 @@ export default function InterviewRoom() {
                             </div>
                         )}
 
-                        {/* REMOTE CAMERA OFF */}
                         {remoteConnected && !remoteCameraOn && (
                             <div className="absolute inset-0 z-[2] flex items-center justify-center bg-[#11121D]/90">
                                 <div className="text-center">
@@ -1565,7 +1312,6 @@ export default function InterviewRoom() {
                             </div>
                         )}
 
-                        {/* REMOTE SCREEN SHARE INDICATOR */}
                         {remoteSharing && (
                             <div className="absolute left-3 top-14 z-[4] flex items-center gap-2 rounded-lg border border-violet-400/30 bg-violet-500/20 px-3 py-2 backdrop-blur-md">
                                 <MonitorUp size={14} className="text-violet-200" />
@@ -1575,7 +1321,6 @@ export default function InterviewRoom() {
                             </div>
                         )}
 
-                        {/* LOCAL VIDEO */}
                         <div className="absolute bottom-3 right-3 z-10 w-[min(38%,190px)] overflow-hidden rounded-xl border border-violet-400/40 bg-[#171824] shadow-xl shadow-black/40 sm:bottom-4 sm:right-4 sm:w-[min(32%,240px)]">
                             <div className="relative aspect-video bg-[#171824]">
                                 <video
@@ -1608,7 +1353,6 @@ export default function InterviewRoom() {
                             </div>
                         </div>
 
-                        {/* ROOM BRANDING */}
                         <div className="absolute left-3 top-3 z-[3] flex items-center gap-1.5 rounded-lg border border-white/10 bg-black/30 px-2.5 py-1.5 backdrop-blur-md sm:left-4 sm:top-4">
                             <Sparkles size={12} className="text-violet-300" />
                             <span className="text-[10px] text-gray-200 sm:text-xs">
@@ -1616,7 +1360,6 @@ export default function InterviewRoom() {
                             </span>
                         </div>
 
-                        {/* MORE OPTIONS */}
                         <button
                             type="button"
                             title="More options"
@@ -1630,7 +1373,6 @@ export default function InterviewRoom() {
                         </button>
                     </section>
 
-                    {/* BOTTOM CONTROLS */}
                     <footer className="flex shrink-0 items-center justify-between gap-2 px-1 pt-3 sm:px-2 sm:pt-4">
                         <div className="hidden min-w-0 sm:block">
                             <p className="text-xs font-medium text-gray-300">
@@ -1644,7 +1386,6 @@ export default function InterviewRoom() {
                         </div>
 
                         <div className="mx-auto flex items-center gap-2 sm:gap-3">
-                            {/* MICROPHONE */}
                             <button
                                 type="button"
                                 onClick={toggleMic}
@@ -1659,7 +1400,6 @@ export default function InterviewRoom() {
                                 {micOn ? <Mic size={17} /> : <MicOff size={17} />}
                             </button>
 
-                            {/* CAMERA */}
                             <button
                                 type="button"
                                 onClick={toggleCamera}
@@ -1674,7 +1414,6 @@ export default function InterviewRoom() {
                                 {cameraOn ? <Video size={17} /> : <VideoOff size={17} />}
                             </button>
 
-                            {/* SCREEN SHARING */}
                             <button
                                 type="button"
                                 onClick={toggleScreenShare}
@@ -1689,7 +1428,6 @@ export default function InterviewRoom() {
                                 <MonitorUp size={17} />
                             </button>
 
-                            {/* LEAVE */}
                             <button
                                 type="button"
                                 onClick={leaveRoom}

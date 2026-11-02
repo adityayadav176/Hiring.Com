@@ -546,14 +546,11 @@ const handleGetAllAdminCompanies = useCallback(
         }
       );
 
-      console.log("Companies HTTP status:", response.status);
 
       const result = await handleResponse(
         response,
         "Failed to fetch companies"
       );
-
-      console.log("Companies API result:", result);
 
       const data =
         result?.data?.data ??

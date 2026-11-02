@@ -8,7 +8,7 @@ import {
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { useAuth, useProfile } from "../../hooks/Hook";
 import CreateUProfile from "./CreateUProfile";
-import UpdateProfileModal from "../../routes/updateProfileModal";
+import UpdateProfileModal from "../../routes/UpdateProfileModal";
 
 const cx = (...classes) => classes.filter(Boolean).join(" ");
 const card = "rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_10px_rgba(15,23,42,0.025)]";

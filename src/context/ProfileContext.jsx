@@ -10,11 +10,15 @@ const ProfileProvider = ({children}) => {
     const [profiles, setProfiles] = useState([]);
     const [updateProfileModalS, setUpdateProfileModal] = useState(false);
 
+    const API_URL = (
+  import.meta.env.VITE_API_URL
+).replace(/\/$/, "");
+
     const handleCreateProfile = async(details) => {
 
        try {
         const { bio, headline, skills, projects, experience, education, socialLinks, resumeId, location, preferences } = details;
-         const response = await fetch("http://localhost:9000/api/v1/profile", {
+         const response = await fetch(`${API_URL}/profile`, {
              headers: {
                  "Content-Type":"application/json"
              },
@@ -41,7 +45,7 @@ const ProfileProvider = ({children}) => {
 
     const handleGetMyProfile = async() => {
         try {
-            const response = await fetch("http://localhost:9000/api/v1/profile/me", {
+            const response = await fetch(`${API_URL}/profile/me`, {
                 credentials: "include",
                 method: "GET"
             })
@@ -65,7 +69,7 @@ const ProfileProvider = ({children}) => {
     const handleUpdateProfile = async(details) => {
         try {
             const { bio, headline, skills, projects, experience, education, socialLinks, resumeId, location, preferences } = details;
-            const response = await fetch("http://localhost:9000/api/v1/profile", {
+            const response = await fetch(`${API_URL}/profile`, {
                 method: "PATCH",
                 credentials: "include",
                 headers: {
@@ -93,7 +97,7 @@ const ProfileProvider = ({children}) => {
 
     const handleProfileCompletion = async() => {
         try {
-            const response = await fetch("http://localhost:9000/api/v1/profile/profileCompletion", {
+            const response = await fetch(`${API_URL}/profile/profileCompletion`, {
                 credentials: "include",
                 method: "GET"
             });
@@ -114,7 +118,7 @@ const ProfileProvider = ({children}) => {
     }
     const handleGetProfileByUserId = async(userId) => {
         try {
-            const response = await fetch(`http://localhost:9000/api/v1/profile/${userId}`, {
+            const response = await fetch(`${API_URL}/profile/${userId}`, {
                 credentials: "include",
                 method: "GET"
             });
@@ -134,7 +138,7 @@ const ProfileProvider = ({children}) => {
     }
     const handleSearchProfile = async() => {
         try {
-            const response = await fetch("http://localhost:9000/api/v1/profile/search", {
+            const response = await fetch(`${API_URL}/profile/search`, {
                 method: "GET"
             });
     

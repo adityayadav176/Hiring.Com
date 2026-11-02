@@ -1,5 +1,5 @@
 
-import React, {
+import {
   useCallback,
   useEffect,
   useMemo,
@@ -23,15 +23,11 @@ import {
   GraduationCap,
   ListFilter,
   ArrowUpRight,
-  Building2,
-  Bookmark,
   LoaderCircle,
   AlertCircle,
   RefreshCw,
-  ChevronRight,
   TrendingUp,
   CheckCircle2,
-  LayoutGrid,
   CalendarDays,
 } from "lucide-react";
 

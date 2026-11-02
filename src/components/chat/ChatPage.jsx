@@ -41,7 +41,17 @@ import { useChatSocket } from "../../hooks/useChatSocket";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const EMOJI_OPTIONS = ["😀", "😂", "😊", "😍", "👍", "👏", "🙏", "🎉", "🔥", "💯", "❤️", "🤝"];
+const EMOJI_OPTIONS = [
+    // Smileys and emotions
+    "😃", "😄", "😁", "😇", "🙂", "🙃", "🥲", "🥳",
+    "😋", "😛", "😜", "🤪", "😝", "🤑", "🤓", "🧐",
+    "🤨", "😏", "😒", "😞", "😔", "😟", "😕", "🙁",
+    "☹️", "😣", "😖", "😫", "😩", "🥺", "😤", "😠",
+    "🤬", "😱", "😨", "😰", "😥", "😓", "🤤", "😪",
+    "🤧", "🤮", "🤢", "🥴", "😵", "🤯", "🤫", "🤭",
+    "🫢", "🫣", "🤥", "😶", "😐", "🫡", "🫠", "🫥",
+    "😮", "😯", "😲", "🥱", "😌", "😬", "🙄", "😮‍💨",
+];
 
 const NAV_ITEMS = [
   { id: "Chats", icon: MessageSquare },

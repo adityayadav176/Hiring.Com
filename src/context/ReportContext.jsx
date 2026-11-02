@@ -56,11 +56,7 @@ const ReportProvider = ({ children }) => {
   const invalidateReportCache = useCallback(() => {
     cacheRef.current.clear();
   }, []);
-
-  // --------------------------------------------------
-  // SHARED REQUEST HELPER
-  // --------------------------------------------------
-
+  
   const request = useCallback(
     async (path, options = {}) => {
       const {

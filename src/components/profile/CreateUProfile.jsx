@@ -1,5 +1,5 @@
 import { BriefcaseBusiness, Check, ExternalLink, GitBranch, GraduationCap, MapPin, Plus, Rocket, Trash, Trash2, UserRound, X } from 'lucide-react'
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 
 function CreateUProfile({onClose, open = true, onSubmit, resumes = [], loading = false, initialData = null}) {
@@ -83,7 +83,6 @@ function CreateUProfile({onClose, open = true, onSubmit, resumes = [], loading =
                 await onSubmit(payload);
             }
         } catch (error) {
-            console.log("Create Profile Error : ", error);
             setError(error?.message || "Unable to save profile");
         }
     } 

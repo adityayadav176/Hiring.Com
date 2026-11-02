@@ -11,8 +11,7 @@ import { useNavigate } from "react-router-dom";
 export const AuthContext = createContext(null);
 
 const API_URL = (
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:9000/api/v1"
+  import.meta.env.VITE_API_URL
 ).replace(/\/$/, "");
 
 const ADMIN_PROFILE_URL = `${API_URL}/admin/profile`;
@@ -1357,10 +1356,6 @@ const handleSignup = async (details = {}) => {
       throw error;
     }
   };
-
-  // --------------------------------------------------
-  // CONTEXT VALUE
-  // --------------------------------------------------
 
   const contextValue = {
     // Account state

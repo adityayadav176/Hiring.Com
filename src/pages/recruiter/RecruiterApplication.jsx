@@ -589,10 +589,6 @@ function ApplicationDrawer({
   onClick={() => {
     const candidate =
       rawApplication?.candidate
-      // rawApplication?.candidateId;
-
-    // console.log("Raw application:", rawApplication);
-    console.log("Candidate data:", candidate);
 
     if (!candidate || typeof candidate !== "object") {
       console.error("Candidate is missing or not populated.");
@@ -986,7 +982,6 @@ export default function RecruiterApplication() {
     fetchApplications();
   }, [fetchApplications]);
   
-  console.log(applications);
 
   const totalItems =
     myApplicationPagination?.total ??
@@ -1065,13 +1060,6 @@ export default function RecruiterApplication() {
 
     try {
       const result = await handleGetApplicationById({ applicationId });
-
-      console.log("Application details response:", result);
-console.log(
-  "Message to recruiter:",
-  result?.data?.messageToRecruiter,
-  result?.data?.application?.messageToRecruiter
-);
       const detail = getApplicationFromResponse(result);
 
       if (!detail || typeof detail !== "object" || !detail._id) {

@@ -54,7 +54,6 @@ function TwoFactorModal({open, onClose, onEnabled, enable2FA, verify2FASetup}) {
             setLoading(true);
             setError("");
             const response = await enable2FA();
-            console.log(response);
             const qr = response.data.qrCodeUrl;
             const setupSecret = response?.data.secret;
 

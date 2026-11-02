@@ -37,7 +37,6 @@ const SessionProvider = ({ children }) => {
 
             setSessions(sessionData);
 
-            console.log("Sessions fetched successfully:", sessionData);
 
             return sessionData;
         } catch (error) {
@@ -88,10 +87,6 @@ const SessionProvider = ({ children }) => {
                     )
                 );
 
-                console.log(
-                    "Specific device logged out successfully"
-                );
-
                 return data;
             } catch (error) {
                 console.error(
@@ -131,10 +126,6 @@ const SessionProvider = ({ children }) => {
             }
 
             setSessions([]);
-
-            console.log(
-                "Logged out from all devices successfully"
-            );
 
             window.location.replace("/login");
 

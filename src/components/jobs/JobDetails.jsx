@@ -11,7 +11,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useJob, useResume } from "../../hooks/Hook";
 import ApplyJob from "../applications/ApplyJob";
 
