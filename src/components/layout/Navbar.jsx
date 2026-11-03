@@ -8,14 +8,14 @@ import {
     X,
 } from "lucide-react";
 
-import { useAuth, useHome } from "../../hooks/Hook";
+import { useAdmin, useAuth, useHome } from "../../hooks/Hook";
 import { TitleContext } from "../../context/TitleContext";
 
 function Navbar({
     isMobileMenuOpen = false,
     setIsMobileMenuOpen = () => {},
 }) {
-    const { user, admin, recruiter } = useAuth();
+    const { user, recruiter } = useAuth();
 
     const { title, setTitle } = useContext(TitleContext);
 
@@ -24,6 +24,8 @@ function Navbar({
         setAdminActivePage,
         setRecruiterActivePage,
     } = useHome();
+
+    const {admin} = useAdmin();
 
     const currentAccount = user || admin || recruiter;
 

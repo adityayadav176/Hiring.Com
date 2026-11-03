@@ -29,12 +29,12 @@ export default function RecruiterLayout() {
   }
 
   return (
-    <div className="flex h-[100dvh] min-h-0 overflow-hidden">
+   <div className="flex h-[100dvh] min-h-0 w-full overflow-hidden">
       {/* Desktop Sidebar */}
       <Sidebar />
 
       {/* Main Dashboard */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {/* Navbar */}
         <Navbar
           isMobileMenuOpen={isMobileMenuOpen}
@@ -48,7 +48,7 @@ export default function RecruiterLayout() {
         />
 
         {/* Page Content */}
-        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain pb-16 lg:pb-0">
+       <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain pb-20 lg:pb-0">
           {recruiterActivePage === "recruiter/dashboard" && <RecruiterDashboard />}
           {recruiterActivePage === "recruiter/jobs" && <RecruiterJobs />}
           {recruiterActivePage === "recruiter/application" && <RecruiterApplication />}

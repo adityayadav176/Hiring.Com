@@ -78,7 +78,7 @@ function BottomNavigation() {
   }
 
   return (
-    <nav className="fixed bottom-4 left-0 right-0 z-40 flex justify-center px-2 lg:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-2 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:hidden">
       <div
         className="flex h-[54px] items-center gap-1 rounded-full
         border border-white/10 bg-[#101014] px-2 shadow-[0_8px_30px_rgba(0,0,0,0.28)]

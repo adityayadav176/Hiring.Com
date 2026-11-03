@@ -1321,37 +1321,49 @@ export default function InterviewRoom() {
                             </div>
                         )}
 
-                        <div className="absolute bottom-3 right-3 z-10 w-[min(38%,190px)] overflow-hidden rounded-xl border border-violet-400/40 bg-[#171824] shadow-xl shadow-black/40 sm:bottom-4 sm:right-4 sm:w-[min(32%,240px)]">
-                            <div className="relative aspect-video bg-[#171824]">
-                                <video
-                                    ref={localVideoRef}
-                                    autoPlay
-                                    muted
-                                    playsInline
-                                    className={`h-full w-full object-cover ${
-                                        cameraOn ? "" : "hidden"
-                                    }`}
-                                />
+                       {/* Responsive self-video preview */}
+<div
+  className="
+    absolute z-10 overflow-hidden rounded-xl
+    border border-violet-400/50
+    bg-[#171824] shadow-2xl shadow-black/50
+    bottom-3 right-3
+    w-[160px]
+    sm:bottom-4 sm:right-4 sm:w-[220px]
+    md:w-[260px]
+    lg:w-[280px]
+  "
+>
+  <div className="relative aspect-video bg-[#171824]">
+    <video
+      ref={localVideoRef}
+      autoPlay
+      muted
+      playsInline
+      className={`h-full w-full object-cover ${
+        cameraOn ? "" : "hidden"
+      }`}
+    />
 
-                                {!cameraOn && (
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <Camera size={20} className="text-gray-500" />
-                                    </div>
-                                )}
+    {!cameraOn && (
+      <div className="absolute inset-0 flex items-center justify-center">
+        <Camera size={28} className="text-gray-500" />
+      </div>
+    )}
 
-                                <span className="absolute left-2 top-2 rounded-md bg-black/60 px-2 py-1 text-[9px] font-medium">
-                                    You{sharing ? " · Sharing screen" : ""}
-                                </span>
+    <span className="absolute left-2 top-2 rounded-md bg-black/70 px-2 py-1 text-[10px] font-medium">
+      You{sharing ? " · Sharing screen" : ""}
+    </span>
 
-                                <span className="absolute bottom-2 right-2 rounded-md bg-black/60 p-1.5">
-                                    {micOn ? (
-                                        <Mic size={12} />
-                                    ) : (
-                                        <MicOff size={12} className="text-red-300" />
-                                    )}
-                                </span>
-                            </div>
-                        </div>
+    <span className="absolute bottom-2 right-2 rounded-md bg-black/70 p-1.5">
+      {micOn ? (
+        <Mic size={13} />
+      ) : (
+        <MicOff size={13} className="text-red-300" />
+      )}
+    </span>
+  </div>
+</div>
 
                         <div className="absolute left-3 top-3 z-[3] flex items-center gap-1.5 rounded-lg border border-white/10 bg-black/30 px-2.5 py-1.5 backdrop-blur-md sm:left-4 sm:top-4">
                             <Sparkles size={12} className="text-violet-300" />

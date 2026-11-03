@@ -12,6 +12,7 @@ export const AuthContext = createContext(null);
 
 const API_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 const REFRESH_URL = `${API_URL}/auth/refreshAccessToken`;
+import { useAdmin } from "../hooks/Hook";
 
 const parseResponse = async (response) => {
   return response.json().catch(() => ({}));
@@ -51,9 +52,9 @@ function AuthProvider({ children }) {
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
-  const [admin, setAdmin] = useState(null);
   const [recruiter, setRecruiter] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const { admin, setAdmin } = useAdmin();
 
   const refreshPromiseRef = useRef(null);
   const authCheckPromiseRef = useRef(null);
@@ -72,10 +73,7 @@ function AuthProvider({ children }) {
         return;
       }
 
-      const normalizedType = normalizeAccountType(
-        type,
-        account
-      );
+      const normalizedType = normalizeAccountType(type, account);
 
       if (normalizedType === "admin") {
         setAdmin(account);
@@ -103,29 +101,22 @@ function AuthProvider({ children }) {
     [clearLocalAuth]
   );
 
+  // Refresh is called only by protected session restoration (getUser).
+  // Concurrent refresh attempts share the same promise.
   const handleRefreshAccessToken = useCallback(async () => {
     if (refreshPromiseRef.current) {
       return refreshPromiseRef.current;
     }
 
-    refreshPromiseRef.current = (async () => {
+    const refreshPromise = (async () => {
       try {
         const response = await fetch(REFRESH_URL, {
           method: "POST",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
         });
 
-        const data = await parseResponse(response);
-
         if (!response.ok) {
-          console.error("Token refresh failed:", {
-            status: response.status,
-            message: data?.message,
-          });
-
+          console.error("Refresh token failed:", response.status);
           return false;
         }
 
@@ -136,216 +127,159 @@ function AuthProvider({ children }) {
       }
     })();
 
+    refreshPromiseRef.current = refreshPromise;
+
     try {
-      return await refreshPromiseRef.current;
+      return await refreshPromise;
     } finally {
-      refreshPromiseRef.current = null;
+      if (refreshPromiseRef.current === refreshPromise) {
+        refreshPromiseRef.current = null;
+      }
     }
   }, []);
 
-  const authenticatedFetch = useCallback(
-    async (url, options = {}) => {
-      const makeRequest = () =>
-        fetch(url, {
-          ...options,
-          credentials: "include",
-        });
+  // Protected session restoration:
+  // 1. Check current access cookie.
+  // 2. If unauthorized, attempt refresh once.
+  // 3. Retry fetchUser once after successful refresh.
+  const getUser = useCallback(async () => {
+    if (authCheckPromiseRef.current) {
+      return authCheckPromiseRef.current;
+    }
 
-      let response = await makeRequest();
-
-      const requestUrl =
-        typeof url === "string"
-          ? url
-          : url instanceof URL
-            ? url.toString()
-            : "";
-
-      if (
-        requestUrl.includes("/auth/refreshAccessToken")
-      ) {
-        return response;
+    const authCheckPromise = (async () => {
+      if (mountedRef.current) {
+        setAuthLoading(true);
       }
 
-      if (response.status !== 401) {
-        return response;
-      }
+      try {
+        const fetchUserRequest = () =>
+          fetch(`${API_URL}/auth/fetchUser`, {
+            method: "GET",
+            credentials: "include",
+          });
 
-      const refreshed = await handleRefreshAccessToken();
+        let response = await fetchUserRequest();
 
-      if (!refreshed) {
-        return response;
-      }
+        if (response.status === 401) {
+          const refreshed = await handleRefreshAccessToken();
 
-      return makeRequest();
-    },
-    [handleRefreshAccessToken]
-  );
+          if (!refreshed) {
+            clearLocalAuth();
+            return null;
+          }
 
-  
-const getUser = useCallback(async () => {
-  if (authCheckPromiseRef.current) {
-    return authCheckPromiseRef.current;
-  }
+          // Only one retry. No refresh loop.
+          response = await fetchUserRequest();
+        }
 
-  authCheckPromiseRef.current = (async () => {
-    setAuthLoading(true);
+        const data = await parseResponse(response);
 
-    try {
-      const fetchCurrentUser = async () => {
-        return fetch(`${API_URL}/auth/fetchUser`, {
-          method: "GET",
-          credentials: "include",
-        });
-      };
-
-      let response = await fetchCurrentUser();
-
-      if (response.status === 401) {
-        const refreshed = await handleRefreshAccessToken();
-
-        if (!refreshed) {
+        if (!response.ok) {
           clearLocalAuth();
           return null;
         }
 
-        response = await fetchCurrentUser();
-      }
+        const account = data?.data;
 
-      const data = await parseResponse(response);
+        if (!account?._id) {
+          clearLocalAuth();
+          return null;
+        }
 
-      if (!response.ok) {
+        const type = normalizeAccountType(account.role, account);
+
+        // getUser is for User/recruiter protected routes.
+        if (type !== "user" && type !== "recruiter") {
+          clearLocalAuth();
+          return null;
+        }
+
+        if (mountedRef.current) {
+          setAuthenticatedAccount(type, account);
+        }
+
+        return account;
+      } catch (error) {
+        console.error("User session restoration failed:", error);
         clearLocalAuth();
         return null;
+      } finally {
+        authCheckPromiseRef.current = null;
+
+        if (mountedRef.current) {
+          setAuthLoading(false);
+        }
       }
+    })();
 
-      const account = data?.data;
+    authCheckPromiseRef.current = authCheckPromise;
+    return authCheckPromise;
+  }, [
+    handleRefreshAccessToken,
+    setAuthenticatedAccount,
+    clearLocalAuth,
+  ]);
 
-      if (!account?._id) {
-        clearLocalAuth();
-        return null;
-      }
+  useEffect(() => {
+    mountedRef.current = true;
 
-      const type = normalizeAccountType(account.role, account);
-
-      if (type !== "user" && type !== "recruiter") {
-        clearLocalAuth();
-        return null;
-      }
-
-      if (mountedRef.current) {
-        setAuthenticatedAccount(type, account);
-      }
-
-      return account;
-    } catch (error) {
-      console.error("User session restoration failed:", error);
-      clearLocalAuth();
-      return null;
-    } finally {
-      authCheckPromiseRef.current = null;
-
-      if (mountedRef.current) {
-        setAuthLoading(false);
-      }
-    }
-  })();
-
-  return authCheckPromiseRef.current;
-}, [
-  handleRefreshAccessToken,
-  setAuthenticatedAccount,
-  clearLocalAuth,
-]);
-
-
-useEffect(() => {
-  mountedRef.current = true;
-
-  return () => {
-    mountedRef.current = false;
-  };
-}, []);
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const handleLogin = async (details = {}) => {
     try {
-      const {
-        email,
-        password,
-        phoneNo,
-      } = details;
+      const { email, password, phoneNo } = details;
 
       const normalizedEmail =
-        typeof email === "string"
-          ? email.trim().toLowerCase()
-          : "";
+        typeof email === "string" ? email.trim().toLowerCase() : "";
 
       const normalizedPhone =
-        typeof phoneNo === "string"
-          ? phoneNo.trim()
-          : "";
+        typeof phoneNo === "string" ? phoneNo.trim() : "";
 
       if (!password || typeof password !== "string") {
-        throw new Error(
-          "Please enter your password."
-        );
+        throw new Error("Please enter your password.");
       }
 
       if (!normalizedEmail && !normalizedPhone) {
-        throw new Error(
-          "Please enter your email or phone number."
-        );
+        throw new Error("Please enter your email or phone number.");
       }
 
       if (normalizedEmail && normalizedPhone) {
-        throw new Error(
-          "Please enter either email or phone number, not both."
-        );
+        throw new Error("Please enter either email or phone number, not both.");
       }
 
-      const response = await fetch(
-        `${API_URL}/auth/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            ...(normalizedEmail
-              ? { email: normalizedEmail }
-              : {}),
-            ...(normalizedPhone
-              ? { phoneNo: normalizedPhone }
-              : {}),
-            password,
-          }),
-        }
-      );
+      // Public login request: intentionally no refresh/retry.
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          ...(normalizedEmail ? { email: normalizedEmail } : {}),
+          ...(normalizedPhone ? { phoneNo: normalizedPhone } : {}),
+          password,
+        }),
+      });
 
       const responseData = await parseResponse(response);
 
       if (!response.ok) {
-        throw new Error(
-          getErrorMessage(responseData, "Login failed.")
-        );
+        throw new Error(getErrorMessage(responseData, "Login failed."));
       }
 
       const accountData = responseData?.data;
 
       if (!accountData) {
-        throw new Error(
-          "Invalid login response from server."
-        );
+        throw new Error("Invalid login response from server.");
       }
 
       if (accountData.twoFactorRequired) {
-        if (
-          !accountData.twoFactorToken ||
-          !accountData.userId
-        ) {
-          throw new Error(
-            "Invalid 2FA response from server."
-          );
+        if (!accountData.twoFactorToken || !accountData.userId) {
+          throw new Error("Invalid 2FA response from server.");
         }
 
         return {
@@ -358,14 +292,9 @@ useEffect(() => {
       }
 
       const account =
-        accountData.user ||
-        accountData.recruiter ||
-        accountData.admin;
+        accountData.user || accountData.recruiter || accountData.admin;
 
-      const accountType = normalizeAccountType(
-        accountData.type,
-        account
-      );
+      const accountType = normalizeAccountType(accountData.type, account);
 
       if (!account?._id || !accountType) {
         throw new Error(
@@ -373,11 +302,7 @@ useEffect(() => {
         );
       }
 
-      setAuthenticatedAccount(
-        accountType,
-        account
-      );
-
+      setAuthenticatedAccount(accountType, account);
       authCheckPromiseRef.current = null;
       setAuthLoading(false);
 
@@ -400,54 +325,42 @@ useEffect(() => {
     }
   };
 
-  const handleGoogleAuth = async ({
-    credential,
-    role,
-  } = {}) => {
+  const handleGoogleAuth = async ({ credential, role } = {}) => {
     try {
       if (!credential) {
         throw new Error("Google credential is required.");
       }
 
-      const response = await fetch(
-        `${API_URL}/auth/google`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            credential,
-            ...(role ? { role } : {}),
-          }),
-        }
-      );
+      // Public Google authentication request: no refresh/retry.
+      const response = await fetch(`${API_URL}/auth/google`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          credential,
+          ...(role ? { role } : {}),
+        }),
+      });
 
       const responseData = await parseResponse(response);
 
       if (!response.ok) {
         throw new Error(
-          getErrorMessage(
-            responseData,
-            "Google authentication failed."
-          )
+          getErrorMessage(responseData, "Google authentication failed.")
         );
       }
 
       const accountData = responseData?.data;
 
       if (!accountData) {
-        throw new Error(
-          "Invalid Google authentication response."
-        );
+        throw new Error("Invalid Google authentication response.");
       }
 
       if (accountData.twoFactorRequired) {
         if (!accountData.twoFactorToken) {
-          throw new Error(
-            "Google 2FA token missing from response."
-          );
+          throw new Error("Google 2FA token missing from response.");
         }
 
         return {
@@ -465,19 +378,13 @@ useEffect(() => {
         accountData.admin ||
         accountData;
 
-      const accountType = normalizeAccountType(
-        accountData.type,
-        account
-      );
+      const accountType = normalizeAccountType(accountData.type, account);
 
       if (!account?._id || !accountType) {
-        throw new Error(
-          "Account data missing from Google response."
-        );
+        throw new Error("Account data missing from Google response.");
       }
 
       setAuthenticatedAccount(accountType, account);
-
       authCheckPromiseRef.current = null;
       setAuthLoading(false);
 
@@ -503,70 +410,46 @@ useEffect(() => {
 
   const handleSignup = async (details = {}) => {
     try {
-      const {
-        role,
-        name,
-        email,
-        password,
-        phoneNo,
-      } = details;
+      const { role, name, email, password, phoneNo } = details;
 
-      if (
-        !name?.trim() ||
-        !email?.trim() ||
-        !password
-      ) {
-        throw new Error(
-          "Name, email and password are required."
-        );
+      if (!name?.trim() || !email?.trim() || !password) {
+        throw new Error("Name, email and password are required.");
       }
 
+      // Preserve exact backend role casing.
       if (!["User", "recruiter"].includes(role)) {
-        throw new Error(
-          "Please select a valid account type."
-        );
+        throw new Error("Please select a valid account type.");
       }
 
-      const response = await fetch(
-        `${API_URL}/auth/register`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            name: name.trim(),
-            email: email.trim().toLowerCase(),
-            password,
-            role,
-            ...(phoneNo?.trim()
-              ? { phoneNo: phoneNo.trim() }
-              : {}),
-          }),
-        }
-      );
+      // Public signup request: no refresh/retry.
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          password,
+          role,
+          ...(phoneNo?.trim() ? { phoneNo: phoneNo.trim() } : {}),
+        }),
+      });
 
       const data = await parseResponse(response);
 
       if (!response.ok) {
-        throw new Error(
-          getErrorMessage(data, "Signup failed.")
-        );
+        throw new Error(getErrorMessage(data, "Signup failed."));
       }
 
-      const createdName =
-        data?.data?.user?.name ||
-        name.trim();
+      const createdName = data?.data?.user?.name || name.trim();
 
       alert(
         `Hello ${createdName}, your account has been created! Welcome to Peer.Hiring.`
       );
 
-      navigate("/login", {
-        replace: true,
-      });
-
+      navigate("/login", { replace: true });
       return data;
     } catch (error) {
       console.error("Signup error:", error);
@@ -581,33 +464,25 @@ useEffect(() => {
         throw new Error("Email is required.");
       }
 
-      const response = await fetch(
-        `${API_URL}/auth/SendPasswordResetOtp`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            email: email.trim().toLowerCase(),
-          }),
-        }
-      );
+      // Public password-reset request: no refresh/retry.
+      const response = await fetch(`${API_URL}/auth/SendPasswordResetOtp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+        }),
+      });
 
       const data = await parseResponse(response);
 
       if (!response.ok) {
-        throw new Error(
-          getErrorMessage(
-            data,
-            "OTP sending failed."
-          )
-        );
+        throw new Error(getErrorMessage(data, "OTP sending failed."));
       }
 
       navigate("/forgetPassword");
-
       return data;
     } catch (error) {
       console.error("Password reset OTP error:", error);
@@ -627,56 +502,40 @@ useEffect(() => {
         : String(otp || "").trim();
 
       if (!/^\d{6}$/.test(otpValue)) {
-        throw new Error(
-          "Please enter the valid six-digit OTP."
-        );
+        throw new Error("Please enter the valid six-digit OTP.");
       }
 
       if (!password || !confirmPassword) {
-        throw new Error(
-          "Please enter and confirm your new password."
-        );
+        throw new Error("Please enter and confirm your new password.");
       }
 
       if (password !== confirmPassword) {
-        throw new Error(
-          "Password and confirm password do not match."
-        );
+        throw new Error("Password and confirm password do not match.");
       }
 
-      const response = await fetch(
-        `${API_URL}/auth/forgetPassword`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            password,
-            confirmPassword,
-            otp: otpValue,
-          }),
-        }
-      );
+      // Public password-reset request: no refresh/retry.
+      const response = await fetch(`${API_URL}/auth/forgetPassword`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          password,
+          confirmPassword,
+          otp: otpValue,
+        }),
+      });
 
       const data = await parseResponse(response);
 
       if (!response.ok) {
-        throw new Error(
-          getErrorMessage(
-            data,
-            "Password reset failed."
-          )
-        );
+        throw new Error(getErrorMessage(data, "Password reset failed."));
       }
 
       clearLocalAuth();
-
       alert("Password changed successfully.");
-
       navigate("/login", { replace: true });
-
       return data;
     } catch (error) {
       console.error("Password reset error:", error);
@@ -691,28 +550,21 @@ useEffect(() => {
         throw new Error("Name is required.");
       }
 
-      const response = await authenticatedFetch(
-        `${API_URL}/auth/changeName`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: name.trim(),
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL}/auth/changeName`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name: name.trim(),
+        }),
+      });
 
       const data = await parseResponse(response);
 
       if (!response.ok) {
-        throw new Error(
-          getErrorMessage(
-            data,
-            "Name update failed."
-          )
-        );
+        throw new Error(getErrorMessage(data, "Name update failed."));
       }
 
       const updatedAccount = data?.data;
@@ -720,15 +572,11 @@ useEffect(() => {
       if (updatedAccount?._id) {
         if (recruiter) {
           setRecruiter((previous) =>
-            previous
-              ? { ...previous, ...updatedAccount }
-              : previous
+            previous ? { ...previous, ...updatedAccount } : previous
           );
         } else if (user) {
           setUser((previous) =>
-            previous
-              ? { ...previous, ...updatedAccount }
-              : previous
+            previous ? { ...previous, ...updatedAccount } : previous
           );
         }
       }
@@ -745,29 +593,16 @@ useEffect(() => {
     const logoutURL = `${API_URL}/auth/logoutCurrentUser`;
 
     try {
-      let response = await fetch(logoutURL, {
+      // Logout should not trigger refresh. Always clear client auth afterward.
+      const response = await fetch(logoutURL, {
         method: "POST",
         credentials: "include",
       });
 
-      if (response.status === 401) {
-        const refreshed =
-          await handleRefreshAccessToken();
-
-        if (refreshed) {
-          response = await fetch(logoutURL, {
-            method: "POST",
-            credentials: "include",
-          });
-        }
-      }
-
       const data = await parseResponse(response);
 
       if (!response.ok) {
-        throw new Error(
-          getErrorMessage(data, "Logout failed.")
-        );
+        throw new Error(getErrorMessage(data, "Logout failed."));
       }
 
       return true;
@@ -781,44 +616,32 @@ useEffect(() => {
     }
   };
 
-  const handleDeleteAccount = async ({
-    otp,
-    password,
-  } = {}) => {
+  const handleDeleteAccount = async ({ otp, password } = {}) => {
     try {
-      const response = await authenticatedFetch(
-        `${API_URL}/auth/deleteAccount`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            otp,
-            password,
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL}/auth/deleteAccount`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          otp,
+          password,
+        }),
+      });
 
       const data = await parseResponse(response);
 
       if (!response.ok) {
         throw new Error(
-          getErrorMessage(
-            data,
-            "Account deletion failed."
-          )
+          getErrorMessage(data, "Account deletion failed.")
         );
       }
 
       clearLocalAuth();
-
       authCheckPromiseRef.current = null;
-
       alert("Account deleted successfully.");
-
       navigate("/login", { replace: true });
-
       return data;
     } catch (error) {
       console.error("Delete account error:", error);
@@ -829,10 +652,11 @@ useEffect(() => {
 
   const handleEmailVerificationOtp = async () => {
     try {
-      const response = await authenticatedFetch(
+      const response = await fetch(
         `${API_URL}/auth/sendEmailVerificationOtp`,
         {
           method: "POST",
+          credentials: "include",
         }
       );
 
@@ -840,10 +664,7 @@ useEffect(() => {
 
       if (!response.ok) {
         throw new Error(
-          getErrorMessage(
-            data,
-            "Email verification OTP sending failed."
-          )
+          getErrorMessage(data, "Email verification OTP sending failed.")
         );
       }
 
@@ -857,30 +678,22 @@ useEffect(() => {
 
   const handleVerifyEmail = async ({ otp } = {}) => {
     try {
-      const response = await authenticatedFetch(
-        `${API_URL}/auth/VerifyEmail`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ otp }),
-        }
-      );
+      const response = await fetch(`${API_URL}/auth/VerifyEmail`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ otp }),
+      });
 
       const data = await parseResponse(response);
 
       if (!response.ok) {
-        throw new Error(
-          getErrorMessage(
-            data,
-            "Email verification failed."
-          )
-        );
+        throw new Error(getErrorMessage(data, "Email verification failed."));
       }
 
       await getUser();
-
       return data;
     } catch (error) {
       console.error("Email verification error:", error);
@@ -891,21 +704,16 @@ useEffect(() => {
 
   const handleSendDeleteAccountOtp = async () => {
     try {
-      const response = await authenticatedFetch(
-        `${API_URL}/auth/sendDeleteAccountOtp`,
-        {
-          method: "POST",
-        }
-      );
+      const response = await fetch(`${API_URL}/auth/sendDeleteAccountOtp`, {
+        method: "POST",
+        credentials: "include",
+      });
 
       const data = await parseResponse(response);
 
       if (!response.ok) {
         throw new Error(
-          getErrorMessage(
-            data,
-            "Delete account OTP sending failed."
-          )
+          getErrorMessage(data, "Delete account OTP sending failed.")
         );
       }
 
@@ -919,39 +727,29 @@ useEffect(() => {
 
   const handleUpdateAvatar = async (formData) => {
     try {
-      const response = await authenticatedFetch(
-        `${API_URL}/auth/update-avatar`,
-        {
-          method: "PATCH",
-          body: formData,
-        }
-      );
+      const response = await fetch(`${API_URL}/auth/update-avatar`, {
+        method: "PATCH",
+        credentials: "include",
+        body: formData,
+      });
 
       const data = await parseResponse(response);
 
       if (!response.ok) {
-        throw new Error(
-          getErrorMessage(data, "Avatar update failed.")
-        );
+        throw new Error(getErrorMessage(data, "Avatar update failed."));
       }
 
       const avatar =
-        data?.data?.avatar ||
-        (data?.data?.url ? data.data : null);
+        data?.data?.avatar || (data?.data?.url ? data.data : null);
 
       if (avatar) {
         setUser((previous) =>
-          previous
-            ? { ...previous, avatar }
-            : previous
+          previous ? { ...previous, avatar } : previous
         );
 
         setRecruiter((previous) =>
-          previous
-            ? { ...previous, avatar }
-            : previous
+          previous ? { ...previous, avatar } : previous
         );
-
       }
 
       return data;
@@ -963,22 +761,17 @@ useEffect(() => {
 
   const handleUpdateCoverImage = async (formData) => {
     try {
-      const response = await authenticatedFetch(
-        `${API_URL}/auth/update-coverImage`,
-        {
-          method: "PATCH",
-          body: formData,
-        }
-      );
+      const response = await fetch(`${API_URL}/auth/update-coverImage`, {
+        method: "PATCH",
+        credentials: "include",
+        body: formData,
+      });
 
       const data = await parseResponse(response);
 
       if (!response.ok) {
         throw new Error(
-          getErrorMessage(
-            data,
-            "Cover image update failed."
-          )
+          getErrorMessage(data, "Cover image update failed.")
         );
       }
 
@@ -988,15 +781,11 @@ useEffect(() => {
 
       if (coverImage) {
         setUser((previous) =>
-          previous
-            ? { ...previous, coverImage }
-            : previous
+          previous ? { ...previous, coverImage } : previous
         );
 
         setRecruiter((previous) =>
-          previous
-            ? { ...previous, coverImage }
-            : previous
+          previous ? { ...previous, coverImage } : previous
         );
       }
 
@@ -1009,19 +798,15 @@ useEffect(() => {
 
   const handleEnable2FA = async () => {
     try {
-      const response = await authenticatedFetch(
-        `${API_URL}/auth/2fa/enable`,
-        {
-          method: "POST",
-        }
-      );
+      const response = await fetch(`${API_URL}/auth/2fa/enable`, {
+        method: "POST",
+        credentials: "include",
+      });
 
       const data = await parseResponse(response);
 
       if (!response.ok) {
-        throw new Error(
-          getErrorMessage(data, "2FA enable failed.")
-        );
+        throw new Error(getErrorMessage(data, "2FA enable failed."));
       }
 
       return data;
@@ -1034,37 +819,27 @@ useEffect(() => {
   const handleVerify2fa = async ({ token } = {}) => {
     try {
       if (!token) {
-        throw new Error(
-          "Authentication code is required."
-        );
+        throw new Error("Authentication code is required.");
       }
 
-      const response = await authenticatedFetch(
-        `${API_URL}/auth/2fa/verify-setup`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            token: String(token).trim(),
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL}/auth/2fa/verify-setup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          token: String(token).trim(),
+        }),
+      });
 
       const data = await parseResponse(response);
 
       if (!response.ok) {
-        throw new Error(
-          getErrorMessage(
-            data,
-            "2FA verification failed."
-          )
-        );
+        throw new Error(getErrorMessage(data, "2FA verification failed."));
       }
 
       await getUser();
-
       return data;
     } catch (error) {
       console.error("2FA verification error:", error);
@@ -1084,62 +859,42 @@ useEffect(() => {
         );
       }
 
-      const response = await fetch(
-        `${API_URL}/auth/login/2fa`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            twoFactorToken,
-            userId,
-            token: String(token).trim(),
-          }),
-        }
-      );
+      // Public 2FA login request: no refresh/retry.
+      const response = await fetch(`${API_URL}/auth/login/2fa`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          twoFactorToken,
+          userId,
+          token: String(token).trim(),
+        }),
+      });
 
       const responseData = await parseResponse(response);
 
       if (!response.ok) {
         throw new Error(
-          getErrorMessage(
-            responseData,
-            "Two-factor login failed."
-          )
+          getErrorMessage(responseData, "Two-factor login failed.")
         );
       }
 
       const data = responseData?.data;
 
       if (!data) {
-        throw new Error(
-          "Invalid 2FA login response."
-        );
+        throw new Error("Invalid 2FA login response.");
       }
 
-      const account =
-        data.user ||
-        data.recruiter ||
-        data.admin;
-
-      const accountType = normalizeAccountType(
-        data.type,
-        account
-      );
+      const account = data.user || data.recruiter || data.admin;
+      const accountType = normalizeAccountType(data.type, account);
 
       if (!account?._id || !accountType) {
-        throw new Error(
-          "Account data missing from 2FA login response."
-        );
+        throw new Error("Account data missing from 2FA login response.");
       }
 
-      setAuthenticatedAccount(
-        accountType,
-        account
-      );
-
+      setAuthenticatedAccount(accountType, account);
       authCheckPromiseRef.current = null;
       setAuthLoading(false);
 
@@ -1165,12 +920,10 @@ useEffect(() => {
 
   const contextValue = {
     user,
-    admin,
     recruiter,
     authLoading,
     getUser,
     handleRefreshAccessToken,
-    authenticatedFetch,
     handleLogin,
     handleGoogleAuth,
     handleSignup,

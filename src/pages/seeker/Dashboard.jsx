@@ -56,7 +56,7 @@ function Dashboard() {
                     />
 
                     {/* Content */}
-                    <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain pb-16 lg:pb-0">
+                    <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0">
                         {activePage === "profile" && <Profile />}
                         {activePage === "jobs" && <JobLayout />}
                         {activePage === "settings" && <Settings />}

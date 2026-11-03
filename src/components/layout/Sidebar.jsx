@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 import { TitleContext } from "../../context/TitleContext";
-import { useAuth, useHome } from "../../hooks/Hook";
+import { useAdmin, useAuth, useHome } from "../../hooks/Hook";
 
 function Sidebar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -33,7 +33,8 @@ function Sidebar() {
     setRecruiterActivePage,
   } = useHome();
 
-  const { admin, recruiter, user } = useAuth();
+  const { recruiter, user } = useAuth();
+  const {admin} = useAdmin();
 
   const currentAccount = admin || recruiter || user;
   const isAdmin = Boolean(admin);

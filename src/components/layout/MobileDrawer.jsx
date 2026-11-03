@@ -1,4 +1,4 @@
-import { useHome, useAuth } from "../../hooks/Hook";
+import { useHome, useAuth, useAdmin } from "../../hooks/Hook";
 
 import {
   X,
@@ -28,7 +28,8 @@ function MobileDrawer({ isOpen, onClose }) {
     setRecruiterActivePage,
   } = useHome();
 
-  const { user, admin, recruiter } = useAuth();
+  const { user, recruiter } = useAuth();
+  const {admin} = useAdmin();
 
   if (!isOpen) return null;
 

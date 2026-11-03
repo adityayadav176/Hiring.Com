@@ -50,14 +50,14 @@ export default function ReportModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-useEffect(() => {
-  if (!isOpen) return;
+  useEffect(() => {
+    if (!isOpen) return;
 
-  setType(job ? "job" : user ? "user" : "job");
-  setReason("");
-  setDescription("");
-  setError("");
-}, [isOpen]);
+    setType(job ? "job" : user ? "user" : "job");
+    setReason("");
+    setDescription("");
+    setError("");
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -70,6 +70,7 @@ useEffect(() => {
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
@@ -94,51 +95,51 @@ useEffect(() => {
       : target?.email || "Peer.Hiring member";
 
   const handleTypeChange = (nextType) => {
-  if (nextType === "job" && !job) return;
-  if (nextType === "user" && !user) return;
+    if (nextType === "job" && !job) return;
+    if (nextType === "user" && !user) return;
 
-  setType(nextType);
-  setReason("");
-  setError("");
-};
+    setType(nextType);
+    setReason("");
+    setError("");
+  };
 
-const handleSubmit = async (event) => {
-  event.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-  if (!targetId) {
-    setError("The item you want to report could not be identified.");
-    return;
-  }
+    if (!targetId) {
+      setError("The item you want to report could not be identified.");
+      return;
+    }
 
-  if (!reason.trim()) {
-    setError("Please select a reason for reporting.");
-    return;
-  }
+    if (!reason.trim()) {
+      setError("Please select a reason for reporting.");
+      return;
+    }
 
-  if (typeof onSubmit !== "function") {
-    setError("Report submission is not configured.");
-    return;
-  }
+    if (typeof onSubmit !== "function") {
+      setError("Report submission is not configured.");
+      return;
+    }
 
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  try {
-    const payload = {
-      reportedJob: type === "job" ? targetId : null,
-      reportedUser: type === "user" ? targetId : null,
-      reason: reason.trim(),
-      description: description.trim(),
-    };
+    try {
+      const payload = {
+        reportedJob: type === "job" ? targetId : null,
+        reportedUser: type === "user" ? targetId : null,
+        reason: reason.trim(),
+        description: description.trim(),
+      };
 
-    await onSubmit(payload);
-    onClose();
-  } catch (error) {
-    setError(error?.message || "Failed to submit the report.");
-  } finally {
-    setLoading(false);
-  }
-};
+      await onSubmit(payload);
+      onClose();
+    } catch (error) {
+      setError(error?.message || "Failed to submit the report.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const TypeCard = ({ value, title, subtitle, Icon }) => {
     const selected = type === value;
@@ -148,14 +149,14 @@ const handleSubmit = async (event) => {
         type="button"
         onClick={() => handleTypeChange(value)}
         aria-pressed={selected}
-        className={`group relative flex min-w-0 items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 ${
+        className={`group relative flex min-w-0 items-center gap-2.5 rounded-xl border p-3 text-left transition-all duration-200 sm:gap-3 sm:p-3 ${
           selected
             ? "border-violet-400 bg-violet-50/80 ring-2 ring-violet-100"
             : "border-slate-200 bg-white hover:border-violet-200 hover:bg-slate-50"
         }`}
       >
         <span
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors sm:h-10 sm:w-10 sm:rounded-xl ${
             selected
               ? "bg-violet-600 text-white shadow-sm shadow-violet-200"
               : "bg-slate-100 text-slate-500 group-hover:bg-violet-100 group-hover:text-violet-700"
@@ -168,6 +169,7 @@ const handleSubmit = async (event) => {
           <span className="block text-sm font-bold text-slate-900">
             {title}
           </span>
+
           <span className="mt-0.5 block text-xs leading-4 text-slate-500">
             {subtitle}
           </span>
@@ -188,7 +190,7 @@ const handleSubmit = async (event) => {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex min-h-full items-center justify-center overflow-y-auto bg-slate-950/45 p-3 backdrop-blur-[5px] sm:p-5"
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/45 p-2 backdrop-blur-[5px] sm:p-5"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !loading) {
           onClose?.();
@@ -199,11 +201,12 @@ const handleSubmit = async (event) => {
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-modal-title"
-        className="my-auto max-h-[calc(100dvh-24px)] w-full max-w-[500px] overflow-y-auto overscroll-contain rounded-2xl border border-white/70 bg-white shadow-[0_24px_90px_-20px_rgba(15,23,42,0.35)] sm:max-h-[calc(100dvh-40px)]"
+        className="my-auto flex max-h-[calc(100dvh-16px)] w-full max-w-[500px] min-h-0 flex-col overflow-hidden rounded-xl border border-white/70 bg-white shadow-[0_24px_90px_-20px_rgba(15,23,42,0.35)] sm:max-h-[calc(100dvh-40px)] sm:rounded-2xl"
       >
-        <header className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
+        {/* Header */}
+        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700 sm:h-11 sm:w-11">
               <ShieldAlert size={23} strokeWidth={1.8} />
             </div>
 
@@ -214,6 +217,7 @@ const handleSubmit = async (event) => {
               >
                 Report an issue
               </h2>
+
               <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
                 Help keep Peer.Hiring safe and trustworthy.
               </p>
@@ -231,20 +235,27 @@ const handleSubmit = async (event) => {
           </button>
         </header>
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-5 px-5 py-5 sm:px-6">
+        {/* Form */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        >
+          {/* Scrollable body */}
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:space-y-5 sm:px-6 sm:py-5">
             <div>
               <label className="mb-2.5 block text-sm font-semibold text-slate-700">
                 What would you like to report?
               </label>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Single column on very small mobile */}
+              <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3">
                 <TypeCard
                   value="job"
                   title="A job"
                   subtitle="Suspicious job posting"
                   Icon={BriefcaseBusiness}
                 />
+
                 <TypeCard
                   value="user"
                   title="A user"
@@ -254,20 +265,23 @@ const handleSubmit = async (event) => {
               </div>
             </div>
 
+            {/* Target information */}
             <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
                   Reporting
                 </span>
+
                 <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
                   {type}
                 </span>
               </div>
 
-              <p className="mt-2 truncate text-sm font-bold text-slate-900">
+              <p className="mt-2 break-words text-sm font-bold text-slate-900">
                 {targetName}
               </p>
-              <p className="mt-1 truncate text-xs text-slate-500">
+
+              <p className="mt-1 break-words text-xs text-slate-500">
                 {targetSubtitle}
               </p>
 
@@ -278,12 +292,14 @@ const handleSubmit = async (event) => {
               )}
             </div>
 
+            {/* Reason */}
             <div>
               <label
                 htmlFor="report-reason"
                 className="mb-2 block text-sm font-semibold text-slate-700"
               >
-                Reason for reporting <span className="text-rose-500">*</span>
+                Reason for reporting{" "}
+                <span className="text-rose-500">*</span>
               </label>
 
               <div className="relative">
@@ -300,6 +316,7 @@ const handleSubmit = async (event) => {
                   <option value="" disabled>
                     Select a reason
                   </option>
+
                   {REPORT_REASONS[type].map((item) => (
                     <option key={item} value={item}>
                       {item}
@@ -314,6 +331,7 @@ const handleSubmit = async (event) => {
               </div>
             </div>
 
+            {/* Description */}
             <div>
               <div className="mb-2 flex items-center justify-between gap-3">
                 <label
@@ -342,6 +360,7 @@ const handleSubmit = async (event) => {
                   size={17}
                   className="pointer-events-none absolute left-3.5 top-3.5 text-slate-400"
                 />
+
                 <textarea
                   id="report-description"
                   value={description}
@@ -361,6 +380,7 @@ const handleSubmit = async (event) => {
               </p>
             </div>
 
+            {/* Error */}
             {error && (
               <div
                 role="alert"
@@ -371,13 +391,14 @@ const handleSubmit = async (event) => {
             )}
           </div>
 
-          <footer className="border-t border-slate-100 bg-slate-50/60 px-5 py-4 sm:px-6">
-            <div className="flex flex-col-reverse gap-2.5 sm:flex-row">
+          {/* Fixed footer */}
+          <footer className="shrink-0 border-t border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-6 sm:py-4">
+            <div className="flex flex-row-reverse gap-2 sm:flex-row sm:gap-2.5">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+                className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50 sm:px-4 sm:text-sm"
               >
                 Cancel
               </button>
@@ -392,7 +413,7 @@ const handleSubmit = async (event) => {
                       ? "Select a reason to continue"
                       : "Submit report"
                 }
-                className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-violet-200 transition hover:bg-violet-800 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-violet-200 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl bg-violet-700 px-3 py-2.5 text-xs font-semibold text-white shadow-sm shadow-violet-200 transition hover:bg-violet-800 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-violet-200 disabled:cursor-not-allowed disabled:opacity-50 sm:gap-2 sm:px-4 sm:text-sm"
               >
                 {loading ? (
                   <>
@@ -408,7 +429,7 @@ const handleSubmit = async (event) => {
               </button>
             </div>
 
-            <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
+            <p className="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-slate-400 sm:text-[11px]">
               <ShieldCheck size={13} />
               Reviewed by the Peer.Hiring moderation team
             </p>

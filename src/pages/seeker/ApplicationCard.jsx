@@ -126,33 +126,27 @@ const getTimeline = (application) => {
     current: false,
   }));
 
-  // Stage 1: Application submitted
   stages[0].date = application?.createdAt;
   stages[0].completed = true;
 
-  // Stage 2: Under review
   stages[1].date = application?.reviewAt;
   stages[1].completed = Boolean(application?.reviewAt);
 
-  // Stage 3: Shortlisted
   stages[2].date = application?.shortlistedAt;
   stages[2].completed = Boolean(application?.shortlistedAt);
 
-  // Stage 4: Interview
   stages[3].date = application?.interviewId?.scheduledAt;
   stages[3].completed =
     Boolean(application?.interviewId?.scheduledAt) ||
     status === "interview_completed" ||
     status === "selected";
 
-  // Stage 5: Final decision
   if (isTerminal) {
     stages[4].date =
       application?.closedAt || application?.updatedAt || null;
     stages[4].completed = true;
   }
 
-  // Current stage
   if (status === "applied") {
     stages[0].current = true;
   } else if (status === "screening") {
@@ -172,7 +166,6 @@ const getTimeline = (application) => {
 };
 
 const getProgressWidth = (timeline) => {
-  // Only advance across consecutive completed stages.
   let lastCompletedIndex = 0;
 
   for (let i = 1; i < timeline.length; i += 1) {
@@ -180,8 +173,6 @@ const getProgressWidth = (timeline) => {
     lastCompletedIndex = i;
   }
 
-  // The track runs from the first dot's center (10%)
-  // to the last dot's center (90%).
   const completedIntervals = lastCompletedIndex;
   const totalIntervals = timeline.length - 1;
 
@@ -231,11 +222,11 @@ const ApplicationCard = ({ application, statusStyle }) => {
 
   return (
     <>
-      <article className="rounded-xl border border-slate-200 bg-white px-5 py-5 transition duration-200 hover:border-slate-300 hover:shadow-[0_6px_25px_rgba(15,23,42,0.04)]">
+      <article className="w-full min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-3.5 transition duration-200 hover:border-slate-300 hover:shadow-[0_6px_25px_rgba(15,23,42,0.04)] sm:p-5">
         {/* Company and job information */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700">
+        <div className="flex min-w-0 flex-col gap-3 min-[420px]:flex-row min-[420px]:items-start min-[420px]:justify-between">
+          <div className="flex min-w-0 flex-1 gap-2.5 sm:gap-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700 sm:h-11 sm:w-11">
               {cardData.companyLogo ? (
                 <img
                   src={cardData.companyLogo}
@@ -250,38 +241,35 @@ const ApplicationCard = ({ application, statusStyle }) => {
               )}
             </div>
 
-            <div className="min-w-0">
-              <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-slate-400 sm:text-[11px]">
                 {cardData.companyName}
               </p>
 
-              <h2 className="mt-0.5 break-words text-[15px] font-semibold tracking-[-0.015em] text-slate-900">
+              <h2 className="mt-0.5 break-words text-sm font-semibold tracking-[-0.015em] text-slate-900 sm:text-[15px]">
                 {cardData.jobTitle}
               </h2>
 
-              <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] text-slate-400 sm:gap-3 sm:text-[11px]">
                 {locationText && (
-                  <span className="flex items-center gap-1">
-                    <MapPin size={12} />
-                    {locationText}
+                  <span className="flex min-w-0 items-start gap-1">
+                    <MapPin size={12} className="mt-0.5 shrink-0" />
+                    <span className="break-words">{locationText}</span>
                   </span>
                 )}
 
                 {cardData.employmentType && (
-                  <>
-                    {locationText && <span>•</span>}
-                    <span>
-                      {EMPLOYMENT_TYPES[cardData.employmentType] ||
-                        cardData.employmentType}
-                    </span>
-                  </>
+                  <span className="break-words">
+                    {EMPLOYMENT_TYPES[cardData.employmentType] ||
+                      cardData.employmentType}
+                  </span>
                 )}
               </div>
             </div>
           </div>
 
           <span
-            className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium ${
+            className={`max-w-full self-start rounded-full px-2.5 py-1 text-[10px] font-medium ${
               statusStyle
                 ? statusStyle(cardData.status)
                 : statusConfig.className
@@ -292,12 +280,12 @@ const ApplicationCard = ({ application, statusStyle }) => {
         </div>
 
         {/* Application progress timeline */}
-        <div className="mt-7">
+        <div className="mt-6 min-w-0 sm:mt-7">
           <div className="relative">
             {/* Uncompleted track */}
             <div className="absolute left-[10%] right-[10%] top-[7px] h-px bg-slate-200" />
 
-            {/* Violet progress: completed stages only */}
+            {/* Completed progress */}
             <div
               className="absolute left-[10%] top-[7px] h-px bg-violet-500 transition-[width] duration-500 ease-in-out"
               style={{
@@ -305,7 +293,7 @@ const ApplicationCard = ({ application, statusStyle }) => {
               }}
             />
 
-            {/* Five equally spaced stages */}
+            {/* Timeline stages */}
             <div className="relative grid grid-cols-5">
               {timeline.map((stage) => {
                 const completed = stage.completed;
@@ -332,7 +320,6 @@ const ApplicationCard = ({ application, statusStyle }) => {
                     key={stage.key}
                     className="flex min-w-0 flex-col items-center"
                   >
-                    {/* Stage marker */}
                     <div
                       className={`relative z-10 flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full border-2 ring-4 ring-white ${dotClass}`}
                     >
@@ -353,16 +340,15 @@ const ApplicationCard = ({ application, statusStyle }) => {
                       ) : null}
                     </div>
 
-                    {/* Stage label and date */}
-                    <div className="mt-2 w-full px-0.5 text-center sm:px-1">
+                    <div className="mt-2 w-full min-w-0 px-0.5 text-center sm:px-1">
                       <p
-                        className={`break-words text-[9px] font-medium leading-tight sm:text-[10px] ${labelClass}`}
+                        className={`break-words text-[8px] font-medium leading-tight min-[380px]:text-[9px] sm:text-[10px] ${labelClass}`}
                       >
                         {stage.label}
                       </p>
 
                       {stage.date && (
-                        <p className="mt-1 text-[9px] leading-tight text-slate-400">
+                        <p className="mt-1 break-words text-[8px] leading-tight text-slate-400 min-[380px]:text-[9px]">
                           {formatDate(stage.date)}
                         </p>
                       )}
@@ -375,16 +361,16 @@ const ApplicationCard = ({ application, statusStyle }) => {
         </div>
 
         {/* Resume and application date */}
-        <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 text-[10px] text-slate-400">
+        <div className="mt-5 flex min-w-0 flex-col gap-3 border-t border-slate-100 pt-3.5 sm:mt-6 sm:flex-row sm:items-center sm:justify-between sm:pt-4">
+          <div className="flex min-w-0 flex-col gap-2 text-[10px] text-slate-400 min-[420px]:flex-row min-[420px]:flex-wrap min-[420px]:items-center min-[420px]:gap-x-5 sm:text-[11px]">
             <span className="flex min-w-0 items-center gap-1.5">
-              <FileText size={12} />
-              <span className="max-w-[180px] truncate">
+              <FileText size={12} className="shrink-0" />
+              <span className="min-w-0 truncate">
                 {cardData.resumeFile}
               </span>
             </span>
 
-            <span>
+            <span className="break-words">
               Applied{" "}
               {formatDate(cardData.appliedDate) || "date unavailable"}
             </span>
@@ -393,7 +379,7 @@ const ApplicationCard = ({ application, statusStyle }) => {
           <button
             onClick={() => setDetailModal(true)}
             type="button"
-            className="flex shrink-0 items-center gap-1 self-start text-[11px] font-medium text-violet-600 transition hover:text-violet-700 sm:self-auto"
+            className="flex min-h-9 w-full shrink-0 items-center justify-center gap-1 rounded-lg border border-violet-100 bg-violet-50/50 px-3 text-[11px] font-medium text-violet-600 transition hover:border-violet-200 hover:bg-violet-50 min-[420px]:w-auto min-[420px]:self-start sm:self-auto"
           >
             View application
             <ChevronRight size={13} />

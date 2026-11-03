@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 export const AdminContext = createContext(null);
 
 const AdminProvider = ({ children }) => {
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
   const [admin, setAdmin] = useState(null);
   const [dashboard, setDashboard] = useState(null);
 
@@ -80,15 +80,17 @@ const handleRefreshAdminToken = useCallback(async () => {
       }
     );
 
-    if (!response.ok) {
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok || result?.success === false) {
       console.error(
         "Admin token refresh failed:",
-        response.status
+        result?.message || response.status
       );
+
       return false;
     }
 
-    console.log("Admin access token refreshed successfully");
     return true;
   } catch (error) {
     console.error("Admin refresh request failed:", error);
@@ -1271,32 +1273,29 @@ const handleUnlockJob = useCallback(async (jobId) => {
 
   const navigate = useNavigate();
 
-  const adminLogout = async () => {
+  const adminLogout = useCallback(async () => {
   try {
     const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/admin/logout`,
+      `${API_URL}/admin/logout`,
       {
         method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
       }
     );
 
-    const result = await response.json();
+    const result = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
+    if (!response.ok || result?.success === false) {
       throw new Error(result.message || "Admin logout failed");
     }
-    setAdminProfile(null);
-    navigate("/login");
 
     return result;
-  } catch (error) {
-    throw error;
+  } finally {
+    setAdmin(null);
+    setAdminProfile(null);
+    navigate("/login", { replace: true });
   }
-};
+}, [API_URL, navigate]);
 
   const value = useMemo(
     () => ({

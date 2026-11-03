@@ -21,6 +21,7 @@ const AppRoutes = () => {
                 <Route path="/forgetPassword" element={<ForgetPassword />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/interview" element={<InterviewRoom />} />
 
                 <Route element={<ProtectedRoutes allowedType="both" />}>
                     <Route path="/interview/:interviewId" element={<InterviewRoom />} />
