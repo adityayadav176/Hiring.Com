@@ -31,7 +31,7 @@ function Dashboard() {
 
     return (
         <DashboardLayout>
-            <div className="flex min-h-0 w-full flex-1">
+            <div className="flex min-h-0 w-full flex-1 overflow-hidden">
 
                 {/* Desktop Sidebar */}
                 <Sidebar
