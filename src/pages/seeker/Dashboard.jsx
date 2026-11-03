@@ -9,11 +9,11 @@ import { useHome } from "../../hooks/Hook";
 import Overview from './../pubic/Overview';
 import JobLayout from './../../components/jobs/JobLayout';
 import Profile from './Profile';
-import { Settings } from "lucide-react";
 import Applications from './Application';
 import InterviewPage from './InterviewPage';
 import ResumePage from './ResumePage';
 import ChatPage from './../../components/chat/ChatPage';
+import Settings from './Settings';
 
 function Dashboard() {
     const { activePage, setActivePage } = useHome();
