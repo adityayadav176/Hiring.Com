@@ -1,58 +1,70 @@
-import { lazy, Suspense } from "react";
-
+import { useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import Sidebar from "../../components/layout/Sidebar";
 import Navbar from "../../components/layout/Navbar";
-import { useHome } from "../../hooks/Hook";
+import MobileDrawer from "../../components/layout/MobileDrawer";
+import BottomNavigation from "../../components/layout/BottomNavigation";
 
-const Profile = lazy(() => import("./Profile"));
-const JobLayout = lazy(() => import("../../components/jobs/JobLayout"));
-const Settings = lazy(() => import("./Settings"));
-const Application = lazy(() => import("./Application"));
-const Overview = lazy(() => import("./../pubic/Overview"));
-const InterviewPage = lazy(() => import("./InterviewPage"));
-const ResumePage = lazy(() => import("./ResumePage"));
-const ChatPage = lazy(() => import("../../components/chat/ChatPage"));
+import { useHome } from "../../hooks/Hook";
+import Overview from './../pubic/Overview';
+import JobLayout from './../../components/jobs/JobLayout';
+import Profile from './Profile';
+import { Settings } from "lucide-react";
+import Applications from './Application';
+import InterviewPage from './InterviewPage';
+import ResumePage from './ResumePage';
+import ChatPage from './../../components/chat/ChatPage';
 
 function Dashboard() {
-  const { activePage, setActivePage } = useHome();
+    const { activePage, setActivePage } = useHome();
 
-  return (
-    <DashboardLayout>
-      <div className="flex min-h-0 w-full flex-1">
-        <Sidebar
-          activePage={activePage}
-          setActivePage={setActivePage}
-        />
+    const [isMobileMenuOpen, setIsMobileMenuOpen] =
+        useState(false);
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <Navbar
-            activePage={activePage}
-            setActivePage={setActivePage}
-          />
+    return (
+        <DashboardLayout>
+            <div className="flex min-h-0 w-full flex-1">
 
-          <main
-            className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain"
-          >
-            <Suspense fallback={
-              <div className="flex min-h-[300px] items-center justify-center">
-                Loading page...
-              </div>
-            }>
-            {activePage === "profile" && <Profile />}
-            {activePage === "jobs" && <JobLayout />}
-            {activePage === "settings" && <Settings />}
-            {activePage === "applications" && <Application />}
-            {activePage === "overview" && <Overview />}
-            {activePage === "interviews" && <InterviewPage />}
-            {activePage === "resume" && <ResumePage />}
-            {activePage === "chats" && <ChatPage/>}
-            </Suspense>
-          </main>
-        </div>
-      </div>
-    </DashboardLayout>
-  );
+                {/* Desktop Sidebar */}
+                <Sidebar
+                    activePage={activePage}
+                    setActivePage={setActivePage}
+                />
+
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+
+                    {/* Navbar */}
+                    <Navbar
+                        activePage={activePage}
+                        setActivePage={setActivePage}
+                        isMobileMenuOpen={isMobileMenuOpen}
+                        setIsMobileMenuOpen={setIsMobileMenuOpen}
+                    />
+
+                    {/* Mobile Drawer */}
+                    <MobileDrawer
+                        isOpen={isMobileMenuOpen}
+                        onClose={() => setIsMobileMenuOpen(false)}
+                    />
+
+                    {/* Content */}
+                    <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain pb-16 lg:pb-0">
+                        {activePage === "profile" && <Profile />}
+                        {activePage === "jobs" && <JobLayout />}
+                        {activePage === "settings" && <Settings />}
+                        {activePage === "applications" && <Applications />}
+                        {activePage === "overview" && <Overview />}
+                        {activePage === "interviews" && <InterviewPage />}
+                        {activePage === "resume" && <ResumePage />}
+                        {activePage === "chats" && <ChatPage />}
+                    </main>
+
+                    {/* Mobile Bottom Navigation */}
+                    <BottomNavigation />
+                </div>
+            </div>
+        </DashboardLayout>
+    );
 }
 
 export default Dashboard;

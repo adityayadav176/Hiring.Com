@@ -30,7 +30,7 @@ function Sidebar() {
     adminActivePage,
     setAdminActivePage,
     recruiterActivePage,
-    setRecruiterActivePage
+    setRecruiterActivePage,
   } = useHome();
 
   const { admin, recruiter, user } = useAuth();
@@ -45,10 +45,10 @@ function Sidebar() {
     "My Account";
 
   const accountRole = isAdmin
-  ? "Administrator"
-  : isRecruiter
-    ? "Recruiter"
-    : "Candidate";
+    ? "Administrator"
+    : isRecruiter
+      ? "Recruiter"
+      : "Candidate";
 
   const adminItems = [
     {
@@ -95,31 +95,31 @@ function Sidebar() {
       label: "Dashboard",
       page: "recruiter/dashboard",
       title: "Dashboard",
-      icon: LayoutGrid
+      icon: LayoutGrid,
     },
     {
       label: "Jobs Dashboard",
       page: "recruiter/jobs",
       title: "JobsDashboard",
-      icon: BriefcaseBusiness
+      icon: BriefcaseBusiness,
     },
     {
       label: "Applications Dashboard",
       page: "recruiter/application",
       title: "ApplicationsDashboard",
-      icon: FileText
+      icon: FileText,
     },
     {
       label: "Interviews Dashboard",
       page: "recruiter/interviews",
       title: "InterviewsDashboard",
-      icon: CalendarDays
+      icon: CalendarDays,
     },
     {
       label: "Company Dashboard",
       page: "recruiter/company",
       title: "Company Dashboard",
-      icon: Building2
+      icon: Building2,
     },
     {
       label: "Message Dashboard",
@@ -132,9 +132,9 @@ function Sidebar() {
       page: "recruiter/settings",
       title: "Settings",
       icon: Settings,
-      section: "ACCOUNT"
+      section: "ACCOUNT",
     },
-  ]
+  ];
 
   const workspaceItems = [
     {
@@ -189,15 +189,15 @@ function Sidebar() {
   ];
 
   const items = isAdmin
-  ? adminItems
-  : isRecruiter
-    ? recruiterItems
-    : workspaceItems;
+    ? adminItems
+    : isRecruiter
+      ? recruiterItems
+      : workspaceItems;
 
   const handleNavigation = (item) => {
     if (isAdmin) {
       setAdminActivePage(item.page);
-    } else if (isRecruiter){
+    } else if (isRecruiter) {
       setRecruiterActivePage(item.page);
     } else {
       setActivePage(item.page);
@@ -207,7 +207,11 @@ function Sidebar() {
   };
 
   const isActive = (page) =>
-    (isAdmin ? adminActivePage : isRecruiter ? recruiterActivePage : activePage) === page;
+    (isAdmin
+      ? adminActivePage
+      : isRecruiter
+        ? recruiterActivePage
+        : activePage) === page;
 
   const sidebarWidth = isSidebarOpen ? "w-64" : "w-[76px]";
 
@@ -269,7 +273,7 @@ function Sidebar() {
 
   return (
     <aside
-      className={`flex h-screen ${sidebarWidth} shrink-0 flex-col overflow-hidden border-r border-slate-200/80 bg-white transition-[width] duration-200 ease-in-out`}
+      className={`hidden lg:flex h-screen ${sidebarWidth} shrink-0 flex-col overflow-hidden border-r border-slate-200/80 bg-white transition-[width] duration-200 ease-in-out`}
     >
       {/* Logo */}
       <div
@@ -311,6 +315,7 @@ function Sidebar() {
               <p className="truncate text-xs font-semibold text-slate-800">
                 {accountName}
               </p>
+
               <p className="mt-1 truncate text-[11px] capitalize text-slate-500">
                 {accountRole}
               </p>
@@ -329,10 +334,10 @@ function Sidebar() {
         {isSidebarOpen && (
           <p className="mb-3 px-3 text-[10px] font-bold tracking-[0.16em] text-slate-400">
             {isAdmin
-  ? "ADMINISTRATION"
-  : isRecruiter
-    ? "RECRUITER"
-    : "WORKSPACE"}
+              ? "ADMINISTRATION"
+              : isRecruiter
+                ? "RECRUITER"
+                : "WORKSPACE"}
           </p>
         )}
 
@@ -352,7 +357,6 @@ function Sidebar() {
           type="button"
           title={!isSidebarOpen ? "Help center" : undefined}
           onClick={() => {
-            // Connect your help center route or modal here.
             setTitle("Help Center");
           }}
           className={`mb-2 flex min-h-[54px] w-full items-center rounded-xl border border-violet-100 bg-[#EEF0FF]/70 text-left transition-colors hover:bg-[#EEF0FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
@@ -368,6 +372,7 @@ function Sidebar() {
               <span className="block text-xs font-semibold text-slate-800">
                 Need help?
               </span>
+
               <span className="mt-1 block truncate text-[10px] text-slate-500">
                 Visit our help center
               </span>

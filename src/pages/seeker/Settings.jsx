@@ -78,10 +78,7 @@ function DeleteAccountSecurityModal({
             await onSendOtp();
             setOtpSent(true);
         } catch (error) {
-            console.error(
-                "Failed to send delete account OTP:",
-                error
-            );
+            console.error("Failed to send delete account OTP:", error);
         } finally {
             setSendingOtp(false);
         }
@@ -108,19 +105,16 @@ function DeleteAccountSecurityModal({
         try {
             await onConfirm();
         } catch (error) {
-            console.error(
-                "Account deletion failed:",
-                error
-            );
+            console.error("Account deletion failed:", error);
         } finally {
             setDeleting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-[4px]">
-            <div className="w-full max-w-[440px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.20)]">
-                <div className="flex items-start justify-between px-6 pt-6">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center overflow-y-auto bg-slate-950/40 px-3 py-4 backdrop-blur-[4px] sm:px-4 sm:py-6">
+            <div className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-[440px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.20)] sm:max-h-[90dvh]">
+                <div className="flex items-start justify-between px-4 pt-5 sm:px-6 sm:pt-6">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-red-600">
                         <KeyRound size={20} strokeWidth={1.8} />
                     </div>
@@ -135,7 +129,7 @@ function DeleteAccountSecurityModal({
                     </button>
                 </div>
 
-                <div className="px-6 pb-5 pt-4">
+                <div className="px-4 pb-5 pt-4 sm:px-6">
                     <h2 className="text-[17px] font-bold tracking-[-0.02em] text-slate-900">
                         Confirm account deletion
                     </h2>
@@ -154,9 +148,7 @@ function DeleteAccountSecurityModal({
                             <input
                                 type="password"
                                 value={password}
-                                onChange={(e) =>
-                                    setPassword(e.target.value)
-                                }
+                                onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Enter your password"
                                 autoComplete="current-password"
                                 disabled={deleting}
@@ -165,7 +157,7 @@ function DeleteAccountSecurityModal({
                         </div>
 
                         <div>
-                            <div className="mb-1.5 flex items-center justify-between">
+                            <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                                 <label className="text-[12px] font-semibold text-slate-700">
                                     Verification code
                                 </label>
@@ -224,12 +216,12 @@ function DeleteAccountSecurityModal({
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+                <div className="flex flex-col-reverse gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-4 sm:flex-row sm:justify-end sm:px-6">
                     <button
                         onClick={onClose}
                         type="button"
                         disabled={deleting}
-                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                        className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 sm:py-2"
                     >
                         Cancel
                     </button>
@@ -242,7 +234,7 @@ function DeleteAccountSecurityModal({
                             !password.trim() ||
                             otp.trim().length !== 6
                         }
-                        className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-[12px] font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300 sm:py-2"
                     >
                         {deleting ? "Deleting..." : "Delete account"}
                     </button>
@@ -254,14 +246,10 @@ function DeleteAccountSecurityModal({
 
 function StatusPill({ children, tone = "neutral" }) {
     const style = {
-        success:
-            "border-emerald-200 bg-emerald-50 text-emerald-700",
-        warning:
-            "border-amber-200 bg-amber-50 text-amber-700",
-        danger:
-            "border-red-200 bg-red-50 text-red-700",
-        neutral:
-            "border-slate-200 bg-slate-50 text-slate-600",
+        success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+        warning: "border-amber-200 bg-amber-50 text-amber-700",
+        danger: "border-red-200 bg-red-50 text-red-700",
+        neutral: "border-slate-200 bg-slate-50 text-slate-600",
     };
 
     return (
@@ -297,31 +285,33 @@ function SettingRow({
 }) {
     return (
         <div
-            className={`bg-white px-5 py-[18px] ${
+            className={`bg-white px-4 py-4 sm:px-5 sm:py-[18px] ${
                 border ? "border-b border-slate-100" : ""
             }`}
         >
-            <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-                    {icon}
-                </div>
+            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-4">
+                <div className="flex min-w-0 items-start gap-3 sm:contents">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+                        {icon}
+                    </div>
 
-                <div className="min-w-0 flex-1">
-                    <h3 className="text-[14px] font-semibold tracking-[-0.01em] text-slate-900">
-                        {title}
-                    </h3>
+                    <div className="min-w-0 flex-1 sm:flex-none sm:min-w-0 sm:grow">
+                        <h3 className="break-words text-[14px] font-semibold tracking-[-0.01em] text-slate-900">
+                            {title}
+                        </h3>
 
-                    {description && (
-                        <p className="mt-1 max-w-[720px] text-[12px] leading-5 text-slate-500">
-                            {description}
-                        </p>
-                    )}
+                        {description && (
+                            <p className="mt-1 max-w-[720px] break-words text-[12px] leading-5 text-slate-500">
+                                {description}
+                            </p>
+                        )}
 
-                    {children}
+                        {children}
+                    </div>
                 </div>
 
                 {right && (
-                    <div className="shrink-0">
+                    <div className="flex w-full min-w-0 flex-wrap items-center gap-2 pl-[52px] sm:w-auto sm:shrink-0 sm:pl-0">
                         {right}
                     </div>
                 )}
@@ -343,9 +333,9 @@ function ConfirmModal({
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-[3px]">
-            <div className="w-full max-w-[420px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
-                <div className="flex items-start justify-between px-6 pt-6">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/35 px-3 py-4 backdrop-blur-[3px] sm:px-4 sm:py-6">
+            <div className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-[420px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.18)] sm:max-h-[90dvh]">
+                <div className="flex items-start justify-between px-4 pt-5 sm:px-6 sm:pt-6">
                     <div
                         className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                             danger
@@ -365,8 +355,8 @@ function ConfirmModal({
                     </button>
                 </div>
 
-                <div className="px-6 pb-6 pt-4">
-                    <h2 className="text-[17px] font-bold tracking-[-0.02em] text-slate-900">
+                <div className="px-4 pb-6 pt-4 sm:px-6">
+                    <h2 className="break-words text-[17px] font-bold tracking-[-0.02em] text-slate-900">
                         {title}
                     </h2>
 
@@ -375,11 +365,11 @@ function ConfirmModal({
                     </p>
                 </div>
 
-                <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+                <div className="flex flex-col-reverse gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-4 sm:flex-row sm:justify-end sm:px-6">
                     <button
                         onClick={onClose}
                         type="button"
-                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                        className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50 sm:py-2"
                     >
                         Cancel
                     </button>
@@ -387,7 +377,7 @@ function ConfirmModal({
                     <button
                         onClick={onConfirm}
                         type="button"
-                        className={`rounded-xl px-4 py-2 text-[12px] font-semibold text-white transition ${
+                        className={`rounded-xl px-4 py-2.5 text-[12px] font-semibold text-white transition sm:py-2 ${
                             danger
                                 ? "bg-red-600 hover:bg-red-700"
                                 : "bg-slate-900 hover:bg-slate-800"
@@ -432,10 +422,7 @@ function VerifyAccountModal({
             await onSendOtp();
             setOtpSent(true);
         } catch (error) {
-            console.error(
-                "Failed to send verification OTP:",
-                error
-            );
+            console.error("Failed to send verification OTP:", error);
         } finally {
             setSendingOtp(false);
         }
@@ -457,19 +444,16 @@ function VerifyAccountModal({
         try {
             await onVerify();
         } catch (error) {
-            console.error(
-                "Account verification failed:",
-                error
-            );
+            console.error("Account verification failed:", error);
         } finally {
             setVerifying(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-[4px]">
-            <div className="w-full max-w-[440px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.20)]">
-                <div className="flex items-start justify-between px-6 pt-6">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center overflow-y-auto bg-slate-950/40 px-3 py-4 backdrop-blur-[4px] sm:px-4 sm:py-6">
+            <div className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-[440px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.20)] sm:max-h-[90dvh]">
+                <div className="flex items-start justify-between px-4 pt-5 sm:px-6 sm:pt-6">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
                         <ShieldCheck size={21} strokeWidth={1.8} />
                     </div>
@@ -484,7 +468,7 @@ function VerifyAccountModal({
                     </button>
                 </div>
 
-                <div className="px-6 pb-6 pt-4">
+                <div className="px-4 pb-6 pt-4 sm:px-6">
                     <h2 className="text-[17px] font-bold tracking-[-0.02em] text-slate-900">
                         Verify your account
                     </h2>
@@ -500,7 +484,7 @@ function VerifyAccountModal({
                             className="mt-0.5 shrink-0 text-violet-600"
                         />
 
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-[12px] font-semibold text-violet-900">
                                 Email verification
                             </p>
@@ -513,7 +497,7 @@ function VerifyAccountModal({
                     </div>
 
                     <div className="mt-5">
-                        <div className="mb-1.5 flex items-center justify-between">
+                        <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                             <label className="text-[12px] font-semibold text-slate-700">
                                 Verification code
                             </label>
@@ -570,12 +554,12 @@ function VerifyAccountModal({
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+                <div className="flex flex-col-reverse gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-4 sm:flex-row sm:justify-end sm:px-6">
                     <button
                         onClick={onClose}
                         type="button"
                         disabled={verifying}
-                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                        className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 sm:py-2"
                     >
                         Cancel
                     </button>
@@ -583,11 +567,8 @@ function VerifyAccountModal({
                     <button
                         onClick={handleVerify}
                         type="button"
-                        disabled={
-                            verifying ||
-                            otp.trim().length !== 6
-                        }
-                        className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-violet-300"
+                        disabled={verifying || otp.trim().length !== 6}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-[12px] font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-violet-300 sm:py-2"
                     >
                         {verifying ? "Verifying..." : "Verify account"}
                     </button>
@@ -626,41 +607,33 @@ const SessionsPanel = ({
     if (showSkeleton && safeSessions.length === 0) {
         return (
             <div className="overflow-hidden rounded-2xl border border-[#E8E9F0] bg-white">
-                {/* Header */}
-                <div className="flex items-center justify-between border-b border-[#E8E9F0] px-5 py-4">
+                <div className="flex flex-col gap-3 border-b border-[#E8E9F0] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                     <div>
                         <div className="h-4 w-32 animate-pulse rounded-md bg-slate-200" />
-
-                        <div className="mt-2 h-3 w-56 animate-pulse rounded-md bg-slate-100" />
+                        <div className="mt-2 h-3 w-56 max-w-full animate-pulse rounded-md bg-slate-100" />
                     </div>
 
-                    {/* Skeleton button */}
                     <div className="h-9 w-24 animate-pulse rounded-lg bg-slate-100" />
                 </div>
 
-                {/* Skeleton sessions */}
                 <div className="divide-y divide-[#F0F1F5]">
                     {[1, 2, 3].map((item) => (
                         <div
                             key={item}
-                            className="flex items-center gap-3 px-5 py-4"
+                            className="flex flex-wrap items-start gap-3 px-4 py-4 sm:flex-nowrap sm:items-center sm:px-5"
                         >
-                            {/* Icon skeleton */}
                             <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-slate-100" />
 
-                            {/* Content skeleton */}
                             <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                     <div className="h-4 w-36 animate-pulse rounded-md bg-slate-200" />
-
                                     <div className="h-5 w-24 animate-pulse rounded-full bg-slate-100" />
                                 </div>
 
-                                <div className="mt-2 h-3 w-64 animate-pulse rounded-md bg-slate-100" />
+                                <div className="mt-2 h-3 w-64 max-w-full animate-pulse rounded-md bg-slate-100" />
                             </div>
 
-                            {/* Button skeleton */}
-                            <div className="h-8 w-16 animate-pulse rounded-lg bg-slate-100" />
+                            <div className="ml-auto h-8 w-16 animate-pulse rounded-lg bg-slate-100" />
                         </div>
                     ))}
                 </div>
@@ -670,9 +643,8 @@ const SessionsPanel = ({
 
     return (
         <div className="overflow-hidden rounded-2xl border border-[#E8E9F0] bg-white">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#E8E9F0] px-5 py-4">
-                <div>
+            <div className="flex flex-col gap-3 border-b border-[#E8E9F0] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                <div className="min-w-0">
                     <h3 className="text-sm font-bold text-slate-900">
                         Active sessions
                     </h3>
@@ -686,14 +658,13 @@ const SessionsPanel = ({
                     <button
                         type="button"
                         onClick={onLogoutAll}
-                        className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:border-red-300 hover:bg-red-100"
+                        className="self-start rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:border-red-300 hover:bg-red-100 sm:self-auto"
                     >
                         Sign out all
                     </button>
                 )}
             </div>
 
-            {/* Sessions */}
             {safeSessions.length > 0 ? (
                 <div className="divide-y divide-[#F0F1F5]">
                     {safeSessions.map((session) => {
@@ -707,13 +678,12 @@ const SessionsPanel = ({
                         return (
                             <div
                                 key={sessionKey}
-                                className={`flex items-center gap-3 px-5 py-4 transition ${
+                                className={`flex flex-wrap items-start gap-3 px-4 py-4 transition sm:flex-nowrap sm:items-center sm:px-5 ${
                                     isCurrent
                                         ? "bg-emerald-50/40"
                                         : "hover:bg-slate-50/70"
                                 }`}
                             >
-                                {/* Device */}
                                 <div
                                     className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
                                         isCurrent
@@ -721,24 +691,26 @@ const SessionsPanel = ({
                                             : "bg-[#F4F3FF] text-[#6D28D9]"
                                     }`}
                                 >
-                                    <Laptop className="h-5 w-5" />
+                                    <DeviceIcon
+                                        type={
+                                            session.device ||
+                                            session.deviceType
+                                        }
+                                    />
                                 </div>
 
-                                {/* Information */}
-                                <div className="min-w-0 flex-1">
+                                <div className="min-w-0 flex-1 basis-[calc(100%-3.25rem)] sm:basis-auto">
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <p className="truncate text-sm font-semibold text-slate-900">
+                                        <p className="max-w-full break-words text-sm font-semibold text-slate-900">
                                             {session.device ||
                                                 session.deviceType ||
                                                 "Unknown device"}
                                         </p>
 
-                                        {/* Current session */}
                                         {isCurrent && (
                                             <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
                                                 <span className="relative flex h-2 w-2">
                                                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-
                                                     <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                                                 </span>
 
@@ -747,22 +719,20 @@ const SessionsPanel = ({
                                         )}
                                     </div>
 
-                                    <p className="mt-1 flex flex-wrap gap-x-1.5 text-[11px] text-slate-400">
-                                        <span>
-                                            {session.browser ||
-                                                "Unknown browser"}
+                                    <p className="mt-1 flex flex-wrap gap-x-1.5 break-words text-[11px] text-slate-400">
+                                        <span className="break-all">
+                                            {session.browser || "Unknown browser"}
                                         </span>
 
                                         <span>·</span>
 
-                                        <span>
-                                            {session.ipAddress ||
-                                                "Unknown IP"}
+                                        <span className="break-all">
+                                            {session.ipAddress || "Unknown IP"}
                                         </span>
 
                                         <span>·</span>
 
-                                        <span>
+                                        <span className="break-words">
                                             {isCurrent
                                                 ? "Active now"
                                                 : session.lastActive ||
@@ -771,20 +741,16 @@ const SessionsPanel = ({
                                     </p>
                                 </div>
 
-                                {/* Action */}
                                 {isCurrent ? (
-                                    <div className="hidden items-center gap-1.5 text-xs font-semibold text-emerald-600 sm:flex">
+                                    <div className="ml-auto hidden items-center gap-1.5 text-xs font-semibold text-emerald-600 sm:flex">
                                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-
                                         Active
                                     </div>
                                 ) : (
                                     <button
                                         type="button"
-                                        onClick={() =>
-                                            onLogoutSession(session)
-                                        }
-                                        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                        onClick={() => onLogoutSession(session)}
+                                        className="ml-auto rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 sm:ml-0"
                                     >
                                         Sign out
                                     </button>
@@ -794,7 +760,7 @@ const SessionsPanel = ({
                     })}
                 </div>
             ) : (
-                <div className="px-5 py-10 text-center">
+                <div className="px-4 py-10 text-center sm:px-5">
                     <p className="text-xs font-medium text-slate-500">
                         No active sessions found.
                     </p>
@@ -805,9 +771,8 @@ const SessionsPanel = ({
                 </div>
             )}
 
-            {/* Footer */}
             {safeSessions.length > 0 && (
-                <div className="border-t border-[#E8E9F0] bg-slate-50/50 px-5 py-3">
+                <div className="border-t border-[#E8E9F0] bg-slate-50/50 px-4 py-3 sm:px-5">
                     <div className="flex items-start gap-2">
                         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#6D28D9]" />
 
@@ -846,27 +811,21 @@ function Settings() {
     const [deleteOtp, setDeleteOtp] = useState("");
     const [verifyOtp, setVerifyOtp] = useState("");
 
-    const [showVerifyModal, setShowVerifyModal] =
-        useState(false);
+    const [showVerifyModal, setShowVerifyModal] = useState(false);
+    const [showSessions, setShowSessions] = useState(false);
+    const [show2FA, setShow2FA] = useState(false);
+    const [show2FAModal, setShow2FAModal] = useState(false);
 
-    const [showSessions, setShowSessions] =
-        useState(false);
+    const [twoFactorEnabled, setTwoFactorEnabled] = useState(
+        Boolean(user?.twoFactorEnabled)
+    );
 
-    const [show2FA, setShow2FA] =
-        useState(false);
-
-    const [show2FAModal, setShow2FAModal] =
-        useState(false);
-
-    const [twoFactorEnabled, setTwoFactorEnabled] =
-        useState(Boolean(user?.twoFactorEnabled));
-
-    const [accountVerified, setAccountVerified] =
-        useState(Boolean(user?.isVerified));
+    const [accountVerified, setAccountVerified] = useState(
+        Boolean(user?.isVerified)
+    );
 
     const [modal, setModal] = useState(null);
-    const [selectedSession, setSelectedSession] =
-        useState(null);
+    const [selectedSession, setSelectedSession] = useState(null);
 
     useEffect(() => {
         if (!showSessions) return;
@@ -875,10 +834,7 @@ function Settings() {
             try {
                 await handleGetAllSession();
             } catch (error) {
-                console.error(
-                    "Failed to fetch sessions:",
-                    error
-                );
+                console.error("Failed to fetch sessions:", error);
             }
         };
 
@@ -886,15 +842,11 @@ function Settings() {
     }, [showSessions]);
 
     useEffect(() => {
-        setTwoFactorEnabled(
-            Boolean(user?.twoFactorEnabled)
-        );
+        setTwoFactorEnabled(Boolean(user?.twoFactorEnabled));
     }, [user?.twoFactorEnabled]);
 
     useEffect(() => {
-        setAccountVerified(
-            Boolean(user?.isVerified)
-        );
+        setAccountVerified(Boolean(user?.isVerified));
     }, [user?.isVerified]);
 
     const closeModal = () => {
@@ -918,10 +870,7 @@ function Settings() {
         try {
             await handleEmailVerificationOtp();
         } catch (error) {
-            console.error(
-                "Failed to send verification OTP:",
-                error
-            );
+            console.error("Failed to send verification OTP:", error);
 
             alert(
                 error?.message ||
@@ -951,10 +900,7 @@ function Settings() {
             setAccountVerified(true);
             closeVerifyAccount();
         } catch (error) {
-            console.error(
-                "Account verification failed:",
-                error
-            );
+            console.error("Account verification failed:", error);
 
             alert(
                 error?.message ||
@@ -977,9 +923,7 @@ function Settings() {
             selectedSession?.id;
 
         if (!sessionId) {
-            alert(
-                "This session does not have a valid session ID."
-            );
+            alert("This session does not have a valid session ID.");
             return;
         }
 
@@ -992,10 +936,7 @@ function Settings() {
 
             closeModal();
         } catch (error) {
-            console.error(
-                "Specific session logout failed:",
-                error
-            );
+            console.error("Specific session logout failed:", error);
 
             alert(
                 error?.message ||
@@ -1012,10 +953,7 @@ function Settings() {
 
             closeModal();
         } catch (error) {
-            console.error(
-                "Logout all devices failed:",
-                error
-            );
+            console.error("Logout all devices failed:", error);
 
             alert(
                 error?.message ||
@@ -1029,10 +967,7 @@ function Settings() {
             await handleLogout();
             closeModal();
         } catch (error) {
-            console.error(
-                "Current session logout failed:",
-                error
-            );
+            console.error("Current session logout failed:", error);
 
             alert(
                 error?.message ||
@@ -1065,10 +1000,7 @@ function Settings() {
 
             closeModal();
         } catch (error) {
-            console.error(
-                "Account deletion failed:",
-                error
-            );
+            console.error("Account deletion failed:", error);
 
             alert(
                 error?.message ||
@@ -1082,19 +1014,20 @@ function Settings() {
     return (
         <>
             <div className="min-h-full bg-[#F7F8FC]">
-                <div className="w-full px-5 py-7 sm:px-7 lg:px-9 xl:px-10">
-                    <div className="w-full max-w-[1180px]">
-                        <header className="mb-8">
+                <div className="w-full px-4 py-5 sm:px-7 sm:py-7 lg:px-9 xl:px-10">
+                    <div className="mx-auto w-full max-w-[1180px]">
+                        <header className="mb-7 sm:mb-8">
                             <h1 className="text-[25px] font-bold tracking-[-0.035em] text-slate-900 sm:text-[27px]">
                                 Settings
                             </h1>
 
                             <p className="mt-1.5 max-w-2xl text-[13px] leading-5 text-slate-500">
-                                Manage your account, security
-                                preferences and active sessions.
+                                Manage your account, security preferences and
+                                active sessions.
                             </p>
                         </header>
 
+                        {/* Account */}
                         <section>
                             <SectionHeading
                                 title="Account"
@@ -1117,7 +1050,7 @@ function Settings() {
                                                 : "Verify your account to build trust with recruiters and candidates."
                                         }
                                         right={
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex flex-wrap items-center gap-2">
                                                 <StatusPill
                                                     tone={
                                                         accountVerified
@@ -1145,9 +1078,7 @@ function Settings() {
                                                             ? undefined
                                                             : openVerifyAccount
                                                     }
-                                                    disabled={
-                                                        accountVerified
-                                                    }
+                                                    disabled={accountVerified}
                                                     className="hidden items-center gap-1 rounded-lg px-2 py-1.5 text-[12px] font-semibold text-violet-600 transition hover:bg-violet-50 disabled:cursor-default disabled:opacity-100 sm:flex"
                                                 >
                                                     {accountVerified
@@ -1163,7 +1094,7 @@ function Settings() {
                                     />
 
                                     {!accountVerified && (
-                                        <div className="mx-5 mb-4 flex items-start gap-3 rounded-xl border border-amber-200/80 bg-amber-50/60 px-3.5 py-3">
+                                        <div className="mx-4 mb-4 flex flex-col items-start gap-3 rounded-xl border border-amber-200/80 bg-amber-50/60 px-3.5 py-3 sm:mx-5 sm:flex-row sm:items-start">
                                             <TriangleAlert
                                                 size={16}
                                                 className="mt-0.5 shrink-0 text-amber-600"
@@ -1216,7 +1147,8 @@ function Settings() {
                             </div>
                         </section>
 
-                        <section className="mt-9">
+                        {/* Security */}
+                        <section className="mt-7 sm:mt-9">
                             <SectionHeading
                                 title="Security"
                                 description="Protect your account and control where you're signed in."
@@ -1238,7 +1170,7 @@ function Settings() {
                                                 : "Add an authenticator app to protect your account."
                                         }
                                         right={
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex flex-wrap items-center gap-2">
                                                 <StatusPill
                                                     tone={
                                                         twoFactorEnabled
@@ -1262,9 +1194,7 @@ function Settings() {
                                                 <button
                                                     type="button"
                                                     onClick={() =>
-                                                        setShow2FA(
-                                                            !show2FA
-                                                        )
+                                                        setShow2FA(!show2FA)
                                                     }
                                                     className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:bg-slate-50"
                                                 >
@@ -1284,9 +1214,9 @@ function Settings() {
                                     />
 
                                     {show2FA && (
-                                        <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-4">
+                                        <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-4 sm:px-5">
                                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                                <div>
+                                                <div className="min-w-0">
                                                     <p className="text-[12px] font-semibold text-slate-800">
                                                         Authenticator app
                                                     </p>
@@ -1302,11 +1232,9 @@ function Settings() {
                                                     <button
                                                         type="button"
                                                         onClick={() =>
-                                                            setShow2FAModal(
-                                                                true
-                                                            )
+                                                            setShow2FAModal(true)
                                                         }
-                                                        className="rounded-xl bg-violet-600 px-3.5 py-2 text-[12px] font-semibold text-white transition hover:bg-violet-700"
+                                                        className="self-start rounded-xl bg-violet-600 px-3.5 py-2 text-[12px] font-semibold text-white transition hover:bg-violet-700"
                                                     >
                                                         Enable 2FA
                                                     </button>
@@ -1337,8 +1265,7 @@ function Settings() {
                                             <button
                                                 onClick={() =>
                                                     setShowSessions(
-                                                        (previous) =>
-                                                            !previous
+                                                        (previous) => !previous
                                                     )
                                                 }
                                                 type="button"
@@ -1363,22 +1290,14 @@ function Settings() {
                                     {showSessions && (
                                         <SessionsPanel
                                             sessions={
-                                                Array.isArray(
-                                                    sessions
-                                                )
+                                                Array.isArray(sessions)
                                                     ? sessions
                                                     : []
                                             }
-                                            sessionsLoading={
-                                                sessionsLoading
-                                            }
-                                            onLogoutSession={
-                                                openLogoutSession
-                                            }
+                                            sessionsLoading={sessionsLoading}
+                                            onLogoutSession={openLogoutSession}
                                             onLogoutAll={() =>
-                                                setModal(
-                                                    "allSessions"
-                                                )
+                                                setModal("allSessions")
                                             }
                                         />
                                     )}
@@ -1386,8 +1305,9 @@ function Settings() {
                             </div>
                         </section>
 
-                        <section className="mt-7">
-                            <div className="flex items-start gap-4 rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50/80 via-white to-white px-5 py-5">
+                        {/* Security banner */}
+                        <section className="mt-6 sm:mt-7">
+                            <div className="flex items-start gap-3 rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50/80 via-white to-white px-4 py-4 sm:gap-4 sm:px-5 sm:py-5">
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-violet-600 shadow-sm ring-1 ring-violet-100">
                                     <ShieldCheck size={20} />
                                 </div>
@@ -1405,9 +1325,7 @@ function Settings() {
 
                                     <button
                                         type="button"
-                                        onClick={() =>
-                                            setShowSessions(true)
-                                        }
+                                        onClick={() => setShowSessions(true)}
                                         className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-violet-700 transition hover:text-violet-800"
                                     >
                                         Review security
@@ -1417,7 +1335,8 @@ function Settings() {
                             </div>
                         </section>
 
-                        <section className="mt-9">
+                        {/* Session */}
+                        <section className="mt-7 sm:mt-9">
                             <SectionHeading
                                 title="Session"
                                 description="Sign out from this device or end other active sessions."
@@ -1437,11 +1356,7 @@ function Settings() {
                                     right={
                                         <button
                                             type="button"
-                                            onClick={() =>
-                                                setModal(
-                                                    "logout"
-                                                )
-                                            }
+                                            onClick={() => setModal("logout")}
                                             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-[12px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
                                         >
                                             <LogOut size={14} />
@@ -1452,7 +1367,8 @@ function Settings() {
                             </div>
                         </section>
 
-                        <section className="mt-9 pb-12">
+                        {/* Danger zone */}
+                        <section className="mt-7 pb-8 sm:mt-9 sm:pb-12">
                             <div>
                                 <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-red-600">
                                     Danger zone
@@ -1477,11 +1393,7 @@ function Settings() {
                                     right={
                                         <button
                                             type="button"
-                                            onClick={() =>
-                                                setModal(
-                                                    "delete"
-                                                )
-                                            }
+                                            onClick={() => setModal("delete")}
                                             className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-3.5 py-2 text-[12px] font-semibold text-red-600 transition hover:bg-red-50"
                                         >
                                             Delete account
@@ -1490,7 +1402,7 @@ function Settings() {
                                     }
                                 />
 
-                                <div className="border-t border-red-100 bg-red-50/50 px-5 py-3">
+                                <div className="border-t border-red-100 bg-red-50/50 px-4 py-3 sm:px-5">
                                     <div className="flex items-start gap-2">
                                         <TriangleAlert
                                             size={14}
@@ -1511,6 +1423,7 @@ function Settings() {
                 </div>
             </div>
 
+            {/* Logout current session */}
             <ConfirmModal
                 open={modal === "logout"}
                 icon={<LogOut size={19} />}
@@ -1521,6 +1434,7 @@ function Settings() {
                 onConfirm={handleLogoutCurrent}
             />
 
+            {/* Logout selected session */}
             <ConfirmModal
                 open={modal === "session"}
                 icon={<Monitor size={19} />}
@@ -1536,6 +1450,7 @@ function Settings() {
                 onConfirm={handleLogoutSession}
             />
 
+            {/* Logout all other sessions */}
             <ConfirmModal
                 open={modal === "allSessions"}
                 icon={<LogOut size={19} />}
@@ -1546,6 +1461,7 @@ function Settings() {
                 onConfirm={handleLogoutAll}
             />
 
+            {/* Delete account confirmation */}
             <ConfirmModal
                 open={modal === "delete"}
                 icon={<Trash2 size={19} />}
@@ -1561,6 +1477,7 @@ function Settings() {
                 }}
             />
 
+            {/* Delete account security verification */}
             <DeleteAccountSecurityModal
                 open={modal === "delete-security"}
                 password={deletePassword}
@@ -1572,6 +1489,7 @@ function Settings() {
                 onConfirm={handleDeleteAccountC}
             />
 
+            {/* Account verification */}
             <VerifyAccountModal
                 open={showVerifyModal}
                 otp={verifyOtp}
@@ -1581,6 +1499,7 @@ function Settings() {
                 onVerify={handleVerifyAccount}
             />
 
+            {/* Two-factor authentication */}
             <TwoFactorModal
                 open={show2FAModal}
                 onClose={() => setShow2FAModal(false)}

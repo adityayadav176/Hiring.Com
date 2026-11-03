@@ -1,45 +1,82 @@
-import React, { lazy, Suspense } from 'react';
-import Navbar from './../../components/layout/Navbar';
-import Sidebar from '../../components/layout/Sidebar';
-import { useHome } from '../../hooks/Hook';
+import { useState } from "react";
 
-const AdminUsers = lazy(() => import('./AdminUsers'));
-const AdminCompanies = lazy(() => import('./AdminCompanies'));
-const AdminJobs = lazy(() => import('./AdminJobs'));
-const AdminReports = lazy(() => import('./AdminReports'));
-const AdminProfile = lazy(() => import('./AdminProfile'));
-const AdminSettings = lazy(() => import('./AdminSettings'));
-const AdminDashboardS = lazy(() => import('./AdminDashboardS'));
+import Navbar from "../../components/layout/Navbar";
+import Sidebar from "../../components/layout/Sidebar";
+import MobileDrawer from "../../components/layout/MobileDrawer";
+import BottomNavigation from "../../components/layout/BottomNavigation";
+
+import { useHome } from "../../hooks/Hook";
+
+import AdminUsers from "./AdminUsers";
+import AdminCompanies from "./AdminCompanies";
+import AdminJobs from "./AdminJobs";
+import AdminReports from "./AdminReports";
+import AdminProfile from "./AdminProfile";
+import AdminSettings from "./AdminSettings";
+import AdminDashboardS from "./AdminDashboardS";
 
 function ADashboard() {
-    const {adminActivePage} = useHome();
+    const { adminActivePage } = useHome();
+
+    const [isMobileMenuOpen, setIsMobileMenuOpen] =
+        useState(false);
+
     return (
-        <div className="h-screen overflow-hidden flex">
-            {/* Fixed Sidebar */}
-            <Sidebar/>
+        <div className="flex h-screen overflow-hidden">
 
-            {/* Right side */}
-            <div className="flex-1 min-w-0 flex flex-col h-screen">
-                
-                {/* Fixed Navbar */}
-                <Navbar />
+            {/* Desktop Sidebar */}
+            <Sidebar />
 
-                {/* Only this area scrolls */}
-                <main className="flex-1 min-h-0 overflow-y-auto">
-                    <Suspense fallback={
-                        <div className='flex min-h-[300px] items-center justify-center'>
-                            Loading admin page...
-                        </div>
-                    }>
-                    {adminActivePage === "admin/dashboard" && <AdminDashboardS/>}
-                    {adminActivePage === "users" && <AdminUsers/>}
-                    {adminActivePage === "companies" && <AdminCompanies/>}
-                    {adminActivePage === "admin/jobs" && <AdminJobs/>}
-                    {adminActivePage === "reports" && <AdminReports/>}
-                    {adminActivePage === "admin/profile" && <AdminProfile/>}
-                    {adminActivePage === "admin/settings" && <AdminSettings/>}
-                    </Suspense>
+            {/* Right Side */}
+            <div className="flex h-screen min-w-0 flex-1 flex-col">
+
+                {/* Navbar */}
+                <Navbar
+                    isMobileMenuOpen={isMobileMenuOpen}
+                    setIsMobileMenuOpen={setIsMobileMenuOpen}
+                />
+
+                {/* Mobile Drawer */}
+                <MobileDrawer
+                    isOpen={isMobileMenuOpen}
+                    onClose={() => setIsMobileMenuOpen(false)}
+                />
+
+                {/* Main Content */}
+                <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain pb-16 lg:pb-0">
+
+                    {adminActivePage === "admin/dashboard" && (
+                        <AdminDashboardS />
+                    )}
+
+                    {adminActivePage === "users" && (
+                        <AdminUsers />
+                    )}
+
+                    {adminActivePage === "companies" && (
+                        <AdminCompanies />
+                    )}
+
+                    {adminActivePage === "admin/jobs" && (
+                        <AdminJobs />
+                    )}
+
+                    {adminActivePage === "reports" && (
+                        <AdminReports />
+                    )}
+
+                    {adminActivePage === "admin/profile" && (
+                        <AdminProfile />
+                    )}
+
+                    {adminActivePage === "admin/settings" && (
+                        <AdminSettings />
+                    )}
+
                 </main>
+
+                {/* Mobile Bottom Navigation */}
+                <BottomNavigation />
 
             </div>
         </div>

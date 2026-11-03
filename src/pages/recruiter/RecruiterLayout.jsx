@@ -1,55 +1,99 @@
-
-import { lazy, Suspense } from "react";
+import { useState } from "react";
 
 import Navbar from "../../components/layout/Navbar";
-import { useHome } from "../../hooks/Hook";
 import Sidebar from "../../components/layout/Sidebar";
+import MobileDrawer from "../../components/layout/MobileDrawer";
+import BottomNavigation from "../../components/layout/BottomNavigation";
 
-const RecruiterJobs = lazy(() => import("./RecruiterJobs"));
-const RecruiterApplication = lazy(() => import("./RecruiterApplication"));
-const RecruiterInterviews = lazy(() => import("./RecruiterInterviews"));
-const RecruiterDashboard = lazy(() => import("./RecruiterDashboard"));
-const Settings = lazy(() => import("../seeker/Settings"));
-const RecruiterProfile = lazy(() => import("./RecruiterProfile"));
-const RecruiterCompanies = lazy(() => import("./RecruiterCompanies"));
-const CandidateProfile = lazy(() => import("./CandidateProfile"));
-const ChatPage = lazy(() => import("../../components/chat/ChatPage"));
+import { useHome } from "../../hooks/Hook";
+
+import RecruiterJobs from "./RecruiterJobs";
+import RecruiterApplication from "./RecruiterApplication";
+import RecruiterInterviews from "./RecruiterInterviews";
+import RecruiterDashboard from "./RecruiterDashboard";
+import Settings from "../seeker/Settings";
+import RecruiterProfile from "./RecruiterProfile";
+import RecruiterCompanies from "./RecruiterCompanies";
+import CandidateProfile from "./CandidateProfile";
+
+import ChatPage from "../../components/chat/ChatPage";
 
 export default function RecruiterLayout() {
     const { recruiterActivePage } = useHome();
 
+    const [isMobileMenuOpen, setIsMobileMenuOpen] =
+        useState(false);
+
+    // Keep chat completely separate from dashboard navigation
+    if (recruiterActivePage === "/recruiter/chat") {
+        return (
+            <div className="h-screen w-screen overflow-hidden">
+                <ChatPage />
+            </div>
+        );
+    }
+
     return (
-        <Suspense
-            fallback={
-                <div className="flex min-h-[300px] items-center justify-center">
-                    Loading recruiter page...
-                </div>
-            }
-        >
-            {recruiterActivePage === "/recruiter/chat" ? (
-                <div className="h-screen w-screen overflow-hidden">
-                    <ChatPage />
-                </div>
-            ) : (
-                <div className="h-screen overflow-hidden flex">
-                    <Sidebar />
+        <div className="flex h-screen overflow-hidden">
 
-                    <div className="flex-1 min-w-0 flex flex-col h-screen">
-                        <Navbar />
+            {/* Desktop Sidebar */}
+            <Sidebar />
 
-                        <main className="flex-1 min-h-0 overflow-y-auto">
-                            {recruiterActivePage === "recruiter/dashboard" && <RecruiterDashboard />}
-                            {recruiterActivePage === "recruiter/jobs" && <RecruiterJobs />}
-                            {recruiterActivePage === "recruiter/application" && <RecruiterApplication />}
-                            {recruiterActivePage === "recruiter/interviews" && <RecruiterInterviews />}
-                            {recruiterActivePage === "recruiter/settings" && <Settings />}
-                            {recruiterActivePage === "recruiter/profile" && <RecruiterProfile />}
-                            {recruiterActivePage === "recruiter/company" && <RecruiterCompanies />}
-                            {recruiterActivePage === "/recruiter/candidate/profile" && <CandidateProfile />}
-                        </main>
-                    </div>
-                </div>
-            )}
-        </Suspense>
+            {/* Main Dashboard */}
+            <div className="flex h-screen min-w-0 flex-1 flex-col">
+
+                {/* Navbar */}
+                <Navbar
+                    isMobileMenuOpen={isMobileMenuOpen}
+                    setIsMobileMenuOpen={setIsMobileMenuOpen}
+                />
+
+                {/* Mobile Drawer */}
+                <MobileDrawer
+                    isOpen={isMobileMenuOpen}
+                    onClose={() => setIsMobileMenuOpen(false)}
+                />
+
+                {/* Page Content */}
+                <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain pb-16 lg:pb-0">
+
+                    {recruiterActivePage === "recruiter/dashboard" && (
+                        <RecruiterDashboard />
+                    )}
+
+                    {recruiterActivePage === "recruiter/jobs" && (
+                        <RecruiterJobs />
+                    )}
+
+                    {recruiterActivePage === "recruiter/application" && (
+                        <RecruiterApplication />
+                    )}
+
+                    {recruiterActivePage === "recruiter/interviews" && (
+                        <RecruiterInterviews />
+                    )}
+
+                    {recruiterActivePage === "recruiter/settings" && (
+                        <Settings />
+                    )}
+
+                    {recruiterActivePage === "recruiter/profile" && (
+                        <RecruiterProfile />
+                    )}
+
+                    {recruiterActivePage === "recruiter/company" && (
+                        <RecruiterCompanies />
+                    )}
+
+                    {recruiterActivePage === "/recruiter/candidate/profile" && (
+                        <CandidateProfile />
+                    )}
+
+                </main>
+
+                {/* Mobile Bottom Navigation */}
+                <BottomNavigation />
+            </div>
+        </div>
     );
 }

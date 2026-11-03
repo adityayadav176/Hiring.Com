@@ -1,0 +1,1 @@
+import{C as e}from"./index-Ds0YzmNk.js";var t={name:`arrow-down-right`,size:24,node:[[`path`,{d:`m7 7 10 10`,key:`1fmybs`}],[`path`,{d:`M17 7v10H7`,key:`6fjiku`}]]};t.node;var n=e(t);export{n as t};

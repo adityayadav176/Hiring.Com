@@ -1,0 +1,1 @@
+import{C as e}from"./index-Ds0YzmNk.js";var t={name:`circle`,size:24,node:[[`circle`,{cx:`12`,cy:`12`,r:`10`,key:`1mglay`}]]};t.node;var n=e(t);export{n as t};
