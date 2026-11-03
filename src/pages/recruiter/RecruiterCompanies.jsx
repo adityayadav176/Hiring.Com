@@ -1461,7 +1461,7 @@ export default function RecruiterCompanies() {
 
   if (loading && !hasLoaded) {
     return (
-      <main className="flex min-h-[60vh] items-center justify-center bg-[#F7F8FC] px-5">
+      <main className="flex min-h-[100vh] items-center justify-center bg-[#F7F8FC] px-5">
         <div className="text-center">
           <LoaderCircle
             size={34}
