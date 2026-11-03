@@ -21,6 +21,14 @@ function Dashboard() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] =
         useState(false);
 
+    if (activePage === "chats") {
+  return (
+    <div className="h-[100dvh] w-full overflow-hidden">
+      <ChatPage />
+    </div>
+  );
+}
+
     return (
         <DashboardLayout>
             <div className="flex min-h-0 w-full flex-1">
@@ -56,7 +64,6 @@ function Dashboard() {
                         {activePage === "overview" && <Overview />}
                         {activePage === "interviews" && <InterviewPage />}
                         {activePage === "resume" && <ResumePage />}
-                        {activePage === "chats" && <ChatPage />}
                     </main>
 
                     {/* Mobile Bottom Navigation */}

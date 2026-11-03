@@ -49,7 +49,7 @@ function Navbar({
         currentAccount?.name?.charAt(0)?.toUpperCase() || "U";
 
     return (
-        <nav className="sticky top-0 z-40 flex h-[76px] w-full min-w-0 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 sm:px-6 lg:px-8">
+        <nav className="relative z-40 flex h-[76px] w-full min-w-0 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 sm:px-6 lg:px-8">
 
             {/* Left Side */}
             <div className="flex min-w-0 items-center gap-3">
