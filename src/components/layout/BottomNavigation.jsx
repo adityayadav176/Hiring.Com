@@ -73,7 +73,7 @@ function BottomNavigation() {
   };
 
   // Hide dock during full-screen recruiter chat.
-  if (recruiterActivePage === "/recruiter/chat") {
+  if (recruiterActivePage === "/recruiter/chat" && activePage === "chats") {
     return null;
   }
 
