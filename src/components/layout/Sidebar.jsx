@@ -13,6 +13,7 @@ import {
   Search,
   Settings,
   User,
+  UserRound,
   X,
 } from "lucide-react";
 
@@ -134,6 +135,13 @@ function Sidebar() {
       title: "Settings",
       icon: Settings,
       section: "ACCOUNT",
+    },
+    {
+      label: "Profile",
+      page: "recruiter/profile",
+      title: "Profile",
+      icon: UserRound,
+      section: "ABOUT"
     },
   ];
 

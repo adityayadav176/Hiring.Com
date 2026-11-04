@@ -696,9 +696,7 @@ useEffect(() => {
 );
 
   useEffect(() => {
-    Promise.resolve(handleGetMyConversations?.()).catch((err) => {
-      console.error("Failed to load conversations:", err);
-    });
+    handleGetMyConversations();
   }, [handleGetMyConversations]);
 
   useEffect(() => {

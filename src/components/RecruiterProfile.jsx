@@ -378,7 +378,7 @@ export default function RecruiterProfile() {
 
   useEffect(() => {
     loadProfileData();
-  }, [loadProfileData]);
+  }, []);
 
   const recruiterName = recruiter?.name || "Recruiter";
   const recruiterLocation = getLocation(profile?.location);

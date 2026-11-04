@@ -1,4 +1,4 @@
-import { useHome, useAuth, useAdmin } from "../../hooks/Hook";
+import { useHome, useAuth, useAdmin, useTitle } from "../../hooks/Hook";
 
 import {
   X,
@@ -29,6 +29,7 @@ function MobileDrawer({ isOpen, onClose }) {
   } = useHome();
 
   const { user, recruiter } = useAuth();
+  const {setTitle} = useTitle();
   const {admin} = useAdmin();
 
   if (!isOpen) return null;
@@ -120,17 +121,18 @@ function MobileDrawer({ isOpen, onClose }) {
       ? "Recruiter"
       : "Candidate";
 
-  const handleNavigation = (page) => {
-    if (isAdmin) {
-      setAdminActivePage(page);
-    } else if (isRecruiter) {
-      setRecruiterActivePage(page);
-    } else {
-      setActivePage(page);
-    }
+  const handleNavigation = (item) => {
+  if (isAdmin) {
+    setAdminActivePage(item.page);
+  } else if (isRecruiter) {
+    setRecruiterActivePage(item.page);
+  } else {
+    setActivePage(item.page);
+  }
 
-    onClose();
-  };
+  setTitle(item.label);
+  onClose();
+};
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
@@ -226,7 +228,7 @@ function MobileDrawer({ isOpen, onClose }) {
                 <button
                   key={item.page}
                   type="button"
-                  onClick={() => handleNavigation(item.page)}
+                  onClick={() => handleNavigation(item)}
                   className={`group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all duration-150 ${
                     isActive
                       ? "bg-violet-50 text-violet-700"

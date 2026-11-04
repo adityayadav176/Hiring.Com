@@ -38,8 +38,7 @@ import {
   LockKeyhole,
   ExternalLink,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useJob } from "../../hooks/Hook";
+import { useHome, useJob } from "../../hooks/Hook";
 
 const PAGE_SIZE = 8;
 
@@ -974,7 +973,7 @@ function MenuButton({
   );
 }
 
-function JobCard({ job, view, onAction, busy }) {
+function JobCard({ job, view, onAction, busy, recruiterActivePage }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const accent =
@@ -1176,13 +1175,13 @@ function JobCard({ job, view, onAction, busy }) {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onAction("applicants", job)}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-violet-50 px-3 py-2.5 text-xs font-bold text-violet-700 hover:bg-violet-100"
-        >
-          Applicants <Users size={14} />
-        </button>
+  <button
+  type="button"
+  onClick={() => recruiterActivePage("recruiter/application")}
+  className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-violet-50 px-3 py-2.5 text-xs font-bold text-violet-700 hover:bg-violet-100"
+>
+  Applicants <Users size={14} />
+</button>
       </div>
     </article>
   );
@@ -1231,7 +1230,7 @@ export default function RecruiterJobs() {
     handleDeleteJob,
   } = useJob();
 
-  const navigate = useNavigate();
+  const {recruiterActivePage} = useHome();
 
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [view, setView] = useState("grid");
@@ -1444,128 +1443,135 @@ export default function RecruiterJobs() {
   };
 
   const handleAction = async (action, job) => {
-    const JobId = getJobId(job);
+  // Dashboard state navigation — no React Router navigation.
+  if (action === "applicants") {
+    setSelectedJob(null);
+    recruiterActivePage("recruiter/application");
+    return;
+  }
 
-    if (!isValidMongoId(JobId)) {
-      showNotice("Invalid job ID. Please refresh the jobs list.", "error");
-      return;
-    }
+  const JobId = getJobId(job);
 
-    if (action === "view") {
-      setSelectedJob(job);
-      return;
-    }
+  if (!isValidMongoId(JobId)) {
+    showNotice("Invalid job ID. Please refresh the jobs list.", "error");
+    return;
+  }
 
-    if (action === "edit") {
-      openEdit(job);
-      return;
-    }
+  if (action === "view") {
+    setSelectedJob(job);
+    return;
+  }
 
-    if (action === "applicants") {
-      navigate(
-        `/recruiter/applications?jobId=${encodeURIComponent(JobId)}`
-      );
-      return;
-    }
+  if (action === "edit") {
+    openEdit(job);
+    return;
+  }
 
-    const actionMessages = {
-      pause: "Pause",
-      activate: "reopen",
-      close: "close",
-      delete: "delete",
-      duplicate: "duplicate",
-    };
-
-    if (action === "close") {
-      const confirmed = window.confirm(
-        `Close "${getTitle(job)}"? Candidates may no longer be able to apply.`
-      );
-      if (!confirmed) return;
-    }
-
-    if (action === "delete") {
-      const confirmed = window.confirm(
-        `Permanently delete "${getTitle(job)}"? This action cannot be undone.`
-      );
-      if (!confirmed) return;
-    }
-
-    setActionBusy(true);
-
-    try {
-      if (["pause", "activate", "close"].includes(action)) {
-        const status =
-          action === "pause"
-            ? "PAUSED"
-            : action === "close"
-              ? "CLOSED"
-              : "OPEN";
-
-        await handleChangeJobStatus({ JobId, status });
-
-        const message =
-          action === "pause"
-            ? "Job paused successfully."
-            : action === "close"
-              ? "Job closed successfully."
-              : "Job reopened successfully.";
-
-        showNotice(message);
-        setSelectedJob(null);
-      } else if (action === "delete") {
-        await handleDeleteJob({ JobId });
-        setSelectedJob(null);
-        showNotice("Job deleted successfully.");
-      } else if (action === "duplicate") {
-        // Build a clean payload instead of spreading UI-derived properties.
-        const copyPayload = {
-          title: `${getTitle(job)} (Copy)`,
-          description: job.description || "",
-          category: job.category || "",
-          requirements: Array.isArray(job.requirements)
-            ? job.requirements
-            : [],
-          responsibilities: Array.isArray(job.responsibilities)
-            ? job.responsibilities
-            : [],
-          employmentType: job.employmentType || "FULL_TIME",
-          workSpaceType: job.workSpaceType || "ONSITE",
-          experienceLevel: job.experienceLevel || "FRESHER",
-          location:
-            job.location && typeof job.location === "object"
-              ? {
-                  city: job.location.city || "",
-                  state: job.location.state || "",
-                  country: job.location.country || "India",
-                }
-              : { city: "", state: "", country: "India" },
-          salary: {
-            min: Number(job.salary?.min) || 0,
-            max: Number(job.salary?.max) || 0,
-            currency: job.salary?.currency || "INR",
-            isNegotiable: Boolean(job.salary?.isNegotiable),
-          },
-          skills: Array.isArray(job.skills) ? job.skills : [],
-          openings: Number(job.openings) || 1,
-          applicationDeadline: job.applicationDeadline || null,
-          status: "DRAFT",
-        };
-
-        await handleCreateJob({ jobData: copyPayload });
-        showNotice("Job duplicated as a draft.");
-      }
-
-      await loadJobs({ silent: true });
-    } catch (requestError) {
-      console.error("Job action failed:", requestError);
-      showNotice(
-        requestError?.message || "Unable to complete this action.",
-        "error"
-      );
-    } finally {
-      setActionBusy(false);
-    }
+  const actionMessages = {
+    pause: "Pause",
+    activate: "reopen",
+    close: "close",
+    delete: "delete",
+    duplicate: "duplicate",
   };
+
+  if (action === "close") {
+    const confirmed = window.confirm(
+      `Close "${getTitle(job)}"? Candidates may no longer be able to apply.`
+    );
+
+    if (!confirmed) return;
+  }
+
+  if (action === "delete") {
+    const confirmed = window.confirm(
+      `Permanently delete "${getTitle(job)}"? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+  }
+
+  setActionBusy(true);
+
+  try {
+    if (["pause", "activate", "close"].includes(action)) {
+      const status =
+        action === "pause"
+          ? "PAUSED"
+          : action === "close"
+            ? "CLOSED"
+            : "OPEN";
+
+      await handleChangeJobStatus({ JobId, status });
+
+      const message =
+        action === "pause"
+          ? "Job paused successfully."
+          : action === "close"
+            ? "Job closed successfully."
+            : "Job reopened successfully.";
+
+      showNotice(message);
+      setSelectedJob(null);
+    } else if (action === "delete") {
+      await handleDeleteJob({ JobId });
+
+      setSelectedJob(null);
+      showNotice("Job deleted successfully.");
+    } else if (action === "duplicate") {
+      const copyPayload = {
+        title: `${getTitle(job)} (Copy)`,
+        description: job.description || "",
+        category: job.category || "",
+        requirements: Array.isArray(job.requirements)
+          ? job.requirements
+          : [],
+        responsibilities: Array.isArray(job.responsibilities)
+          ? job.responsibilities
+          : [],
+        employmentType: job.employmentType || "FULL_TIME",
+        workSpaceType: job.workSpaceType || "ONSITE",
+        experienceLevel: job.experienceLevel || "FRESHER",
+        location:
+          job.location && typeof job.location === "object"
+            ? {
+                city: job.location.city || "",
+                state: job.location.state || "",
+                country: job.location.country || "India",
+              }
+            : {
+                city: "",
+                state: "",
+                country: "India",
+              },
+        salary: {
+          min: Number(job.salary?.min) || 0,
+          max: Number(job.salary?.max) || 0,
+          currency: job.salary?.currency || "INR",
+          isNegotiable: Boolean(job.salary?.isNegotiable),
+        },
+        skills: Array.isArray(job.skills) ? job.skills : [],
+        openings: Number(job.openings) || 1,
+        applicationDeadline: job.applicationDeadline || null,
+        status: "DRAFT",
+      };
+
+      await handleCreateJob({ jobData: copyPayload });
+      showNotice("Job duplicated as a draft.");
+    }
+
+    await loadJobs({ silent: true });
+  } catch (requestError) {
+    console.error("Job action failed:", requestError);
+
+    showNotice(
+      requestError?.message || "Unable to complete this action.",
+      "error"
+    );
+  } finally {
+    setActionBusy(false);
+  }
+};
 
   const currentSelectedJob = selectedJob
     ? normalizeJob(selectedJob)
@@ -1911,6 +1917,7 @@ export default function RecruiterJobs() {
             >
               {jobs.map((job) => (
                 <JobCard
+                  recruiterActivePage={recruiterActivePage}
                   key={job._id}
                   job={job}
                   view={view}
@@ -2140,15 +2147,15 @@ export default function RecruiterJobs() {
                   Edit job
                 </button>
 
-                <button
-                  type="button"
-                  disabled={actionBusy}
-                  onClick={() => handleAction("applicants", selectedJob)}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 px-4 py-3 text-sm font-bold text-violet-700 hover:bg-violet-50 disabled:opacity-50"
-                >
-                  <Users size={16} />
-                  View applicants
-                </button>
+  <button
+  type="button"
+  disabled={actionBusy}
+  onClick={() => handleAction("applicants", selectedJob)}
+  className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 px-4 py-3 text-sm font-bold text-violet-700 hover:bg-violet-50 disabled:opacity-50"
+>
+  <Users size={16} />
+  View applicants
+</button>
 
                 <button
                   type="button"

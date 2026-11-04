@@ -281,30 +281,30 @@ function getInterviewTimestamp(item) {
 function canJoinInterview(item) {
   if (!item || typeof item !== "object") return false;
 
-  // 1. Require the actual MongoDB document ID.
+  // Require MongoDB interview ID
   const interviewId = getMongoInterviewId(item);
-
   if (!interviewId) return false;
 
-  // 2. Only online interviews support the video room.
+  // Only online interviews
   const interviewType = normalizeInterviewType(
     item.interviewType ?? item.type
   );
 
   if (interviewType !== "Online") return false;
 
-  // 3. Only active interview statuses can join.
+  // Only active statuses
   const status = normalizeStatus(item.status);
 
   if (!ACTIVE_STATUSES.includes(status)) return false;
 
-  // 4. Require a valid scheduled timestamp.
+  // Require a valid scheduled timestamp
   const timestamp = getInterviewTimestamp(item);
 
   if (timestamp === null) return false;
 
-  // Do not reject an interview just because its start time has passed.
-  // The backend remains responsible for authorization.
+  // Hide Join button after interview start time
+  if (timestamp <= Date.now()) return false;
+
   return true;
 }
 

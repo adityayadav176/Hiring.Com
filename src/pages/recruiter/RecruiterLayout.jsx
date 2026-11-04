@@ -6,13 +6,13 @@ import RecruiterDashboard from './RecruiterDashboard';
 import RecruiterJobs from './RecruiterJobs';
 import RecruiterApplication from './RecruiterApplication';
 import RecruiterInterviews from './RecruiterInterviews';
-import RecruiterProfile from './../../components/RecruiterProfile';
 import RecruiterCompanies from './RecruiterCompanies';
-import CandidateProfile from './../../components/CandidateProfile';
 import BottomNavigation from "../../components/layout/BottomNavigation";
 import Settings from "../seeker/Settings";
 import Sidebar from "../../components/layout/Sidebar";
 import ChatPage from "../../components/chat/ChatPage";
+import CandidateProfile from './CandidateProfile';
+import RecruiterProfile from "../../components/RecruiterProfile";
 
 export default function RecruiterLayout() {
   const { recruiterActivePage } = useHome();

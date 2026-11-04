@@ -1,4 +1,4 @@
-import { useHome, useAuth } from "../../hooks/Hook";
+import { useHome, useAuth, useTitle } from "../../hooks/Hook";
 
 import {
   LayoutDashboard,
@@ -22,6 +22,7 @@ function BottomNavigation() {
   } = useHome();
 
   const { admin, recruiter } = useAuth();
+  const {setTitle} = useTitle(); 
 
   const isAdmin = Boolean(admin);
   const isRecruiter = Boolean(recruiter);
@@ -40,6 +41,7 @@ function BottomNavigation() {
     { label: "Applications", page: "recruiter/application", icon: FileText },
     { label: "Interviews", page: "recruiter/interviews", icon: CalendarDays },
     { label: "Messages", page: "/recruiter/chat", icon: MessageSquare },
+    { label: "Profile", page: "recruiter/profile", icon: MessageSquare },
   ];
 
   const candidateItems = [
@@ -63,14 +65,20 @@ function BottomNavigation() {
       : activePage;
 
   const handleNavigation = (page) => {
-    if (isAdmin) {
-      setAdminActivePage(page);
-    } else if (isRecruiter) {
-      setRecruiterActivePage(page);
-    } else {
-      setActivePage(page);
-    }
-  };
+  const selectedItem = items.find((item) => item.page === page);
+
+  if (isAdmin) {
+    setAdminActivePage(page);
+  } else if (isRecruiter) {
+    setRecruiterActivePage(page);
+  } else {
+    setActivePage(page);
+  }
+
+  if (selectedItem) {
+    setTitle(selectedItem.label);
+  }
+};
 
   // Hide dock during full-screen recruiter chat.
   if (recruiterActivePage === "/recruiter/chat" && activePage === "chats") {
