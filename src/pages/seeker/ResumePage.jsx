@@ -932,21 +932,34 @@ const CreateResumeModal = ({ onClose, onCreated }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[99997] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-sm sm:p-6"
-      onMouseDown={(event) => {
-        if (
-          event.target === event.currentTarget &&
-          !submitting
-        ) {
-          onClose?.();
-        }
-      }}
-    >
+  className="fixed inset-0 z-[99997] flex items-center justify-center bg-slate-950/55 backdrop-blur-sm"
+  onMouseDown={(event) => {
+    if (
+      event.target === event.currentTarget &&
+      !submitting
+    ) {
+      onClose?.();
+    }
+  }}
+>
       <form
         onSubmit={handleSubmit}
-        className="flex max-h-[94dvh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl"
+        className="
+  flex h-[100dvh] w-full flex-col overflow-hidden
+  rounded-none border-0 bg-white shadow-2xl
+
+  sm:h-[95dvh] sm:max-h-[900px] sm:max-w-2xl
+  sm:rounded-3xl sm:border sm:border-white/70
+
+  lg:h-auto lg:max-h-[94dvh]
+"
       >
-        <header className="flex shrink-0 items-start justify-between border-b border-slate-100 px-5 py-5 sm:px-7">
+        <header className="
+  flex shrink-0 items-start justify-between
+  border-b border-slate-100
+  px-4 py-4
+  sm:px-7 sm:py-5
+">
           <div>
             <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-violet-700">
               <Sparkles size={12} />
@@ -1229,13 +1242,21 @@ const CreateResumeModal = ({ onClose, onCreated }) => {
           )}
         </div>
 
-        <footer className="flex shrink-0 flex-col-reverse gap-3 border-t border-slate-100 bg-slate-50/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+        <footer className="
+  flex shrink-0 flex-col-reverse gap-3
+  border-t border-slate-100
+  bg-slate-50/70
+  px-4 py-3
+  pb-[max(12px,env(safe-area-inset-bottom))]
+  sm:flex-row sm:items-center sm:justify-between
+  sm:px-7 sm:py-4
+">
           <p className="text-[10px] text-slate-400">
             <ShieldCheck size={13} className="mr-1 inline" />
             PDF upload · Maximum 10 MB
           </p>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex w-full gap-2 sm:w-auto sm:justify-end">
             <Button
               variant="ghost"
               onClick={onClose}
@@ -1245,9 +1266,10 @@ const CreateResumeModal = ({ onClose, onCreated }) => {
             </Button>
 
             <Button
-              type="submit"
-              disabled={submitting || !title.trim() || !file}
-            >
+  type="submit"
+  disabled={submitting || !title.trim() || !file}
+  className="flex-1 justify-center sm:flex-none"
+>
               {submitting ? (
                 <LoaderCircle size={16} className="animate-spin" />
               ) : (

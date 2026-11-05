@@ -399,47 +399,59 @@ const UpdateProfileModal = ({
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+return (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-0 backdrop-blur-sm sm:p-4">
 
-      <div className="flex h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+    {/* ================= MODAL ================= */}
 
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-5">
+    <div className="flex h-[100dvh] w-full flex-col overflow-hidden rounded-none bg-white shadow-2xl sm:h-[92vh] sm:max-w-5xl sm:rounded-3xl">
 
-          <div className="flex items-center gap-3">
+      {/* ================= HEADER ================= */}
 
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
-              <UserRound className="h-5 w-5" />
-            </div>
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-6 sm:py-5">
 
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">
-                Update Profile
-              </h2>
+        <div className="flex min-w-0 items-center gap-3">
 
-              <p className="text-sm text-slate-500">
-                Keep your professional profile up to date
-              </p>
-            </div>
-
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600 sm:h-11 sm:w-11">
+            <UserRound className="h-5 w-5" />
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="min-w-0">
+            <h2 className="text-base font-bold text-slate-900 sm:text-lg">
+              Update Profile
+            </h2>
+
+            <p className="text-xs text-slate-500 sm:text-sm">
+              Keep your professional profile up to date
+            </p>
+          </div>
 
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="flex-1 overflow-y-auto"
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
         >
+          <X className="h-5 w-5" />
+        </button>
 
-          <div className="space-y-8 p-6">
+      </div>
+
+      {/* ================= FORM ================= */}
+
+      <form
+        onSubmit={handleSubmit}
+        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+      >
+
+        {/* ================= SCROLLABLE CONTENT ================= */}
+
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+
+          <div className="space-y-5 p-4 sm:space-y-8 sm:p-6">
+
+            {/* ================= BASIC INFORMATION ================= */}
 
             <section>
 
@@ -449,7 +461,7 @@ const UpdateProfileModal = ({
                 description="Tell recruiters who you are"
               />
 
-              <div className="mt-5 grid gap-5">
+              <div className="mt-4 grid gap-4 sm:mt-5 sm:gap-5">
 
                 <Input
                   label="Professional Headline"
@@ -478,6 +490,8 @@ const UpdateProfileModal = ({
 
             </section>
 
+            {/* ================= LOCATION ================= */}
+
             <section>
 
               <SectionTitle
@@ -486,7 +500,7 @@ const UpdateProfileModal = ({
                 description="Where are you currently located?"
               />
 
-              <div className="mt-5 grid gap-4 md:grid-cols-3">
+              <div className="mt-4 grid gap-4 sm:mt-5 md:grid-cols-3">
 
                 <Input
                   label="City"
@@ -531,6 +545,8 @@ const UpdateProfileModal = ({
 
             </section>
 
+            {/* ================= SOCIAL LINKS ================= */}
+
             <section>
 
               <SectionTitle
@@ -539,16 +555,12 @@ const UpdateProfileModal = ({
                 description="Add your professional online presence"
               />
 
-              <div className="mt-5 grid gap-5 md:grid-cols-3">
+              <div className="mt-4 grid gap-4 sm:mt-5 sm:gap-5 md:grid-cols-3">
 
                 <IconInput
-                  icon={
-                    <FaGithub className="h-4 w-4" />
-                  }
+                  icon={<FaGithub className="h-4 w-4" />}
                   label="GitHub"
-                  value={
-                    form.socialLinks.github
-                  }
+                  value={form.socialLinks.github}
                   placeholder="https://github.com/username"
                   onChange={(e) =>
                     handleNestedChange(
@@ -560,13 +572,9 @@ const UpdateProfileModal = ({
                 />
 
                 <IconInput
-                  icon={
-                    <FaLinkedin className="h-4 w-4" />
-                  }
+                  icon={<FaLinkedin className="h-4 w-4" />}
                   label="LinkedIn"
-                  value={
-                    form.socialLinks.linkedin
-                  }
+                  value={form.socialLinks.linkedin}
                   placeholder="https://linkedin.com/in/username"
                   onChange={(e) =>
                     handleNestedChange(
@@ -578,13 +586,9 @@ const UpdateProfileModal = ({
                 />
 
                 <IconInput
-                  icon={
-                    <LinkIcon className="h-4 w-4" />
-                  }
+                  icon={<LinkIcon className="h-4 w-4" />}
                   label="Portfolio"
-                  value={
-                    form.socialLinks.portfolio
-                  }
+                  value={form.socialLinks.portfolio}
                   placeholder="https://yourportfolio.com"
                   onChange={(e) =>
                     handleNestedChange(
@@ -599,6 +603,8 @@ const UpdateProfileModal = ({
 
             </section>
 
+            {/* ================= SKILLS ================= */}
+
             <section>
 
               <SectionHeader
@@ -608,81 +614,73 @@ const UpdateProfileModal = ({
                 onClick={addSkill}
               />
 
-              <div className="mt-5 space-y-3">
+              <div className="mt-4 space-y-3 sm:mt-5">
 
                 {form.skills.length === 0 ? (
                   <EmptySection text="No skills added yet." />
                 ) : (
-                  form.skills.map(
-                    (skill, index) => (
-                      <div
-                        key={index}
-                        className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-[1fr_220px_auto]"
-                      >
+                  form.skills.map((skill, index) => (
+                    <div
+                      key={index}
+                      className="grid min-w-0 gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4 md:grid-cols-[1fr_220px_auto]"
+                    >
 
-                        <Input
-                          label="Skill"
-                          value={
-                            skill.name || ""
-                          }
-                          onChange={(e) =>
-                            updateSkill(
-                              index,
-                              "name",
-                              e.target.value
-                            )
-                          }
-                          placeholder="React.js"
-                        />
+                      <Input
+                        label="Skill"
+                        value={skill.name || ""}
+                        onChange={(e) =>
+                          updateSkill(
+                            index,
+                            "name",
+                            e.target.value
+                          )
+                        }
+                        placeholder="React.js"
+                      />
 
-                        <Select
-                          label="Level"
-                          value={
-                            skill.level ||
-                            "intermediate"
-                          }
-                          onChange={(e) =>
-                            updateSkill(
-                              index,
-                              "level",
-                              e.target.value
-                            )
-                          }
-                          options={[
-                            {
-                              value: "beginner",
-                              label: "Beginner",
-                            },
-                            {
-                              value: "intermediate",
-                              label:
-                                "Intermediate",
-                            },
-                            {
-                              value: "advanced",
-                              label: "Advanced",
-                            },
-                            {
-                              value: "expert",
-                              label: "Expert",
-                            },
-                          ]}
-                        />
+                      <Select
+                        label="Level"
+                        value={skill.level || "intermediate"}
+                        onChange={(e) =>
+                          updateSkill(
+                            index,
+                            "level",
+                            e.target.value
+                          )
+                        }
+                        options={[
+                          {
+                            value: "beginner",
+                            label: "Beginner",
+                          },
+                          {
+                            value: "intermediate",
+                            label: "Intermediate",
+                          },
+                          {
+                            value: "advanced",
+                            label: "Advanced",
+                          },
+                          {
+                            value: "expert",
+                            label: "Expert",
+                          },
+                        ]}
+                      />
 
-                        <DeleteButton
-                          onClick={() =>
-                            removeSkill(index)
-                          }
-                        />
+                      <DeleteButton
+                        onClick={() => removeSkill(index)}
+                      />
 
-                      </div>
-                    )
-                  )
+                    </div>
+                  ))
                 )}
 
               </div>
 
             </section>
+
+            {/* ================= EXPERIENCE ================= */}
 
             <section>
 
@@ -693,202 +691,172 @@ const UpdateProfileModal = ({
                 onClick={addExperience}
               />
 
-              <div className="mt-5 space-y-5">
+              <div className="mt-4 space-y-4 sm:mt-5 sm:space-y-5">
 
                 {form.experience.length === 0 ? (
                   <EmptySection text="No experience added yet." />
                 ) : (
-                  form.experience.map(
-                    (item, index) => (
-                      <div
-                        key={index}
-                        className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
-                      >
+                  form.experience.map((item, index) => (
+                    <div
+                      key={index}
+                      className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"
+                    >
 
-                        <div className="mb-5 flex items-center justify-between">
+                      <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
 
-                          <h4 className="font-semibold text-slate-900">
-                            Experience #{index + 1}
-                          </h4>
+                        <h4 className="font-semibold text-slate-900">
+                          Experience #{index + 1}
+                        </h4>
 
-                          <DeleteButton
-                            onClick={() =>
-                              removeExperience(
-                                index
-                              )
-                            }
-                          />
+                        <DeleteButton
+                          onClick={() => removeExperience(index)}
+                        />
 
-                        </div>
+                      </div>
 
-                        <div className="grid gap-4 md:grid-cols-2">
+                      <div className="grid min-w-0 gap-4 md:grid-cols-2">
 
+                        <Input
+                          label="Company"
+                          value={item.company || ""}
+                          onChange={(e) =>
+                            updateExperience(
+                              index,
+                              "company",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Company name"
+                        />
+
+                        <Input
+                          label="Position"
+                          value={item.position || ""}
+                          onChange={(e) =>
+                            updateExperience(
+                              index,
+                              "position",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Software Developer"
+                        />
+
+                        <Select
+                          label="Employment Type"
+                          value={item.employmentType || "full-time"}
+                          onChange={(e) =>
+                            updateExperience(
+                              index,
+                              "employmentType",
+                              e.target.value
+                            )
+                          }
+                          options={[
+                            {
+                              value: "full-time",
+                              label: "Full-time",
+                            },
+                            {
+                              value: "part-time",
+                              label: "Part-time",
+                            },
+                            {
+                              value: "internship",
+                              label: "Internship",
+                            },
+                            {
+                              value: "freelance",
+                              label: "Freelance",
+                            },
+                            {
+                              value: "contract",
+                              label: "Contract",
+                            },
+                          ]}
+                        />
+
+                        <Input
+                          label="Start Date"
+                          type="date"
+                          value={
+                            item.startDate
+                              ? String(item.startDate).slice(0, 10)
+                              : ""
+                          }
+                          onChange={(e) =>
+                            updateExperience(
+                              index,
+                              "startDate",
+                              e.target.value
+                            )
+                          }
+                        />
+
+                        {!item.currentlyWorking && (
                           <Input
-                            label="Company"
-                            value={
-                              item.company || ""
-                            }
-                            onChange={(e) =>
-                              updateExperience(
-                                index,
-                                "company",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Company name"
-                          />
-
-                          <Input
-                            label="Position"
-                            value={
-                              item.position || ""
-                            }
-                            onChange={(e) =>
-                              updateExperience(
-                                index,
-                                "position",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Software Developer"
-                          />
-
-                          <Select
-                            label="Employment Type"
-                            value={
-                              item.employmentType ||
-                              "full-time"
-                            }
-                            onChange={(e) =>
-                              updateExperience(
-                                index,
-                                "employmentType",
-                                e.target.value
-                              )
-                            }
-                            options={[
-                              {
-                                value: "full-time",
-                                label: "Full-time",
-                              },
-                              {
-                                value: "part-time",
-                                label: "Part-time",
-                              },
-                              {
-                                value: "internship",
-                                label: "Internship",
-                              },
-                              {
-                                value: "freelance",
-                                label: "Freelance",
-                              },
-                              {
-                                value: "contract",
-                                label: "Contract",
-                              },
-                            ]}
-                          />
-
-                          <Input
-                            label="Start Date"
+                            label="End Date"
                             type="date"
                             value={
-                              item.startDate
-                                ? String(
-                                    item.startDate
-                                  ).slice(
-                                    0,
-                                    10
-                                  )
+                              item.endDate
+                                ? String(item.endDate).slice(0, 10)
                                 : ""
                             }
                             onChange={(e) =>
                               updateExperience(
                                 index,
-                                "startDate",
+                                "endDate",
                                 e.target.value
                               )
                             }
                           />
-
-                          {!item.currentlyWorking && (
-                            <Input
-                              label="End Date"
-                              type="date"
-                              value={
-                                item.endDate
-                                  ? String(
-                                      item.endDate
-                                    ).slice(
-                                      0,
-                                      10
-                                    )
-                                  : ""
-                              }
-                              onChange={(e) =>
-                                updateExperience(
-                                  index,
-                                  "endDate",
-                                  e.target.value
-                                )
-                              }
-                            />
-                          )}
-
-                        </div>
-
-                        <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
-
-                          <input
-                            type="checkbox"
-                            checked={
-                              Boolean(
-                                item.currentlyWorking
-                              )
-                            }
-                            onChange={(e) =>
-                              updateExperience(
-                                index,
-                                "currentlyWorking",
-                                e.target.checked
-                              )
-                            }
-                            className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
-                          />
-
-                          I currently work here
-
-                        </label>
-
-                        <div className="mt-4">
-
-                          <label className={labelClass}>
-                            Description
-                          </label>
-
-                          <textarea
-                            rows={4}
-                            value={
-                              item.description ||
-                              ""
-                            }
-                            onChange={(e) =>
-                              updateExperience(
-                                index,
-                                "description",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Describe your responsibilities and achievements..."
-                            className={`${inputClass} resize-none`}
-                          />
-
-                        </div>
+                        )}
 
                       </div>
-                    )
-                  )
+
+                      <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+
+                        <input
+                          type="checkbox"
+                          checked={Boolean(item.currentlyWorking)}
+                          onChange={(e) =>
+                            updateExperience(
+                              index,
+                              "currentlyWorking",
+                              e.target.checked
+                            )
+                          }
+                          className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                        />
+
+                        I currently work here
+
+                      </label>
+
+                      <div className="mt-4">
+
+                        <label className={labelClass}>
+                          Description
+                        </label>
+
+                        <textarea
+                          rows={4}
+                          value={item.description || ""}
+                          onChange={(e) =>
+                            updateExperience(
+                              index,
+                              "description",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Describe your responsibilities and achievements..."
+                          className={`${inputClass} resize-none`}
+                        />
+
+                      </div>
+
+                    </div>
+                  ))
                 )}
 
               </div>
@@ -906,144 +874,119 @@ const UpdateProfileModal = ({
                 onClick={addEducation}
               />
 
-              <div className="mt-5 space-y-5">
+              <div className="mt-4 space-y-4 sm:mt-5 sm:space-y-5">
 
                 {form.education.length === 0 ? (
                   <EmptySection text="No education added yet." />
                 ) : (
-                  form.education.map(
-                    (item, index) => (
-                      <div
-                        key={index}
-                        className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
-                      >
+                  form.education.map((item, index) => (
+                    <div
+                      key={index}
+                      className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"
+                    >
 
-                        <div className="mb-5 flex items-center justify-between">
+                      <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
 
-                          <h4 className="font-semibold text-slate-900">
-                            Education #{index + 1}
-                          </h4>
+                        <h4 className="font-semibold text-slate-900">
+                          Education #{index + 1}
+                        </h4>
 
-                          <DeleteButton
-                            onClick={() =>
-                              removeEducation(
-                                index
-                              )
-                            }
-                          />
-
-                        </div>
-
-                        <div className="grid gap-4 md:grid-cols-2">
-
-                          <Input
-                            label="Institute"
-                            value={
-                              item.institute ||
-                              ""
-                            }
-                            onChange={(e) =>
-                              updateEducation(
-                                index,
-                                "institute",
-                                e.target.value
-                              )
-                            }
-                            placeholder="University / College"
-                          />
-
-                          <Input
-                            label="Degree"
-                            value={
-                              item.degree || ""
-                            }
-                            onChange={(e) =>
-                              updateEducation(
-                                index,
-                                "degree",
-                                e.target.value
-                              )
-                            }
-                            placeholder="BCA"
-                          />
-
-                          <Input
-                            label="Field of Study"
-                            value={
-                              item.field || ""
-                            }
-                            onChange={(e) =>
-                              updateEducation(
-                                index,
-                                "field",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Computer Science"
-                          />
-
-                          <Input
-                            label="Grade / CGPA"
-                            value={
-                              item.grade || ""
-                            }
-                            onChange={(e) =>
-                              updateEducation(
-                                index,
-                                "grade",
-                                e.target.value
-                              )
-                            }
-                            placeholder="8.2 CGPA"
-                          />
-
-                          <Input
-                            label="Start Year"
-                            type="number"
-                            value={
-                              item.startYear ??
-                              ""
-                            }
-                            onChange={(e) =>
-                              updateEducation(
-                                index,
-                                "startYear",
-                                e.target.value
-                                  ? Number(
-                                      e.target.value
-                                    )
-                                  : ""
-                              )
-                            }
-                            placeholder="2024"
-                          />
-
-                          <Input
-                            label="End Year"
-                            type="number"
-                            value={
-                              item.endYear ??
-                              ""
-                            }
-                            onChange={(e) =>
-                              updateEducation(
-                                index,
-                                "endYear",
-                                e.target.value
-                                  ? Number(
-                                      e.target.value
-                                    )
-                                  : ""
-                              )
-                            }
-                            placeholder="2027"
-                          />
-
-                        </div>
+                        <DeleteButton
+                          onClick={() => removeEducation(index)}
+                        />
 
                       </div>
-                    )
-                  )
+
+                      <div className="grid min-w-0 gap-4 md:grid-cols-2">
+
+                        <Input
+                          label="Institute"
+                          value={item.institute || ""}
+                          onChange={(e) =>
+                            updateEducation(
+                              index,
+                              "institute",
+                              e.target.value
+                            )
+                          }
+                          placeholder="University / College"
+                        />
+
+                        <Input
+                          label="Degree"
+                          value={item.degree || ""}
+                          onChange={(e) =>
+                            updateEducation(
+                              index,
+                              "degree",
+                              e.target.value
+                            )
+                          }
+                          placeholder="BCA"
+                        />
+
+                        <Input
+                          label="Field of Study"
+                          value={item.field || ""}
+                          onChange={(e) =>
+                            updateEducation(
+                              index,
+                              "field",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Computer Science"
+                        />
+
+                        <Input
+                          label="Grade / CGPA"
+                          value={item.grade || ""}
+                          onChange={(e) =>
+                            updateEducation(
+                              index,
+                              "grade",
+                              e.target.value
+                            )
+                          }
+                          placeholder="8.2 CGPA"
+                        />
+
+                        <Input
+                          label="Start Year"
+                          type="number"
+                          value={item.startYear ?? ""}
+                          onChange={(e) =>
+                            updateEducation(
+                              index,
+                              "startYear",
+                              e.target.value
+                                ? Number(e.target.value)
+                                : ""
+                            )
+                          }
+                          placeholder="2024"
+                        />
+
+                        <Input
+                          label="End Year"
+                          type="number"
+                          value={item.endYear ?? ""}
+                          onChange={(e) =>
+                            updateEducation(
+                              index,
+                              "endYear",
+                              e.target.value
+                                ? Number(e.target.value)
+                                : ""
+                            )
+                          }
+                          placeholder="2027"
+                        />
+
+                      </div>
+
+                    </div>
+                  ))
                 )}
 
               </div>
@@ -1061,186 +1004,154 @@ const UpdateProfileModal = ({
                 onClick={addProject}
               />
 
-              <div className="mt-5 space-y-5">
+              <div className="mt-4 space-y-4 sm:mt-5 sm:space-y-5">
 
                 {form.projects.length === 0 ? (
                   <EmptySection text="No projects added yet." />
                 ) : (
-                  form.projects.map(
-                    (project, index) => (
-                      <div
-                        key={index}
-                        className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
-                      >
+                  form.projects.map((project, index) => (
+                    <div
+                      key={index}
+                      className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"
+                    >
 
-                        <div className="mb-5 flex items-center justify-between">
+                      <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
 
-                          <h4 className="font-semibold text-slate-900">
-                            Project #{index + 1}
-                          </h4>
+                        <h4 className="font-semibold text-slate-900">
+                          Project #{index + 1}
+                        </h4>
 
-                          <DeleteButton
-                            onClick={() =>
-                              removeProject(
-                                index
+                        <DeleteButton
+                          onClick={() => removeProject(index)}
+                        />
+
+                      </div>
+
+                      <div className="grid min-w-0 gap-4">
+
+                        <Input
+                          label="Project Title"
+                          value={project.title || ""}
+                          onChange={(e) =>
+                            updateProject(
+                              index,
+                              "title",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Peer.Hiring"
+                        />
+
+                        <div>
+                          <label className={labelClass}>
+                            Description
+                          </label>
+
+                          <textarea
+                            rows={4}
+                            value={project.description || ""}
+                            onChange={(e) =>
+                              updateProject(
+                                index,
+                                "description",
+                                e.target.value
                               )
                             }
+                            placeholder="Describe your project..."
+                            className={`${inputClass} resize-none`}
+                          />
+                        </div>
+
+                        <div className="grid min-w-0 gap-4 md:grid-cols-2">
+
+                          <Input
+                            label="GitHub URL"
+                            type="url"
+                            value={project.githubUrl || ""}
+                            onChange={(e) =>
+                              updateProject(
+                                index,
+                                "githubUrl",
+                                e.target.value
+                              )
+                            }
+                            placeholder="https://github.com/..."
+                          />
+
+                          <Input
+                            label="Live URL"
+                            type="url"
+                            value={project.liveUrl || ""}
+                            onChange={(e) =>
+                              updateProject(
+                                index,
+                                "liveUrl",
+                                e.target.value
+                              )
+                            }
+                            placeholder="https://..."
                           />
 
                         </div>
 
-                        <div className="grid gap-4">
+                        <Input
+                          label="Technologies"
+                          value={
+                            Array.isArray(project.technologies)
+                              ? project.technologies.join(", ")
+                              : ""
+                          }
+                          onChange={(e) =>
+                            updateProjectTechnologies(
+                              index,
+                              e.target.value
+                            )
+                          }
+                          placeholder="React, Node.js, MongoDB"
+                        />
+
+                        <div className="grid min-w-0 gap-4 md:grid-cols-2">
 
                           <Input
-                            label="Project Title"
+                            label="Start Date"
+                            type="date"
                             value={
-                              project.title ||
-                              ""
+                              project.startDate
+                                ? String(project.startDate).slice(0, 10)
+                                : ""
                             }
                             onChange={(e) =>
                               updateProject(
                                 index,
-                                "title",
+                                "startDate",
                                 e.target.value
                               )
                             }
-                            placeholder="Peer.Hiring"
                           />
 
-                          <div>
-                            <label className={labelClass}>
-                              Description
-                            </label>
-
-                            <textarea
-                              rows={4}
-                              value={
-                                project.description ||
-                                ""
-                              }
-                              onChange={(e) =>
-                                updateProject(
-                                  index,
-                                  "description",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Describe your project..."
-                              className={`${inputClass} resize-none`}
-                            />
-                          </div>
-
-                          <div className="grid gap-4 md:grid-cols-2">
-
-                            <Input
-                              label="GitHub URL"
-                              type="url"
-                              value={
-                                project.githubUrl ||
-                                ""
-                              }
-                              onChange={(e) =>
-                                updateProject(
-                                  index,
-                                  "githubUrl",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="https://github.com/..."
-                            />
-
-                            <Input
-                              label="Live URL"
-                              type="url"
-                              value={
-                                project.liveUrl ||
-                                ""
-                              }
-                              onChange={(e) =>
-                                updateProject(
-                                  index,
-                                  "liveUrl",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="https://..."
-                            />
-
-                          </div>
-
                           <Input
-                            label="Technologies"
+                            label="End Date"
+                            type="date"
                             value={
-                              Array.isArray(
-                                project.technologies
-                              )
-                                ? project.technologies.join(
-                                    ", "
-                                  )
+                              project.endDate
+                                ? String(project.endDate).slice(0, 10)
                                 : ""
                             }
                             onChange={(e) =>
-                              updateProjectTechnologies(
+                              updateProject(
                                 index,
+                                "endDate",
                                 e.target.value
                               )
                             }
-                            placeholder="React, Node.js, MongoDB"
                           />
-
-                          <div className="grid gap-4 md:grid-cols-2">
-
-                            <Input
-                              label="Start Date"
-                              type="date"
-                              value={
-                                project.startDate
-                                  ? String(
-                                      project.startDate
-                                    ).slice(
-                                      0,
-                                      10
-                                    )
-                                  : ""
-                              }
-                              onChange={(e) =>
-                                updateProject(
-                                  index,
-                                  "startDate",
-                                  e.target.value
-                                )
-                              }
-                            />
-
-                            <Input
-                              label="End Date"
-                              type="date"
-                              value={
-                                project.endDate
-                                  ? String(
-                                      project.endDate
-                                    ).slice(
-                                      0,
-                                      10
-                                    )
-                                  : ""
-                              }
-                              onChange={(e) =>
-                                updateProject(
-                                  index,
-                                  "endDate",
-                                  e.target.value
-                                )
-                              }
-                            />
-
-                          </div>
 
                         </div>
 
                       </div>
-                    )
-                  )
+
+                    </div>
+                  ))
                 )}
 
               </div>
@@ -1257,13 +1168,13 @@ const UpdateProfileModal = ({
                 description="Help recruiters understand what you're looking for"
               />
 
-              <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:mt-5 sm:p-5">
 
                 {/* Looking for job */}
 
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center justify-between gap-3 sm:gap-4">
 
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-semibold text-slate-900">
                       Looking for opportunities
                     </p>
@@ -1278,19 +1189,15 @@ const UpdateProfileModal = ({
                     onClick={() =>
                       setForm((prev) => ({
                         ...prev,
-
                         preferences: {
                           ...prev.preferences,
-
                           lookingForJob:
-                            !prev.preferences
-                              .lookingForJob,
+                            !prev.preferences.lookingForJob,
                         },
                       }))
                     }
-                    className={`relative h-7 w-12 rounded-full transition ${
-                      form.preferences
-                        .lookingForJob
+                    className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+                      form.preferences.lookingForJob
                         ? "bg-violet-600"
                         : "bg-slate-300"
                     }`}
@@ -1298,8 +1205,7 @@ const UpdateProfileModal = ({
 
                     <span
                       className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition ${
-                        form.preferences
-                          .lookingForJob
+                        form.preferences.lookingForJob
                           ? "left-6"
                           : "left-1"
                       }`}
@@ -1309,14 +1215,13 @@ const UpdateProfileModal = ({
 
                 </div>
 
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {/* Job type and work mode */}
+
+                <div className="mt-5 grid min-w-0 gap-4 md:grid-cols-2">
 
                   <Select
                     label="Preferred Job Type"
-                    value={
-                      form.preferences
-                        .preferredJobType
-                    }
+                    value={form.preferences.preferredJobType}
                     onChange={(e) =>
                       handleNestedChange(
                         "preferences",
@@ -1350,9 +1255,7 @@ const UpdateProfileModal = ({
 
                   <Select
                     label="Work Mode"
-                    value={
-                      form.preferences.workMode
-                    }
+                    value={form.preferences.workMode}
                     onChange={(e) =>
                       handleNestedChange(
                         "preferences",
@@ -1386,51 +1289,30 @@ const UpdateProfileModal = ({
                     Expected Salary
                   </label>
 
-                  <div className="grid gap-3 md:grid-cols-3">
+                  <div className="grid min-w-0 gap-3 md:grid-cols-3">
 
                     <Input
                       type="number"
-                      value={
-                        form.preferences
-                          .expectedSalary
-                          .min
-                      }
+                      value={form.preferences.expectedSalary.min}
                       onChange={(e) =>
-                        handleSalaryChange(
-                          "min",
-                          e.target.value
-                        )
+                        handleSalaryChange("min", e.target.value)
                       }
                       placeholder="Minimum"
                     />
 
                     <Input
                       type="number"
-                      value={
-                        form.preferences
-                          .expectedSalary
-                          .max
-                      }
+                      value={form.preferences.expectedSalary.max}
                       onChange={(e) =>
-                        handleSalaryChange(
-                          "max",
-                          e.target.value
-                        )
+                        handleSalaryChange("max", e.target.value)
                       }
                       placeholder="Maximum"
                     />
 
                     <Select
-                      value={
-                        form.preferences
-                          .expectedSalary
-                          .currency
-                      }
+                      value={form.preferences.expectedSalary.currency}
                       onChange={(e) =>
-                        handleSalaryChange(
-                          "currency",
-                          e.target.value
-                        )
+                        handleSalaryChange("currency", e.target.value)
                       }
                       options={[
                         {
@@ -1454,46 +1336,42 @@ const UpdateProfileModal = ({
 
           </div>
 
-          {/* ================= FOOTER ================= */}
+        </div>
 
-          <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-slate-200 bg-white px-6 py-4">
+        {/* ================= FOOTER ================= */}
 
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={loading}
-              className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Cancel
-            </button>
+        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-slate-200 bg-white px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-end sm:gap-3 sm:px-6 sm:py-4">
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+            className="w-full rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          >
+            Cancel
+          </button>
 
-              <Save className="h-4 w-4" />
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
 
-              {loading
-                ? "Saving..."
-                : "Save Changes"}
+            <Save className="h-4 w-4" />
 
-            </button>
+            {loading ? "Saving..." : "Save Changes"}
 
-          </div>
+          </button>
 
-        </form>
+        </div>
 
-      </div>
+      </form>
 
     </div>
-  );
-};
 
-/* =====================================================
-   SMALL COMPONENTS
-===================================================== */
+  </div>
+);
+};
 
 function SectionTitle({
   icon,

@@ -220,7 +220,9 @@ function ProfileDashboard() {
         <div className="group relative h-44 overflow-hidden bg-gradient-to-r from-violet-800 via-violet-700 to-indigo-700 md:h-56">
           {user?.coverImage?.url && <img src={user.coverImage.url} alt="Profile cover" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.02]"/>}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/10 to-slate-950/10"/>
-          <div className="absolute left-5 top-5 rounded-lg border border-white/20 bg-slate-950/20 px-3 py-2 text-[11px] font-semibold tracking-wide text-white backdrop-blur-md">CAREER PROFILE</div>
+          <div className="absolute bottom-4 right-4 z-20 rounded-lg border border-white/30 bg-slate-950/25 px-3 py-2 text-[10px] font-bold tracking-wider text-white shadow-lg backdrop-blur-md sm:bottom-5 sm:right-5 sm:text-[11px]">
+  CAREER PROFILE
+</div>
           <div className="absolute right-4 top-4 flex gap-2"><button type="button" onClick={() => openImagePreview("cover")} disabled={!user?.coverImage?.url} className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-slate-950/25 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-slate-950/40 disabled:opacity-40"><Eye className="h-3.5 w-3.5"/> Preview</button><button type="button" onClick={() => openFilePicker("cover")} className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-violet-50"><Upload className="h-3.5 w-3.5"/> Change cover</button></div>
           <input ref={coverInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(event) => handleImageSelected(event, "cover")}/>
         </div>

@@ -780,6 +780,7 @@ function InterviewCard({
   );
 }
 
+
 function DetailModal({
   interview,
   onClose,
@@ -788,7 +789,10 @@ function DetailModal({
   now,
 }) {
   useEffect(() => {
-    if (!interview) return undefined;
+    if (!interview) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
     const handleKeyDown = (event) => {
       if (event.key === "Escape") onClose();
@@ -797,34 +801,26 @@ function DetailModal({
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [interview, onClose]);
-
-  useEffect(() => {
-    if (!interview) return undefined;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [interview]);
 
   if (!interview) return null;
 
   const companyName = getCompanyName(interview);
   const jobTitle = getJobTitle(interview);
-  const recruiter = interview?.recruiter;
-  const candidate = interview?.candidate;
-  const feedback = interview?.feedback;
+  const recruiter = interview.recruiter;
+  const candidate = interview.candidate;
   const timezone = getTimezone(interview);
+  const feedback = interview.feedback;
 
   const hasFeedback =
     feedback?.rating != null ||
-    Boolean(interview?.recommendation) ||
-    Boolean(interview?.notes);
+    Boolean(interview.recommendation) ||
+    Boolean(interview.notes);
+
+  const joinable = canJoinInterview(interview, now);
 
   return (
     <div
@@ -834,263 +830,277 @@ function DetailModal({
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-sm sm:p-5"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 backdrop-blur-sm sm:items-center sm:p-4"
     >
-      <div className="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-3xl border border-white/50 bg-white shadow-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-5 sm:px-6">
-          <div className="flex min-w-0 items-center gap-4">
-            <CompanyLogo interview={interview} size="lg" />
+      <div className="flex h-[100dvh] w-full flex-col overflow-hidden bg-white sm:h-auto sm:max-h-[92vh] sm:max-w-4xl sm:rounded-3xl sm:border sm:border-white/50 sm:shadow-2xl">
 
-            <div className="min-w-0">
+        {/* Sticky header */}
+        <header className="sticky top-0 z-20 shrink-0 border-b border-slate-100 bg-white px-4 py-4 sm:px-6">
+          <div className="flex items-start gap-3">
+            <CompanyLogo interview={interview} size="md" />
+
+            <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="break-words text-lg font-bold text-slate-950 sm:text-xl">
-                  {jobTitle || "Interview details"}
-                </h2>
+                <StatusBadge status={interview.status} />
 
-                <StatusBadge status={interview?.status} />
+                <span className="text-[10px] font-semibold text-slate-400">
+                  {formatEnum(interview.interviewType)}
+                </span>
               </div>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <h2 className="mt-1.5 break-words text-base font-bold leading-6 text-slate-950 sm:text-xl">
+                {jobTitle || "Interview details"}
+              </h2>
+
+              <p className="mt-1 truncate text-xs font-medium text-slate-500 sm:text-sm">
                 {companyName || "Company unavailable"}
-                {interview?.round
-                  ? ` · Round ${interview.round}`
-                  : ""}
+                {interview.round ? ` · Round ${interview.round}` : ""}
               </p>
             </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close interview details"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+            >
+              <X size={19} />
+            </button>
           </div>
+        </header>
 
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close interview details"
-            className="shrink-0 rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-          >
-            <X size={20} />
-          </button>
-        </div>
+        {/* Scrollable content */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="space-y-5 p-4 sm:space-y-6 sm:p-6">
 
-        <div className="max-h-[calc(92vh-90px)] overflow-y-auto p-5 sm:p-6">
-          {canJoinInterview(interview, now) && (
-            <div className="mb-5 flex flex-col justify-between gap-3 rounded-2xl border border-violet-100 bg-violet-50/70 p-4 sm:flex-row sm:items-center">
-              <div>
+            {/* Join interview banner */}
+            {joinable && (
+              <section className="rounded-2xl bg-gradient-to-br from-[#211044] to-[#6D28D9] p-4 text-white sm:p-5">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-white/15 p-2.5">
+                    <Video size={20} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-bold">
+                      Your interview is ready
+                    </h3>
+
+                    <p className="mt-1 text-xs leading-5 text-violet-100">
+                      Join your interview with your camera and microphone.
+                    </p>
+                  </div>
+                </div>
+
+                <JoinInterviewButton
+                  interview={interview}
+                  onJoin={onJoin}
+                  joiningInterviewId={joiningInterviewId}
+                  now={now}
+                  className="mt-4 w-full bg-white py-3 text-sm text-violet-800 hover:bg-violet-50"
+                />
+              </section>
+            )}
+
+            {/* Schedule overview */}
+            <section>
+              <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-bold text-slate-900">
-                  Ready for your interview?
+                  Interview schedule
                 </h3>
 
-                <p className="mt-1 text-xs text-slate-500">
-                  Join the online interview with your camera and microphone.
-                </p>
+                <span className="text-[10px] font-medium text-slate-400">
+                  {timezone}
+                </span>
               </div>
 
-              <JoinInterviewButton
-                interview={interview}
-                onJoin={onJoin}
-                joiningInterviewId={joiningInterviewId}
-                now={now}
-                className="py-3 text-sm"
-              />
-            </div>
-          )}
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+                <InfoItem
+                  icon={CalendarDays}
+                  label="Date"
+                  value={formatDate(interview)}
+                />
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <InfoItem
-              icon={CalendarDays}
-              label="Date"
-              value={formatDate(interview)}
-            />
+                <InfoItem
+                  icon={Clock3}
+                  label="Time"
+                  value={formatTime(interview)}
+                />
 
-            <InfoItem
-              icon={Clock3}
-              label="Time"
-              value={formatTime(interview)}
-            />
+                <InfoItem
+                  icon={Clock3}
+                  label="Duration"
+                  value={formatDuration(interview.duration)}
+                />
 
-            <InfoItem
-              icon={Clock3}
-              label="Duration"
-              value={formatDuration(interview?.duration)}
-            />
+                <InfoItem
+                  icon={Globe2}
+                  label="Interview type"
+                  value={formatEnum(interview.interviewType)}
+                />
+              </div>
+            </section>
 
-            <InfoItem
-              icon={Globe2}
-              label="Interview type"
-              value={formatEnum(interview?.interviewType)}
-            />
-          </div>
+            {/* Interview description */}
+            <section className="rounded-2xl border border-slate-200 p-4 sm:p-5">
+              <h3 className="text-sm font-bold text-slate-900">
+                About this interview
+              </h3>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-            <div className="min-w-0 space-y-6">
-              <section>
-                <h3 className="text-sm font-bold text-slate-900">
-                  About this interview
-                </h3>
+              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
+                {getText(interview.description) ||
+                  "No interview description has been provided."}
+              </p>
+            </section>
 
-                <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-500">
-                  {getText(interview?.description) ||
-                    "No interview description has been provided."}
-                </p>
-              </section>
+            {/* People */}
+            <section>
+              <h3 className="mb-3 text-sm font-bold text-slate-900">
+                People
+              </h3>
 
-              <section>
-                <h3 className="text-sm font-bold text-slate-900">
-                  Interviewer
-                </h3>
-
-                <div className="mt-3 flex items-center gap-3 rounded-2xl border border-slate-200 p-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-200 p-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
                     <UserRound size={19} />
                   </div>
 
                   <div className="min-w-0">
-                    <p className="break-words text-sm font-bold text-slate-800">
-                      {getDisplayName(recruiter) ||
-                        "Recruiter details unavailable"}
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                      Recruiter
                     </p>
 
-                    <p className="mt-0.5 break-words text-xs text-slate-500">
+                    <p className="mt-1 break-words text-sm font-bold text-slate-800">
+                      {getDisplayName(recruiter) ||
+                        "Recruiter unavailable"}
+                    </p>
+
+                    <p className="mt-0.5 break-all text-xs text-slate-500">
                       {getText(recruiter?.email)}
                     </p>
                   </div>
                 </div>
-              </section>
 
-              {candidate && (
-                <section>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Candidate
-                  </h3>
-
-                  <div className="mt-3 flex items-center gap-3 rounded-2xl border border-slate-200 p-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700">
+                {candidate && (
+                  <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-200 p-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
                       <UserRound size={19} />
                     </div>
 
                     <div className="min-w-0">
-                      <p className="break-words text-sm font-bold text-slate-800">
-                        {getDisplayName(candidate) ||
-                          "Candidate details unavailable"}
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                        Candidate
                       </p>
 
-                      <p className="mt-0.5 break-words text-xs text-slate-500">
+                      <p className="mt-1 break-words text-sm font-bold text-slate-800">
+                        {getDisplayName(candidate) ||
+                          "Candidate unavailable"}
+                      </p>
+
+                      <p className="mt-0.5 break-all text-xs text-slate-500">
                         {getText(candidate?.email)}
                       </p>
                     </div>
                   </div>
-                </section>
-              )}
+                )}
+              </div>
+            </section>
 
-              {interview?.application && (
-                <section>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Application
-                  </h3>
+            {/* Application */}
+            {interview.application && (
+              <section className="rounded-2xl border border-slate-200 p-4 sm:p-5">
+                <h3 className="text-sm font-bold text-slate-900">
+                  Application details
+                </h3>
 
-                  <div className="mt-3 rounded-2xl border border-slate-200 px-4">
-                    <DetailRow label="Reference">
-                      {getApplicationReference(interview)}
-                    </DetailRow>
+                <div className="mt-2">
+                  <DetailRow label="Reference">
+                    {getApplicationReference(interview)}
+                  </DetailRow>
 
-                    <DetailRow label="Status">
-                      {formatEnum(interview.application?.status)}
-                    </DetailRow>
+                  <DetailRow label="Status">
+                    {formatEnum(interview.application.status)}
+                  </DetailRow>
 
-                    <DetailRow label="Created">
-                      {formatDateTime(
-                        interview.application?.createdAt,
-                        timezone
-                      )}
-                    </DetailRow>
+                  <DetailRow label="Created">
+                    {formatDateTime(
+                      interview.application.createdAt,
+                      timezone
+                    )}
+                  </DetailRow>
+                </div>
+              </section>
+            )}
+
+            {/* Feedback */}
+            {hasFeedback && (
+              <section className="rounded-2xl border border-violet-100 bg-violet-50/70 p-4 sm:p-5">
+                <h3 className="text-sm font-bold text-slate-900">
+                  Interview feedback
+                </h3>
+
+                {feedback?.rating != null && (
+                  <div className="mt-3 flex items-center gap-2 text-sm font-bold text-amber-600">
+                    <Star size={16} fill="currentColor" />
+                    {feedback.rating} / 5
                   </div>
-                </section>
-              )}
+                )}
 
-              {hasFeedback && (
-                <section className="rounded-2xl bg-violet-50/70 p-4">
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Interview feedback
-                  </h3>
-
-                  {feedback?.rating != null && (
-                    <div className="mt-3 flex items-center gap-2 text-sm font-bold text-amber-600">
-                      <Star size={16} fill="currentColor" />
-                      {feedback.rating} / 5
-                    </div>
-                  )}
-
-                  {interview?.recommendation && (
-                    <p className="mt-3 text-xs text-slate-600">
-                      Recommendation:{" "}
-                      <span className="font-bold text-violet-700">
-                        {formatEnum(interview.recommendation)}
-                      </span>
-                    </p>
-                  )}
-
-                  {interview?.notes && (
-                    <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
-                      {interview.notes}
-                    </p>
-                  )}
-                </section>
-              )}
-
-              {interview?.cancellationReason && (
-                <section className="rounded-2xl bg-rose-50 p-4">
-                  <h3 className="text-sm font-bold text-rose-700">
-                    Cancellation reason
-                  </h3>
-
-                  <p className="mt-2 whitespace-pre-wrap break-words text-sm text-rose-700">
-                    {interview.cancellationReason}
+                {interview.recommendation && (
+                  <p className="mt-3 text-sm text-slate-600">
+                    Recommendation:{" "}
+                    <span className="font-bold text-violet-700">
+                      {formatEnum(interview.recommendation)}
+                    </span>
                   </p>
-                </section>
-              )}
+                )}
 
-              {interview?.rescheduleReason && (
-                <section className="rounded-2xl bg-amber-50 p-4">
-                  <h3 className="text-sm font-bold text-amber-800">
-                    Reschedule reason
-                  </h3>
-
-                  <p className="mt-2 whitespace-pre-wrap break-words text-sm text-amber-800">
-                    {interview.rescheduleReason}
+                {interview.notes && (
+                  <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
+                    {interview.notes}
                   </p>
-                </section>
-              )}
-            </div>
+                )}
+              </section>
+            )}
 
-            <aside className="h-fit rounded-2xl border border-slate-200 p-4">
-              <p className="text-xs font-bold text-slate-500">
-                Interview information
-              </p>
+            {/* Reasons */}
+            {interview.cancellationReason && (
+              <section className="rounded-2xl border border-rose-100 bg-rose-50 p-4">
+                <h3 className="text-sm font-bold text-rose-700">
+                  Cancellation reason
+                </h3>
 
-              <div className="mt-3">
-                <DetailRow label="Status">
-                  <StatusBadge status={interview?.status} />
-                </DetailRow>
+                <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-rose-700">
+                  {interview.cancellationReason}
+                </p>
+              </section>
+            )}
 
-                <DetailRow label="Round">
-                  {interview?.round}
-                </DetailRow>
+            {interview.rescheduleReason && (
+              <section className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                <h3 className="text-sm font-bold text-amber-800">
+                  Reschedule reason
+                </h3>
 
+                <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-amber-800">
+                  {interview.rescheduleReason}
+                </p>
+              </section>
+            )}
+
+            {/* Additional information */}
+            <section className="rounded-2xl border border-slate-200 p-4 sm:p-5">
+              <h3 className="text-sm font-bold text-slate-900">
+                Additional information
+              </h3>
+
+              <div className="mt-2">
                 <DetailRow label="Location">
                   {getInterviewLocation(interview)}
                 </DetailRow>
 
-                <DetailRow label="Timezone">
-                  {timezone}
-                </DetailRow>
-
                 <DetailRow label="Room ID">
-                  {getText(interview?.interviewRoomId)}
-                </DetailRow>
-
-                <DetailRow label="Company">
-                  {companyName}
-                </DetailRow>
-
-                <DetailRow label="Job">
-                  {jobTitle}
+                  {getText(interview.interviewRoomId)}
                 </DetailRow>
 
                 <DetailRow label="Job location">
@@ -1102,33 +1112,45 @@ function DetailModal({
                 </DetailRow>
 
                 <DetailRow label="Completed at">
-                  {formatDateTime(interview?.completedAt, timezone)}
+                  {formatDateTime(interview.completedAt, timezone)}
                 </DetailRow>
 
                 <DetailRow label="Created at">
-                  {formatDateTime(interview?.createdAt, timezone)}
+                  {formatDateTime(interview.createdAt, timezone)}
                 </DetailRow>
 
                 <DetailRow label="Last updated">
-                  {formatDateTime(interview?.updatedAt, timezone)}
+                  {formatDateTime(interview.updatedAt, timezone)}
                 </DetailRow>
               </div>
-
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-xs font-bold text-violet-700 transition hover:bg-violet-50"
-              >
-                <FileText size={15} />
-                Print details
-              </button>
-            </aside>
+            </section>
           </div>
         </div>
+
+        {/* Sticky mobile footer */}
+        <footer className="sticky bottom-0 z-20 flex shrink-0 items-center gap-3 border-t border-slate-200 bg-white px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:justify-end sm:px-6">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
+          >
+            <FileText size={15} />
+            Print
+          </button>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-11 flex-1 rounded-xl bg-slate-900 px-5 text-sm font-bold text-white transition hover:bg-slate-800 sm:flex-none"
+          >
+            Close details
+          </button>
+        </footer>
       </div>
     </div>
   );
 }
+
 
 function CalendarPanel({
   calendarMonth,
