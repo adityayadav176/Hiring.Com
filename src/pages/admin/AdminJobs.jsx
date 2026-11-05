@@ -142,13 +142,23 @@ const getCompanyLogo = (job) => {
 const getRecruiterName = (job) => {
   const recruiter = job?.recruiterId || job?.recruiter;
 
-  if (typeof recruiter === "object" && recruiter !== null) {
-    return recruiter.name || "Not specified";
+  if (!recruiter) return "Not specified";
+
+  if (typeof recruiter === "string") {
+    return "Recruiter not populated";
   }
 
-  console.log(recruiter.name);
+  if (typeof recruiter === "object") {
+    return (
+      recruiter.name ||
+      recruiter.fullName ||
+      recruiter.username ||
+      recruiter.email ||
+      "Not specified"
+    );
+  }
 
-  return "Not populated";
+  return "Not specified";
 };
 
 const getLocation = (job) => {
@@ -367,7 +377,11 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
     {
       title: "Job information",
       items: [
-        { icon: Layers, label: "Category", value: formatLabel(job.category) },
+        {
+          icon: Layers,
+          label: "Category",
+          value: formatLabel(job.category),
+        },
         {
           icon: BriefcaseBusiness,
           label: "Employment type",
@@ -437,14 +451,15 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
   ];
 
   const DetailCard = ({ icon: Icon, label, value }) => (
-    <div className="flex min-w-0 items-start gap-3 rounded-xl border border-slate-200/80 bg-white p-3.5 transition hover:border-violet-200">
+    <div className="flex min-w-0 items-start gap-3 rounded-xl border border-slate-200 bg-white p-3.5 transition hover:border-violet-200">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
         <Icon size={17} />
       </div>
 
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-xs font-medium text-slate-500">{label}</p>
-        <p className="mt-1 break-words text-sm font-semibold text-slate-800">
+
+        <p className="mt-1 break-words text-sm font-semibold leading-5 text-slate-800">
           {value === null || value === undefined || value === ""
             ? "Not specified"
             : value}
@@ -453,24 +468,36 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
     </div>
   );
 
-  return (
+  const renderList = (items) => {
+    if (!Array.isArray(items)) return [];
+
+    return items.map(getItemText).filter(Boolean);
+  };
+
+ return (
+  <div
+    className="fixed inset-0 z-50 bg-white sm:flex sm:items-center sm:justify-center sm:bg-slate-950/60 sm:p-4 sm:backdrop-blur-sm"
+    onMouseDown={(event) => {
+      if (event.target === event.currentTarget && !busy) {
+        onClose();
+      }
+    }}
+  >
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-sm sm:p-6"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !busy) onClose();
-      }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="job-details-title"
+      className="
+        flex h-[100dvh] w-full flex-col overflow-hidden bg-white
+        sm:h-auto sm:max-h-[94dvh] sm:max-w-5xl
+        sm:rounded-2xl sm:shadow-2xl
+      "
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="job-details-title"
-        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
-      >
         {/* Header */}
-        <div className="border-b border-slate-200 bg-white px-5 py-5 sm:px-7">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex min-w-0 items-start gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 text-violet-600">
+        <header className="shrink-0 border-b border-slate-200 bg-white px-4 py-3 sm:px-6 sm:py-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-violet-50 text-violet-600 sm:h-14 sm:w-14">
                 {companyLogo ? (
                   <img
                     src={companyLogo}
@@ -478,34 +505,32 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <Building2 size={25} />
+                  <Building2 size={24} />
                 )}
               </div>
 
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="rounded-md bg-violet-50 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-violet-700">
-                    Job posting
+                  <span className="rounded-md bg-violet-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-violet-700">
+                    Job details
                   </span>
+
                   <StatusBadge status={status} />
                 </div>
 
                 <h2
-                  id="job-details-title"
-                  className="break-words text-xl font-bold tracking-tight text-slate-950 sm:text-2xl"
-                >
-                  {job.title || "Untitled job"}
-                </h2>
+  id="job-details-title"
+  className="break-words text-base font-bold leading-tight tracking-tight text-slate-950 sm:text-2xl"
+>
+  {job.title || "Untitled job"}
+</h2>
+                <p className="mt-1.5 break-words text-sm font-medium text-slate-600">
+                  {companyName}
+                </p>
 
-                <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
-                  <span className="font-semibold text-slate-700">
-                    {companyName}
-                  </span>
-                  <span className="hidden text-slate-300 sm:inline">•</span>
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin size={14} />
-                    {getLocation(job)}
-                  </span>
+                <p className="mt-1 flex items-start gap-1.5 text-xs text-slate-500">
+                  <MapPin size={14} className="mt-0.5 shrink-0" />
+                  <span className="break-words">{getLocation(job)}</span>
                 </p>
               </div>
             </div>
@@ -515,46 +540,55 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
               onClick={onClose}
               disabled={busy}
               aria-label="Close job details"
-              className="shrink-0 rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
+              className="shrink-0 rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
             >
               <X size={19} />
             </button>
           </div>
 
           {/* Quick metrics */}
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-              <p className="text-xs font-medium text-slate-500">Salary range</p>
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+            <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[11px] font-medium text-slate-500">
+                Salary range
+              </p>
               <p className="mt-1 break-words text-sm font-bold text-slate-900">
                 {formatSalary(job.salary)}
               </p>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-              <p className="text-xs font-medium text-slate-500">Applications</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[11px] font-medium text-slate-500">
+                Applications
+              </p>
               <p className="mt-1 text-lg font-bold text-slate-900">
                 {applicationCount.toLocaleString("en-IN")}
               </p>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-              <p className="text-xs font-medium text-slate-500">Job views</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[11px] font-medium text-slate-500">
+                Job views
+              </p>
               <p className="mt-1 text-lg font-bold text-slate-900">
                 {views.toLocaleString("en-IN")}
               </p>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-              <p className="text-xs font-medium text-slate-500">Recruiter</p>
+            <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[11px] font-medium text-slate-500">
+                Recruiter
+              </p>
               <p className="mt-1 break-words text-sm font-bold text-slate-900">
                 {getRecruiterName(job)}
               </p>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Scrollable body */}
-        <div className="flex-1 space-y-7 overflow-y-auto bg-[#F8F9FC] p-5 sm:p-7">
+        {/* Scrollable content */}
+        <main className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain bg-[#F8F9FC] p-3 sm:space-y-7 sm:p-6">
+          {/* Detail sections */}
           {detailSections.map((section) => (
             <section key={section.title}>
               <div className="mb-3">
@@ -564,7 +598,7 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
                 <div className="mt-2 h-px bg-slate-200" />
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 sm:gap-3">
                 {section.items.map((item) => (
                   <DetailCard key={item.label} {...item} />
                 ))}
@@ -572,7 +606,7 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
             </section>
           ))}
 
-          {/* Skills */}
+          {/* Required skills */}
           {skills.length > 0 && (
             <section>
               <h3 className="mb-3 text-sm font-bold text-slate-900">
@@ -589,7 +623,7 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
                     return (
                       <span
                         key={`${label}-${index}`}
-                        className="rounded-lg border border-violet-100 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700"
+                        className="max-w-full break-words rounded-lg border border-violet-100 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700"
                       >
                         {formatLabel(label)}
                       </span>
@@ -614,7 +648,7 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
           </section>
 
           {/* Responsibilities and requirements */}
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
             {[
               {
                 title: "Responsibilities",
@@ -625,9 +659,7 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
                 items: job.requirements,
               },
             ].map(({ title, items }) => {
-              const values = Array.isArray(items)
-                ? items.map(getItemText).filter(Boolean)
-                : [];
+              const values = renderList(items);
 
               return (
                 <section key={title}>
@@ -635,7 +667,7 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
                     {title}
                   </h3>
 
-                  <div className="h-full rounded-xl border border-slate-200 bg-white p-4">
+                  <div className="rounded-xl border border-slate-200 bg-white p-4">
                     {values.length > 0 ? (
                       <ul className="space-y-3">
                         {values.map((value, index) => (
@@ -662,28 +694,31 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
             })}
           </div>
 
-          {/* IDs and moderation information */}
+          {/* Administrative information */}
           <section>
             <h3 className="mb-3 text-sm font-bold text-slate-900">
               Administrative information
             </h3>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3">
               <DetailCard
                 icon={FileText}
                 label="Job ID"
                 value={job._id}
               />
+
               <DetailCard
-                icon={FileText}
+                icon={CircleDollarSign}
                 label="Currency"
                 value={job.salary?.currency || "INR"}
               />
+
               <DetailCard
                 icon={CircleDollarSign}
                 label="Salary negotiable"
                 value={job.salary?.isNegotiable ? "Yes" : "No"}
               />
+
               <DetailCard
                 icon={ShieldCheck}
                 label="Moderation status"
@@ -697,55 +732,60 @@ const JobDetailsModal = ({ job, onClose, onModerate, busy }) => {
               />
             </div>
           </section>
-        </div>
+        </main>
 
         {/* Footer */}
-        <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <ShieldCheck size={16} className="shrink-0 text-slate-400" />
-            Admin moderation controls
+        <footer className="shrink-0 border-t border-slate-200 bg-white px-3 py-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="hidden items-center gap-2 text-xs text-slate-500 sm:flex">
+              <ShieldCheck size={16} className="text-slate-400" />
+              Admin moderation controls
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={busy}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                Close
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onModerate(job)}
+                disabled={busy || deleted}
+                className={cn(
+                  "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5",
+                  "text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
+                  blocked
+                    ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                    : "bg-red-600 text-white hover:bg-red-700"
+                )}
+              >
+                {busy ? (
+                  <LoaderCircle size={16} className="animate-spin" />
+                ) : blocked ? (
+                  <CheckCircle size={16} />
+                ) : (
+                  <Ban size={16} />
+                )}
+
+                {busy
+                  ? "Processing..."
+                  : blocked
+                    ? "Unblock job"
+                    : "Block job"}
+              </button>
+            </div>
           </div>
-
-          <div className="flex flex-col-reverse gap-2 sm:flex-row">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={busy}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-            >
-              Close details
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onModerate(job)}
-              disabled={busy || deleted}
-              className={cn(
-                "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5",
-                "text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
-                blocked
-                  ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                  : "bg-red-600 text-white hover:bg-red-700"
-              )}
-            >
-              {busy ? (
-                <LoaderCircle size={16} className="animate-spin" />
-              ) : blocked ? (
-                <CheckCircle size={16} />
-              ) : (
-                <Ban size={16} />
-              )}
-
-              {blocked ? "Unblock job" : "Block job"}
-            </button>
-          </div>
-        </div>
+        </footer>
       </div>
     </div>
   );
 };
 
-/* ----------------------------- Confirmation modal ----------------------------- */
 
 const ConfirmModal = ({
   action,

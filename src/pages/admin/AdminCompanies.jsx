@@ -1102,11 +1102,16 @@ if (result?.success === false) {
       </div>
 
       {/* Company details drawer */}
+            {/* Company Details Drawer */}
       {(selected || detailsLoading) && (
         <div
-          className="fixed inset-0 z-[100] flex justify-end bg-slate-950/40 backdrop-blur-[2px]"
+          className="fixed inset-0 z-[100] flex justify-end bg-slate-950/50 backdrop-blur-sm"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !detailsLoading) {
+            if (
+              event.target === event.currentTarget &&
+              !detailsLoading &&
+              !actionLoading
+            ) {
               setSelected(null);
             }
           }}
@@ -1115,239 +1120,381 @@ if (result?.success === false) {
             role="dialog"
             aria-modal="true"
             aria-label="Company details"
-            className="flex h-full w-full max-w-xl flex-col overflow-hidden bg-white shadow-2xl"
+            className="flex h-full w-full max-w-xl flex-col overflow-hidden bg-white shadow-2xl animate-in slide-in-from-right duration-300"
           >
-            <div className="flex items-start justify-between border-b border-slate-100 px-5 py-5 sm:px-6">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-violet-700">
+            {/* Header */}
+            <div className="flex shrink-0 items-start justify-between border-b border-slate-100 bg-white px-5 py-5 sm:px-6">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-violet-700">
+                  <Building2 size={15} />
                   Company profile
-                </p>
-                <h2 className="mt-1 text-xl font-bold text-slate-900">
+                </div>
+
+                <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                   Company details
                 </h2>
+
                 <p className="mt-1 text-sm text-slate-500">
-                  Review the company's registered information.
+                  Review and manage registered company information.
                 </p>
               </div>
 
               <button
                 type="button"
                 onClick={() => setSelected(null)}
-                disabled={detailsLoading}
+                disabled={detailsLoading || Boolean(actionLoading)}
                 aria-label="Close company details"
-                className="rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100 disabled:opacity-50"
+                className="ml-3 shrink-0 rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:border-slate-300 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <X size={19} />
               </button>
             </div>
 
+            {/* Loading */}
             {detailsLoading ? (
-              <div className="flex flex-1 flex-col items-center justify-center">
-                <LoaderCircle
-                  size={32}
-                  className="animate-spin text-violet-700"
-                />
-                <p className="mt-3 text-sm font-semibold text-slate-700">
-                  Loading company details...
+              <div className="flex flex-1 flex-col items-center justify-center px-6">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50">
+                  <LoaderCircle
+                    size={28}
+                    className="animate-spin text-violet-700"
+                  />
+                </div>
+
+                <p className="mt-4 text-sm font-bold text-slate-800">
+                  Loading company details
+                </p>
+
+                <p className="mt-1 text-center text-xs text-slate-500">
+                  Please wait while we retrieve company information.
                 </p>
               </div>
             ) : selected ? (
               <>
-                <div className="flex-1 space-y-6 overflow-y-auto px-5 py-6 sm:px-6">
-                  <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-5">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white bg-white text-violet-700 shadow-sm">
-                        {(
-                          selected?.logo?.url ||
-                          selected?.logoUrl ||
-                          selected?.companyLogo
-                        ) ? (
-                          <img
-                            src={
-                              selected?.logo?.url ||
-                              selected?.logoUrl ||
-                              selected?.companyLogo
-                            }
-                            alt={`${getCompanyName(selected)} logo`}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <Building2 size={28} />
-                        )}
+                {/* Scrollable content */}
+                <div className="flex-1 overflow-y-auto overscroll-contain">
+                  <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
+
+                    {/* Company profile card */}
+                    <div className="relative overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-indigo-50 p-5">
+                      <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-violet-100/60 blur-2xl" />
+
+                      <div className="relative flex items-start gap-4">
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white bg-white text-violet-700 shadow-sm sm:h-20 sm:w-20">
+                          {(
+                            selected?.logo?.url ||
+                            selected?.logoUrl ||
+                            selected?.companyLogo
+                          ) ? (
+                            <img
+                              src={
+                                selected?.logo?.url ||
+                                selected?.logoUrl ||
+                                selected?.companyLogo
+                              }
+                              alt={`${getCompanyName(selected)} logo`}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <Building2 size={30} />
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <h3 className="break-words text-lg font-bold leading-tight text-slate-900 sm:text-xl">
+                            {getCompanyName(selected)}
+                          </h3>
+
+                          <p className="mt-2 text-sm text-slate-500">
+                            {selected?.industry ||
+                              selected?.category ||
+                              "Industry not specified"}
+                          </p>
+
+                          {selected?._id && (
+                            <p className="mt-2 break-all text-xs text-slate-400">
+                              ID: {selected._id}
+                            </p>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="min-w-0 flex-1">
-                        <h3 className="break-words text-lg font-bold text-slate-900">
-                          {getCompanyName(selected)}
-                        </h3>
-                        <p className="mt-1 text-sm text-slate-500">
-                          {selected?.industry ||
-                            selected?.category ||
-                            "Industry not specified"}
+                      <div className="relative mt-5 flex flex-wrap gap-2">
+                        <StatusBadge
+                          status={getVerificationStatus(selected)}
+                        />
+                        <StatusBadge
+                          status={getCompanyStatus(selected)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Contact information */}
+                    <section>
+                      <div className="mb-3 flex items-center gap-2">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-700">
+                          <Mail size={16} />
+                        </span>
+
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-900">
+                            Contact information
+                          </h3>
+                          <p className="text-xs text-slate-500">
+                            Company contact details
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 px-4">
+                        <DetailRow
+                          icon={Mail}
+                          label="Company email"
+                          value={
+                            selected?.companyEmail ||
+                            selected?.email ||
+                            selected?.recruiter?.email
+                          }
+                        />
+
+                        <DetailRow
+                          icon={Phone}
+                          label="Phone number"
+                          value={
+                            selected?.companyPhone ||
+                            selected?.contactNumber ||
+                            selected?.phone
+                          }
+                        />
+
+                        <DetailRow
+                          icon={Globe}
+                          label="Website"
+                          value={
+                            selected?.socialLinks?.website ||
+                            selected?.website ||
+                            selected?.websiteUrl
+                          }
+                          href={
+                            selected?.socialLinks?.website ||
+                            selected?.website ||
+                            selected?.websiteUrl
+                              ? /^https?:\/\//i.test(
+                                  selected?.socialLinks?.website ||
+                                    selected?.website ||
+                                    selected?.websiteUrl
+                                )
+                                ? selected?.socialLinks?.website ||
+                                  selected?.website ||
+                                  selected?.websiteUrl
+                                : `https://${
+                                    selected?.socialLinks?.website ||
+                                    selected?.website ||
+                                    selected?.websiteUrl
+                                  }`
+                              : undefined
+                          }
+                        />
+
+                        <DetailRow
+                          icon={MapPin}
+                          label="Headquarters"
+                          value={[
+                            selected?.headquarters?.address,
+                            selected?.headquarters?.city,
+                            selected?.headquarters?.state,
+                            selected?.headquarters?.country,
+                          ]
+                            .filter(Boolean)
+                            .join(", ") ||
+                            selected?.location ||
+                            selected?.address}
+                        />
+                      </div>
+                    </section>
+
+                    {/* Company information */}
+                    <section>
+                      <div className="mb-3 flex items-center gap-2">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
+                          <BriefcaseBusiness size={16} />
+                        </span>
+
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-900">
+                            Company information
+                          </h3>
+                          <p className="text-xs text-slate-500">
+                            Business and registration details
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 px-4">
+                        <DetailRow
+                          icon={BriefcaseBusiness}
+                          label="Industry"
+                          value={
+                            selected?.industry ||
+                            selected?.category
+                          }
+                        />
+
+                        <DetailRow
+                          icon={Users}
+                          label="Company size"
+                          value={formatCompanySize(
+                            selected?.companySize ||
+                              selected?.size
+                          )}
+                        />
+
+                        <DetailRow
+                          icon={CalendarDays}
+                          label="Founded year"
+                          value={selected?.foundedYear}
+                        />
+
+                        <DetailRow
+                          icon={CalendarDays}
+                          label="Registration date"
+                          value={formatDate(
+                            selected?.createdAt ||
+                              selected?.registeredAt
+                          )}
+                        />
+
+                        <DetailRow
+                          icon={ShieldCheck}
+                          label="Verification status"
+                          value={
+                            selected?.verificationStatus ||
+                            getVerificationStatus(selected)
+                          }
+                        />
+                      </div>
+                    </section>
+
+                    {/* Description */}
+                    {(selected?.description || selected?.about) && (
+                      <section>
+                        <div className="mb-3 flex items-center gap-2">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                            <Building2 size={16} />
+                          </span>
+
+                          <h3 className="text-sm font-bold text-slate-900">
+                            About the company
+                          </h3>
+                        </div>
+
+                        <p className="whitespace-pre-wrap break-words rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+                          {selected.description || selected.about}
                         </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <StatusBadge
-                        status={getVerificationStatus(selected)}
-                      />
-                      <StatusBadge status={getCompanyStatus(selected)} />
-                    </div>
+                      </section>
+                    )}
                   </div>
-
-                  <div>
-                    <h3 className="mb-2 text-sm font-bold text-slate-900">
-                      Contact information
-                    </h3>
-                    <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 px-4">
-                      <DetailRow
-  icon={Mail}
-  label="Email"
-  value={selected?.companyEmail}
-/>
-
-<DetailRow
-  icon={Phone}
-  label="Phone"
-  value={selected?.companyPhone}
-/>
-
-<DetailRow
-  icon={Globe}
-  label="Website"
-  value={selected?.socialLinks?.website}
-  href={
-    selected?.socialLinks?.website
-      ? /^https?:\/\//i.test(selected.socialLinks.website)
-        ? selected.socialLinks.website
-        : `https://${selected.socialLinks.website}`
-      : undefined
-  }
-/>
-
-<DetailRow
-  icon={MapPin}
-  label="Location"
-  value={[
-    selected?.headquarters?.city,
-    selected?.headquarters?.state,
-    selected?.headquarters?.country,
-  ]
-    .filter(Boolean)
-    .join(", ")}
-/>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="mb-2 text-sm font-bold text-slate-900">
-                      Company information
-                    </h3>
-                    <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 px-4">
-                      <DetailRow
-                        icon={BriefcaseBusiness}
-                        label="Industry"
-                        value={selected?.industry || selected?.category}
-                      />
-                      <DetailRow
-                        icon={Users}
-                        label="Company size"
-                        value={formatCompanySize(
-                          selected?.companySize || selected?.size
-                        )}
-                      />
-                      <DetailRow
-  icon={CalendarDays}
-  label="Founded year"
-  value={selected?.foundedYear}
-/>
-                      <DetailRow
-                        icon={CalendarDays}
-                        label="Registration date"
-                        value={formatDate(
-                          selected?.createdAt || selected?.registeredAt
-                        )}
-                      />
-
-<DetailRow
-  icon={ShieldCheck}
-  label="Verification status"
-  value={selected?.verificationStatus}
-/>
-                    </div>
-                  </div>
-
-                  {(selected?.description || selected?.about) && (
-                    <div>
-                      <h3 className="mb-2 text-sm font-bold text-slate-900">
-                        About the company
-                      </h3>
-                      <p className="whitespace-pre-wrap rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-                        {selected.description || selected.about}
-                      </p>
-                    </div>
-                  )}
                 </div>
 
-                <div className="border-t border-slate-100 bg-white p-4 sm:px-6">
-                  <div className="flex flex-wrap gap-2">
-                    {getVerificationStatus(selected) !== "verified" &&
-                      getCompanyStatus(selected) !== "deleted" && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            runConfirmedAction("verify", selected)
-                          }
-                          disabled={Boolean(actionLoading)}
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
-                        >
-                          <CheckCircle2 size={16} />
-                          Verify company
-                        </button>
-                      )}
+                {/* Sticky footer actions */}
+                <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-4 shadow-[0_-8px_20px_rgba(15,23,42,0.04)] sm:px-6">
+                  <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
 
-                    {getCompanyStatus(selected) === "blocked" ? (
+                    {getCompanyStatus(selected) === "deleted" ? (
                       <button
                         type="button"
                         onClick={() =>
-                          runConfirmedAction("unblock", selected)
+                          runConfirmedAction("restore", selected)
                         }
                         disabled={Boolean(actionLoading)}
-                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:opacity-50"
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <ShieldCheck size={16} />
-                        Unblock
+                        {isActionBusy("restore", selected) ? (
+                          <LoaderCircle size={16} className="animate-spin" />
+                        ) : (
+                          <RotateCcw size={16} />
+                        )}
+                        Restore
                       </button>
                     ) : (
-                      getCompanyStatus(selected) === "active" && (
+                      <>
+                        {getVerificationStatus(selected) !== "verified" && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              runConfirmedAction("verify", selected)
+                            }
+                            disabled={Boolean(actionLoading)}
+                            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {isActionBusy("verify", selected) ? (
+                              <LoaderCircle size={16} className="animate-spin" />
+                            ) : (
+                              <CheckCircle2 size={16} />
+                            )}
+                            Verify
+                          </button>
+                        )}
+
+                        {getCompanyStatus(selected) === "blocked" ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              runConfirmedAction("unblock", selected)
+                            }
+                            disabled={Boolean(actionLoading)}
+                            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {isActionBusy("unblock", selected) ? (
+                              <LoaderCircle size={16} className="animate-spin" />
+                            ) : (
+                              <ShieldCheck size={16} />
+                            )}
+                            Unblock
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              runConfirmedAction("block", selected)
+                            }
+                            disabled={Boolean(actionLoading)}
+                            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm font-semibold text-orange-700 transition hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {isActionBusy("block", selected) ? (
+                              <LoaderCircle size={16} className="animate-spin" />
+                            ) : (
+                              <Ban size={16} />
+                            )}
+                            Block
+                          </button>
+                        )}
+
                         <button
                           type="button"
                           onClick={() =>
-                            runConfirmedAction("block", selected)
+                            runConfirmedAction("delete", selected)
                           }
                           disabled={Boolean(actionLoading)}
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm font-semibold text-orange-700 transition hover:bg-orange-100 disabled:opacity-50"
+                          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          <Ban size={16} />
-                          Block
+                          {isActionBusy("delete", selected) ? (
+                            <LoaderCircle size={16} className="animate-spin" />
+                          ) : (
+                            <Trash2 size={16} />
+                          )}
+                          Delete
                         </button>
-                      )
+                      </>
                     )}
 
-                    {getCompanyStatus(selected) !== "deleted" && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          runConfirmedAction("delete", selected)
-                        }
-                        disabled={Boolean(actionLoading)}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"
-                      >
-                        <Trash2 size={16} />
-                        Delete
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setSelected(null)}
+                      disabled={Boolean(actionLoading)}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Close
+                    </button>
                   </div>
                 </div>
               </>

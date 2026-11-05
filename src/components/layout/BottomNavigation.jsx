@@ -1,4 +1,4 @@
-import { useHome, useAuth, useTitle } from "../../hooks/Hook";
+import { useHome, useAuth, useTitle, useAdmin } from "../../hooks/Hook";
 
 import {
   LayoutDashboard,
@@ -22,7 +22,8 @@ function BottomNavigation() {
     setRecruiterActivePage,
   } = useHome();
 
-  const { admin, recruiter } = useAuth();
+  const { recruiter } = useAuth();
+  const {admin} = useAdmin();
   const {setTitle} = useTitle(); 
 
   const isAdmin = Boolean(admin);

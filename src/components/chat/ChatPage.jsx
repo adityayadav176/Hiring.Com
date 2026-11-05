@@ -1766,110 +1766,121 @@ const formatLastSeen = (date) => {
         {activeChat ? (
           <>
             {/* Chat header */}
-            <header className="flex min-h-[64px] shrink-0 items-center justify-between gap-3 border-b border-[#252536] bg-[#11121F] px-3 sm:px-5">
-              <div className="flex min-w-0 items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    stopTyping?.();
-                    setMobileChatOpen(false);
-                  }}
-                  aria-label="Back to conversations"
-                  className="rounded-xl p-1.5 text-[#7C819D] hover:bg-[#171626] md:hidden"
-                >
-                  <ArrowLeft size={19} />
-                </button>
+            {/* Chat header */}
+<header className="flex min-h-[72px] shrink-0 items-center justify-between gap-3 border-b border-[#252536] bg-[#11121F] px-3 sm:px-5">
 
-                <Avatar
-                  name={activeName}
-                  image={activeImage}
-                  online={
-                    activeChat.conversationType !== "group" &&
-                    otherParticipantOnline
-                  }
-                />
+  {/* Avatar and user information */}
+  <div className="flex min-w-0 flex-1 items-center gap-3">
 
-                <div className="min-w-0">
-                  <h2 className="truncate text-[15px] font-bold text-[#F1F0FA]">
-                    {activeName}
-                  </h2>
+    <Avatar
+      name={activeName}
+      image={activeImage}
+      online={
+        activeChat.conversationType !== "group" &&
+        otherParticipantOnline
+      }
+      size="lg"
+    />
 
-                  <p className="mt-1 flex items-center gap-1.5 truncate text-[11px] text-[#777D99]">
-                    {typingNames.length ? (
-                      <span className="font-medium text-[#7657F6]">
-                        typing...
-                      </span>
-                    ) : activeChat.conversationType === "group" ? (
-                      `${participants.length} participants`
-                    ) : (
-                      <>
-                        <span
-                          className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                            otherParticipantOnline
-                              ? "bg-[#00D6A0] shadow-[0_0_8px_rgba(0,214,160,0.45)]"
-                              : "bg-[#777D99]"
-                          }`}
-                        />
+    <div className="min-w-0 flex-1">
+      <h2 className="truncate text-[15px] font-bold text-[#F1F0FA] sm:text-base">
+        {activeName}
+      </h2>
 
-                        <span>
-                          {otherParticipantOnline
-                            ? "Online"
-                            : formatLastSeen(otherParticipantLastSeen)}
-                        </span>
-                      </>
-                    )}
-                  </p>
-                </div>
-              </div>
+      <p className="mt-1 flex items-center gap-1.5 text-[11px] text-[#777D99] sm:text-xs">
 
-              <div className="flex shrink-0 items-center gap-1">
-                <button
-  type="button"
-  onClick={onBackToDashboard}
-  title="Back to Dashboard"
-  className="
-    flex h-8 w-8 items-center justify-center
-    rounded-xl
-    border border-[#252536]
-    bg-[#171725]
-    text-[#A78BFA]
-    transition-all duration-200
-    hover:border-[#7657F6]
-    hover:bg-[#7657F6]
-    hover:text-white
-  "
->
-  <ArrowLeft size={21} />
-</button>
-                <button
-                  type="button"
-                  title={favourites.includes(activeId) ? "Remove from favourites" : "Add to favourites"}
-                  aria-label={favourites.includes(activeId) ? "Remove from favourites" : "Add to favourites"}
-                  onClick={() => toggleFavourite(activeId)}
-                  className={`flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-[#19172B] ${
-                    favourites.includes(activeId) ? "text-[#F5C451]" : "text-[#777D99] hover:text-[#F5C451]"
-                  }`}
-                >
-                  <Star size={17} className={favourites.includes(activeId) ? "fill-current" : ""} />
-                </button>
-                <button
-                  type="button"
-                  title="Call (coming soon)"
-                  aria-label="Call"
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-[#7C819D] transition hover:bg-[#19172B] hover:text-[#7657F6]"
-                >
-                  <Phone size={18} />
-                </button>
-                <button
-                  type="button"
-                  title="More options"
-                  aria-label="More conversation options"
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-[#7C819D] transition hover:bg-[#19172B] hover:text-[#7657F6]"
-                >
-                  <MoreVertical size={19} strokeWidth={1.8} />
-                </button>
-              </div>
-            </header>
+        {typingNames.length ? (
+          <span className="font-medium text-[#7657F6]">
+            typing...
+          </span>
+        ) : activeChat.conversationType === "group" ? (
+          `${participants.length} participants`
+        ) : (
+          <>
+            <span
+              className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                otherParticipantOnline
+                  ? "bg-[#00D6A0] shadow-[0_0_8px_rgba(0,214,160,0.45)]"
+                  : "bg-[#777D99]"
+              }`}
+            />
+
+            <span className="truncate">
+              {otherParticipantOnline
+                ? "Online"
+                : formatLastSeen(otherParticipantLastSeen)}
+            </span>
+          </>
+        )}
+      </p>
+    </div>
+  </div>
+
+  {/* Header actions */}
+  <div className="flex shrink-0 items-center gap-1">
+
+    {/* Single Dashboard Back Button */}
+    <button
+      type="button"
+      onClick={onBackToDashboard}
+      title="Back to Dashboard"
+      aria-label="Back to Dashboard"
+      className="flex h-9 items-center gap-2 rounded-xl border border-[#252536] bg-[#171725] px-3 text-xs font-semibold text-[#A78BFA] transition-all duration-200 hover:border-[#7657F6] hover:bg-[#7657F6] hover:text-white"
+    >
+      <ArrowLeft size={16} />
+      <span className="hidden sm:inline">
+        Dashboard
+      </span>
+    </button>
+
+    <button
+      type="button"
+      title={
+        favourites.includes(activeId)
+          ? "Remove from favourites"
+          : "Add to favourites"
+      }
+      aria-label={
+        favourites.includes(activeId)
+          ? "Remove from favourites"
+          : "Add to favourites"
+      }
+      onClick={() => toggleFavourite(activeId)}
+      className={`flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-[#19172B] ${
+        favourites.includes(activeId)
+          ? "text-[#F5C451]"
+          : "text-[#777D99] hover:text-[#7657F6]"
+      }`}
+    >
+      <Star
+        size={17}
+        className={
+          favourites.includes(activeId)
+            ? "fill-current"
+            : ""
+        }
+      />
+    </button>
+
+    <button
+      type="button"
+      title="Call (coming soon)"
+      aria-label="Call"
+      className="flex h-9 w-9 items-center justify-center rounded-xl text-[#7C819D] transition hover:bg-[#19172B] hover:text-[#7657F6]"
+    >
+      <Phone size={18} />
+    </button>
+
+    <button
+      type="button"
+      title="More options"
+      aria-label="More conversation options"
+      className="flex h-9 w-9 items-center justify-center rounded-xl text-[#7C819D] transition hover:bg-[#19172B] hover:text-[#7657F6]"
+    >
+      <MoreVertical size={19} strokeWidth={1.8} />
+    </button>
+  </div>
+</header>
 
             {/* Application information */}
             {linkedApplication && (

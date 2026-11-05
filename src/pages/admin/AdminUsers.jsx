@@ -378,8 +378,6 @@ const DetailItem = ({ icon: Icon, label, value }) => (
   </div>
 );
 
-/* ----------------------------- User details modal ----------------------------- */
-/* ----------------------------- Professional User Details Modal ----------------------------- */
 
 const UserDetailsModal = ({
   user,
@@ -394,36 +392,36 @@ const UserDetailsModal = ({
   const status = getUserStatus(user);
   const role = getUserRole(user);
   const avatar = getAvatar(user);
+  const userId = getUserId(user);
 
-  const InfoCard = ({ icon: Icon, label, value, iconColor = "text-slate-500" }) => (
-    <div className="group min-w-0 rounded-xl border border-slate-200/80 bg-white p-4 transition hover:border-violet-200 hover:shadow-sm">
+  const InfoCard = ({ icon: Icon, label, value, iconColor = "text-violet-600" }) => (
+    <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4">
       <div className="flex items-center gap-2">
-        <Icon size={16} className={iconColor} />
-        <p className="text-xs font-medium text-slate-500">{label}</p>
+        <Icon size={16} className={cn("shrink-0", iconColor)} />
+        <span className="text-xs font-medium text-slate-500">{label}</span>
       </div>
 
-      <p className="mt-2 break-words text-sm font-semibold leading-6 text-slate-800">
-        {value === null || value === undefined || value === ""
-          ? "Not specified"
-          : value}
+      <p className="mt-2 break-words text-sm font-semibold leading-5 text-slate-800">
+        {value || "Not specified"}
       </p>
     </div>
   );
 
   const SectionHeading = ({ title, description }) => (
-    <div className="mb-4">
+    <div className="mb-3 sm:mb-4">
       <h3 className="text-sm font-bold text-slate-900">{title}</h3>
       {description && (
-        <p className="mt-1 text-xs leading-5 text-slate-500">
-          {description}
-        </p>
+        <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
       )}
     </div>
   );
 
+  const isBlocked = status === "blocked";
+  const isDeleted = status === "deleted";
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-3 backdrop-blur-[3px] sm:p-6"
+      className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-sm"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !busy) onClose();
       }}
@@ -432,58 +430,27 @@ const UserDetailsModal = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="user-details-title"
-        className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+        className={cn(
+          "flex h-full w-full flex-col overflow-hidden bg-white",
+          "sm:mx-auto sm:my-6 sm:h-[calc(100%-3rem)] sm:max-h-[900px]",
+          "sm:max-w-4xl sm:rounded-2xl sm:border sm:border-slate-200 sm:shadow-2xl"
+        )}
       >
         {/* Header */}
-        <div className="border-b border-slate-200 bg-white px-5 py-5 sm:px-7">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex min-w-0 items-start gap-4">
-              {avatar ? (
-                <img
-                  src={avatar}
-                  alt={getUserName(user)}
-                  className="h-16 w-16 shrink-0 rounded-2xl border border-slate-200 object-cover"
-                />
-              ) : (
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-violet-100 bg-violet-50 text-lg font-bold text-violet-700">
-                  {getInitials(getUserName(user))}
-                </div>
-              )}
+        <header className="shrink-0 border-b border-slate-200 bg-white">
+          <div className="flex items-center justify-between gap-3 px-4 py-3.5 sm:px-6 sm:py-5">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                <UserRound size={19} />
+              </div>
 
-              <div className="min-w-0 pt-0.5">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600">
-                    <UserRound size={13} />
-                    User account
-                  </span>
-                  <StatusBadge status={status} />
-                </div>
-
-                <h2
-                  id="user-details-title"
-                  className="break-words text-xl font-bold tracking-tight text-slate-950 sm:text-2xl"
-                >
-                  {getUserName(user)}
-                </h2>
-
-                <p className="mt-1 break-all text-sm text-slate-500">
-                  {getEmail(user)}
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-violet-700">
+                  User profile
                 </p>
-
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <RoleBadge role={role} />
-
-                  <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
-                    {isEmailVerified(user) ? (
-                      <CheckCircle size={14} className="text-emerald-600" />
-                    ) : (
-                      <Clock size={14} className="text-amber-600" />
-                    )}
-                    {isEmailVerified(user)
-                      ? "Verified email"
-                      : "Email not verified"}
-                  </span>
-                </div>
+                <p className="text-sm font-bold text-slate-900 sm:text-base">
+                  Account details
+                </p>
               </div>
             </div>
 
@@ -492,131 +459,190 @@ const UserDetailsModal = ({
               onClick={onClose}
               disabled={busy}
               aria-label="Close user details"
-              className="shrink-0 rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
             >
               <X size={19} />
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Scrollable content */}
-        <div className="flex-1 space-y-7 overflow-y-auto bg-[#F8F9FC] p-5 sm:p-7">
-          {/* Account overview */}
-          <section>
-            <SectionHeading
-              title="Account overview"
-              description="A summary of the user's current account information."
-            />
+        {/* Scrollable body */}
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#F7F8FC]">
+          {/* Profile hero */}
+          <section className="border-b border-slate-200 bg-white px-4 py-5 sm:px-6 sm:py-6">
+            <div className="flex items-start gap-3.5 sm:gap-5">
+              {avatar ? (
+                <img
+                  src={avatar}
+                  alt={getUserName(user)}
+                  className="h-16 w-16 shrink-0 rounded-2xl border border-slate-200 object-cover sm:h-20 sm:w-20"
+                />
+              ) : (
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-lg font-bold text-violet-700 sm:h-20 sm:w-20 sm:text-xl">
+                  {getInitials(getUserName(user))}
+                </div>
+              )}
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <InfoCard
-                icon={Mail}
-                label="Email address"
-                value={getEmail(user)}
-                iconColor="text-violet-600"
-              />
-              <InfoCard
-                icon={Phone}
-                label="Phone number"
-                value={getPhone(user)}
-              />
-              <InfoCard
-                icon={ShieldCheck}
-                label="Account role"
-                value={formatLabel(role)}
-                iconColor="text-violet-600"
-              />
-              <InfoCard
-                icon={CheckCircle}
-                label="Email verification"
-                value={isEmailVerified(user) ? "Verified" : "Not verified"}
-                iconColor={
-                  isEmailVerified(user)
-                    ? "text-emerald-600"
-                    : "text-amber-600"
-                }
-              />
-              <InfoCard
-                icon={Hash}
-                label="User ID"
-                value={getUserId(user)}
-                iconColor="text-violet-600"
-              />
+              <div className="min-w-0 flex-1">
+                <h2
+                  id="user-details-title"
+                  className="break-words text-lg font-bold leading-6 tracking-tight text-slate-950 sm:text-2xl"
+                >
+                  {getUserName(user)}
+                </h2>
+
+                <p className="mt-1 break-all text-xs leading-5 text-slate-500 sm:text-sm">
+                  {getEmail(user)}
+                </p>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <StatusBadge status={status} />
+                  <RoleBadge role={role} />
+                </div>
+
+                <div className="mt-2 flex items-center gap-1.5 text-xs">
+                  {isEmailVerified(user) ? (
+                    <CheckCircle size={14} className="text-emerald-600" />
+                  ) : (
+                    <Clock size={14} className="text-amber-600" />
+                  )}
+
+                  <span
+                    className={
+                      isEmailVerified(user)
+                        ? "font-medium text-emerald-700"
+                        : "font-medium text-amber-700"
+                    }
+                  >
+                    {isEmailVerified(user)
+                      ? "Email verified"
+                      : "Email not verified"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* User ID */}
+            <div className="mt-4 flex min-w-0 items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5">
+              <Hash size={15} className="shrink-0 text-slate-400" />
+              <span className="shrink-0 text-xs font-medium text-slate-500">
+                User ID
+              </span>
+              <span className="min-w-0 flex-1 truncate font-mono text-xs text-slate-700">
+                {userId || "Not available"}
+              </span>
+              {userId && (
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard?.writeText(userId)}
+                  className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-100"
+                >
+                  Copy
+                </button>
+              )}
             </div>
           </section>
 
-          {/* Account activity */}
-          <section>
-            <SectionHeading
-              title="Account activity"
-              description="Creation, update, and account restriction details."
-            />
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <InfoCard
-                icon={CalendarDays}
-                label="Account created"
-                value={formatDateTime(user.createdAt || user.joinedAt)}
+          <div className="space-y-5 p-4 sm:space-y-6 sm:p-6">
+            {/* Account information */}
+            <section>
+              <SectionHeading
+                title="Account information"
+                description="Contact information and account settings."
               />
-              <InfoCard
-                icon={Clock}
-                label="Last updated"
-                value={formatDateTime(user.updatedAt)}
-              />
-              <InfoCard
-                icon={ShieldAlert}
-                label="Blocked until"
-                value={
-                  status === "blocked"
-                    ? formatDateTime(user.lockUntil)
-                    : "Not blocked"
-                }
-                iconColor={
-                  status === "blocked"
-                    ? "text-red-600"
-                    : "text-slate-500"
-                }
-              />
-            </div>
-          </section>
 
-          {/* Block reason */}
-          {user.blockReason && (
-            <section className="rounded-xl border border-amber-200/80 bg-amber-50/70 p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
-                  <AlertCircle size={18} />
-                </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <InfoCard
+                  icon={Mail}
+                  label="Email address"
+                  value={getEmail(user)}
+                />
 
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-bold text-amber-950">
-                    Block reason
-                  </h3>
-                  <p className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-6 text-amber-900">
-                    {user.blockReason}
-                  </p>
-                </div>
+                <InfoCard
+                  icon={Phone}
+                  label="Phone number"
+                  value={getPhone(user)}
+                  iconColor="text-slate-500"
+                />
+
+                <InfoCard
+                  icon={ShieldCheck}
+                  label="Account role"
+                  value={formatLabel(role)}
+                />
+
+                <InfoCard
+                  icon={CheckCircle}
+                  label="Email verification"
+                  value={isEmailVerified(user) ? "Verified" : "Not verified"}
+                  iconColor={
+                    isEmailVerified(user)
+                      ? "text-emerald-600"
+                      : "text-amber-600"
+                  }
+                />
               </div>
             </section>
-          )}
 
-          {/* Account status */}
-          <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-            <SectionHeading
-              title="Account status"
-              description="Current access state for this platform account."
-            />
+            {/* Account activity */}
+            <section>
+              <SectionHeading
+                title="Account activity"
+                description="Account creation and recent updates."
+              />
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={status} />
-                <RoleBadge role={role} />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <InfoCard
+                  icon={CalendarDays}
+                  label="Account created"
+                  value={formatDateTime(user.createdAt || user.joinedAt)}
+                  iconColor="text-slate-500"
+                />
+
+                <InfoCard
+                  icon={Clock}
+                  label="Last updated"
+                  value={formatDateTime(user.updatedAt)}
+                  iconColor="text-slate-500"
+                />
+
+                <InfoCard
+                  icon={ShieldAlert}
+                  label="Blocked until"
+                  value={isBlocked ? formatDateTime(user.lockUntil) : "Not blocked"}
+                  iconColor={isBlocked ? "text-red-600" : "text-slate-500"}
+                />
               </div>
+            </section>
 
-              <div className="flex items-start gap-2.5 sm:max-w-sm">
+            {/* Block reason */}
+            {user.blockReason && (
+              <section className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+                    <AlertCircle size={18} />
+                  </div>
+
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-amber-950">
+                      Block reason
+                    </h3>
+                    <p className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-6 text-amber-900">
+                      {user.blockReason}
+                    </p>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* Status summary */}
+            <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+              <SectionHeading title="Account status" />
+
+              <div className="flex items-start gap-3">
                 <div
                   className={cn(
-                    "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
                     status === "active"
                       ? "bg-emerald-50 text-emerald-600"
                       : status === "blocked"
@@ -627,18 +653,18 @@ const UserDetailsModal = ({
                   )}
                 >
                   {status === "active" ? (
-                    <CheckCircle size={17} />
+                    <CheckCircle size={19} />
                   ) : status === "blocked" ? (
-                    <Ban size={17} />
+                    <Ban size={19} />
                   ) : status === "deleted" ? (
-                    <Trash2 size={17} />
+                    <Trash2 size={19} />
                   ) : (
-                    <AlertCircle size={17} />
+                    <AlertCircle size={19} />
                   )}
                 </div>
 
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate-800">
                     {status === "active"
                       ? "Account is active"
                       : status === "blocked"
@@ -650,69 +676,64 @@ const UserDetailsModal = ({
 
                   <p className="mt-1 text-xs leading-5 text-slate-500">
                     {status === "active"
-                      ? "This account is currently marked as active."
+                      ? "This user currently has an active account."
                       : status === "blocked"
-                        ? "You can unblock this account using the action below."
+                        ? "This user is currently restricted from accessing the platform."
                         : status === "deleted"
-                          ? "This account is marked as deleted. Review your backend deletion policy before taking further action."
-                          : "The current account status could not be determined from the returned user data."}
+                          ? "This account is marked as deleted."
+                          : "The current account status could not be determined."}
                   </p>
                 </div>
               </div>
-            </div>
-          </section>
-        </div>
+            </section>
+          </div>
+        </main>
 
-        {/* Footer actions */}
-        <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
-          <button
-            type="button"
-            onClick={() => onDelete(user)}
-            disabled={busy}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Trash2 size={16} />
-            Delete user
-          </button>
+        {/* Sticky action footer */}
+        <footer className="z-10 shrink-0 border-t border-slate-200 bg-white px-3 py-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
+          <div className="flex gap-2 sm:justify-between">
+            <button
+              type="button"
+              onClick={() => onDelete(user)}
+              disabled={busy}
+              className="inline-flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 px-3 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50 sm:flex-none sm:px-4"
+            >
+              <Trash2 size={16} />
+              <span>Delete</span>
+            </button>
 
-          <div className="flex flex-col gap-2 sm:flex-row">
-            {status !== "deleted" &&
-              (status === "blocked" ? (
-                <button
-                  type="button"
-                  onClick={() => onUnblock(user)}
-                  disabled={busy}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <CheckCircle size={16} />
-                  Unblock user
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => onBlock(user)}
-                  disabled={busy}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Ban size={16} />
-                  Block user
-                </button>
-              ))}
+            {!isDeleted && (
+              <button
+                type="button"
+                onClick={() => (isBlocked ? onUnblock(user) : onBlock(user))}
+                disabled={busy}
+                className={cn(
+                  "inline-flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold transition disabled:opacity-50 sm:flex-none sm:px-4",
+                  isBlocked
+                    ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                    : "border-red-200 text-red-600 hover:bg-red-50"
+                )}
+              >
+                {isBlocked ? <CheckCircle size={16} /> : <Ban size={16} />}
+                <span>{isBlocked ? "Unblock" : "Block"}</span>
+              </button>
+            )}
 
             <button
               type="button"
               onClick={onClose}
               disabled={busy}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 focus:outline-none focus:ring-4 focus:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-w-0 flex-1 items-center justify-center rounded-xl bg-violet-600 px-3 py-3 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50 sm:flex-none sm:px-6"
             >
-              Close details
+              Done
             </button>
           </div>
-        </div>
+        </footer>
       </div>
     </div>
   );
 };
+
 
 /* ----------------------------- Confirmation modal ----------------------------- */
 
