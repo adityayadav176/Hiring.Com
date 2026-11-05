@@ -1180,9 +1180,9 @@ export default function RecruiterProfile() {
 
               {professionalLinks.length ? (
                 <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {professionalLinks.map((link) => (
-                    <SocialLink key={link.key} {...link} />
-                  ))}
+   {companyLinks.map(({ key, ...linkProps }) => (
+  <SocialLink key={key} {...linkProps} />
+))}
                 </div>
               ) : (
                 <div className="mt-5">
@@ -1300,9 +1300,9 @@ export default function RecruiterProfile() {
                           Company links
                         </h3>
 
-                        {companyLinks.map((link) => (
-                          <SocialLink key={link.key} {...link} />
-                        ))}
+                        {companyLinks.map(({ key, ...linkProps }) => (
+  <SocialLink key={key} {...linkProps} />
+))}
                       </div>
                     )}
 
@@ -1383,20 +1383,32 @@ export default function RecruiterProfile() {
       </div>
 
       {/* Edit profile modal */}
-      {editing && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-[3px] sm:p-6"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeEditing();
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="edit-recruiter-title"
-            className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/60 bg-white shadow-2xl sm:rounded-3xl"
-          >
-            <div className="relative overflow-hidden bg-[#28104F] px-5 py-5 text-white sm:px-7 sm:py-6">
+      {/* Edit profile modal */}
+{editing && (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-0 backdrop-blur-[3px] sm:p-6"
+    onMouseDown={(event) => {
+      if (event.target === event.currentTarget) closeEditing();
+    }}
+  >
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-recruiter-title"
+      className="
+        flex h-dvh max-h-dvh w-full flex-col overflow-hidden
+        rounded-none border-0 bg-white shadow-2xl
+        sm:h-auto sm:max-h-[92vh] sm:max-w-3xl
+        sm:rounded-3xl sm:border sm:border-white/60
+      "
+    >
+            <div
+  className="
+    relative shrink-0 overflow-hidden bg-[#28104F]
+    px-4 py-4 pt-[calc(env(safe-area-inset-top)+1rem)]
+    text-white sm:px-7 sm:py-6 sm:pt-6
+  "
+>
               <div className="absolute -right-8 -top-20 h-44 w-44 rounded-full border border-white/10" />
 
               <div className="relative flex items-start justify-between gap-4">
@@ -1430,8 +1442,8 @@ export default function RecruiterProfile() {
               </div>
             </div>
 
-            <div className="border-b border-slate-200 px-4 pt-3 sm:px-7">
-              <div className="flex gap-5">
+            <div className="shrink-0 overflow-x-auto border-b border-slate-200 px-4 pt-3 sm:px-7">
+  <div className="flex min-w-max gap-5">
                 {[
                   {
                     id: "recruiter",
@@ -1467,10 +1479,10 @@ export default function RecruiterProfile() {
             </div>
 
             <form
-              id="edit-recruiter-form"
-              onSubmit={saveProfile}
-              className="min-h-0 flex-1 overflow-y-auto"
-            >
+  id="edit-recruiter-form"
+  onSubmit={saveProfile}
+  className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+>
               <div className="space-y-5 px-4 py-5 sm:px-7 sm:py-6">
                 {activeTab === "recruiter" ? (
                   <>
@@ -1742,19 +1754,27 @@ export default function RecruiterProfile() {
               </div>
             </form>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50/80 px-4 py-4 sm:px-7">
+            <div
+  className="
+    flex shrink-0 flex-col gap-3 border-t border-slate-200
+    bg-slate-50/95 px-4 py-3
+    pb-[calc(env(safe-area-inset-bottom)+0.75rem)]
+    sm:flex-row sm:items-center sm:justify-between
+    sm:px-7 sm:py-4 sm:pb-4
+  "
+>
               <p className="hidden text-xs text-slate-400 sm:block">
                 {activeTab === "recruiter"
                   ? "Recruiter profile details"
                   : "Organization details"}
               </p>
 
-              <div className="ml-auto flex items-center gap-2">
+              <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
                 <button
                   type="button"
                   onClick={closeEditing}
                   disabled={saving}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
+                  className="flex-1 justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50 sm:flex-none sm:py-2.5"
                 >
                   Cancel
                 </button>
@@ -1774,7 +1794,7 @@ export default function RecruiterProfile() {
                     type="submit"
                     form="edit-recruiter-form"
                     disabled={saving}
-                    className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-3 text-xs font-bold text-white transition hover:bg-violet-800 disabled:opacity-50 sm:flex-none sm:py-2.5"
                   >
                     {saving ? (
                       <LoaderCircle

@@ -439,6 +439,7 @@ function TextArea({ className = "", ...props }) {
   );
 }
 
+
 function JobFormModal({
   open,
   mode,
@@ -449,6 +450,13 @@ function JobFormModal({
 }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
+  const [activeSection, setActiveSection] = useState(0);
+
+  const sections = [
+    { title: "Basics", subtitle: "Role and hiring details" },
+    { title: "Description", subtitle: "Responsibilities and skills" },
+    { title: "Location", subtitle: "Workplace and compensation" },
+  ];
 
   useEffect(() => {
     if (!open) return;
@@ -458,12 +466,21 @@ function JobFormModal({
         ? createFormFromJob(initialJob)
         : { ...EMPTY_FORM }
     );
+
     setErrors({});
+    setActiveSection(0);
   }, [open, mode, initialJob]);
 
   const update = useCallback((name, value) => {
-    setForm((current) => ({ ...current, [name]: value }));
-    setErrors((current) => ({ ...current, [name]: "" }));
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
+
+    setErrors((current) => ({
+      ...current,
+      [name]: "",
+    }));
   }, []);
 
   if (!open) return null;
@@ -471,385 +488,643 @@ function JobFormModal({
   const validate = () => {
     const next = {};
 
-    if (!form.title.trim()) next.title = "Job title is required.";
-    if (!form.description.trim()) {
+    if (!form.title?.trim()) {
+      next.title = "Job title is required.";
+    }
+
+    if (!form.description?.trim()) {
       next.description = "Job description is required.";
     }
+
     if (!form.employmentType) {
       next.employmentType = "Select an employment type.";
     }
+
     if (!form.experienceLevel) {
       next.experienceLevel = "Select an experience level.";
     }
 
-    const min = form.salaryMin === "" ? 0 : Number(form.salaryMin);
-    const max = form.salaryMax === "" ? 0 : Number(form.salaryMax);
+    const min =
+      form.salaryMin === "" ? 0 : Number(form.salaryMin);
+
+    const max =
+      form.salaryMax === "" ? 0 : Number(form.salaryMax);
+
     const openings = Number(form.openings);
 
     if (!Number.isFinite(min) || min < 0) {
-      next.salaryMin = "Enter a valid non-negative salary.";
+      next.salaryMin = "Enter a valid minimum salary.";
     }
 
     if (!Number.isFinite(max) || max < 0) {
-      next.salaryMax = "Enter a valid non-negative salary.";
+      next.salaryMax = "Enter a valid maximum salary.";
     }
 
     if (max > 0 && min > max) {
-      next.salaryMax = "Maximum salary must be greater than minimum salary.";
+      next.salaryMax =
+        "Maximum salary must be greater than minimum salary.";
     }
 
     if (!Number.isInteger(openings) || openings < 1) {
       next.openings = "Enter at least one opening.";
     }
 
-    if (
-      form.applicationDeadline &&
-      Number.isNaN(new Date(`${form.applicationDeadline}T00:00:00`).getTime())
-    ) {
-      next.applicationDeadline = "Enter a valid deadline.";
-    }
+    if (form.applicationDeadline) {
+      const deadline = new Date(
+        `${form.applicationDeadline}T00:00:00`
+      );
 
-    if (
-      form.applicationDeadline &&
-      form.applicationDeadline < getDateInputValue(new Date())
-    ) {
-      next.applicationDeadline = "Deadline cannot be in the past.";
+      if (Number.isNaN(deadline.getTime())) {
+        next.applicationDeadline = "Enter a valid deadline.";
+      } else if (
+        form.applicationDeadline < getDateInputValue(new Date())
+      ) {
+        next.applicationDeadline =
+          "Deadline cannot be in the past.";
+      }
     }
 
     setErrors(next);
-    return Object.keys(next).length === 0;
+
+    if (Object.keys(next).length > 0) {
+      if (
+        next.title ||
+        next.employmentType ||
+        next.experienceLevel ||
+        next.openings
+      ) {
+        setActiveSection(0);
+      } else if (next.description) {
+        setActiveSection(1);
+      } else {
+        setActiveSection(2);
+      }
+
+      return false;
+    }
+
+    return true;
   };
 
   const submit = async (event) => {
     event.preventDefault();
+
+    if (saving) return;
+
     if (!validate()) return;
+
     await onSubmit(buildJobPayload(form));
   };
 
-  const sections = [
-    "Job information",
-    "Description & qualifications",
-    "Location & compensation",
-  ];
+  const sectionProgress =
+    ((activeSection + 1) / sections.length) * 100;
+
+  const sectionButtonClass = (index) =>
+    `flex min-w-0 items-center gap-2.5 rounded-xl px-2 py-3 text-left transition sm:px-3 ${
+      activeSection === index
+        ? "bg-violet-700 text-white shadow-md shadow-violet-200"
+        : "bg-slate-100 text-slate-600 hover:bg-violet-50"
+    }`;
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/50 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !saving) onClose();
+        if (
+          event.target === event.currentTarget &&
+          !saving
+        ) {
+          onClose();
+        }
       }}
     >
-      <section className="flex max-h-[95vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
-        <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-7">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">
-              Peer.Hiring · Recruiter workspace
-            </p>
-            <h2 className="mt-1 text-xl font-bold text-slate-950">
-              {mode === "edit" ? "Edit job listing" : "Create a job listing"}
-            </h2>
-            <p className="mt-1 text-xs text-slate-500">
-              Keep your role information clear and accurate.
-            </p>
-          </div>
+      <section className="flex h-[100dvh] w-full flex-col overflow-hidden bg-white sm:h-auto sm:max-h-[92vh] sm:max-w-4xl sm:rounded-3xl sm:shadow-2xl">
 
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            aria-label="Close job form"
-            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"
-          >
-            <X size={20} />
-          </button>
-        </header>
-
-        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className="overflow-y-auto px-5 py-5 sm:px-7">
-            <div className="grid gap-2 sm:grid-cols-3">
-              {sections.map((section, index) => (
-                <div
-                  key={section}
-                  className="rounded-xl bg-violet-50 px-3 py-2.5 text-xs font-semibold text-violet-800"
-                >
-                  <span className="mr-2 text-violet-400">
-                    0{index + 1}
-                  </span>
-                  {section}
-                </div>
-              ))}
-            </div>
-
-            <div className="mb-4 mt-6 flex items-center gap-2 text-sm font-bold text-slate-900">
-              <BriefcaseBusiness size={18} className="text-violet-700" />
-              Basic job information
-            </div>
-
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field
-                label="Job title"
-                required
-                error={errors.title}
-                className="sm:col-span-2"
-              >
-                <TextInput
-                  value={form.title}
-                  onChange={(e) => update("title", e.target.value)}
-                  placeholder="e.g. Full Stack Developer"
-                  maxLength={150}
-                />
-              </Field>
-
-              <Field label="Category / department">
-                <TextInput
-                  value={form.category}
-                  onChange={(e) => update("category", e.target.value)}
-                  placeholder="Engineering, Design, Marketing"
-                  maxLength={100}
-                />
-              </Field>
-
-              <Field label="Number of openings" error={errors.openings}>
-                <TextInput
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={form.openings}
-                  onChange={(e) => update("openings", e.target.value)}
-                />
-              </Field>
-
-              <Field label="Employment type" required error={errors.employmentType}>
-                <SelectInput
-                  value={form.employmentType}
-                  onChange={(e) => update("employmentType", e.target.value)}
-                >
-                  {EMPLOYMENT_OPTIONS.slice(1).map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </SelectInput>
-              </Field>
-
-              <Field label="Work arrangement">
-                <SelectInput
-                  value={form.workSpaceType}
-                  onChange={(e) => update("workSpaceType", e.target.value)}
-                >
-                  {WORKSPACE_OPTIONS.slice(1).map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </SelectInput>
-              </Field>
-
-              <Field label="Experience level" required error={errors.experienceLevel}>
-                <SelectInput
-                  value={form.experienceLevel}
-                  onChange={(e) => update("experienceLevel", e.target.value)}
-                >
-                  {EXPERIENCE_OPTIONS.slice(1).map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </SelectInput>
-              </Field>
-
-              <Field label="Listing status">
-                <SelectInput
-                  value={form.status}
-                  onChange={(e) => update("status", e.target.value)}
-                >
-                  {STATUS_OPTIONS.slice(1).map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </SelectInput>
-              </Field>
-
-              <div className="sm:col-span-2">
-                <div className="mb-2 mt-2 flex items-center gap-2 text-sm font-bold text-slate-900">
-                  <FileText size={18} className="text-violet-700" />
-                  Job description and qualifications
-                </div>
+        {/* Header */}
+        <header className="shrink-0 border-b border-slate-100 bg-white px-4 py-4 sm:px-7">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                <BriefcaseBusiness size={20} />
               </div>
 
-              <Field
-                label="Job description"
-                required
-                error={errors.description}
-                className="sm:col-span-2"
-              >
-                <TextArea
-                  rows={5}
-                  value={form.description}
-                  onChange={(e) => update("description", e.target.value)}
-                  placeholder="Describe the role, team, objectives, and expectations..."
-                />
-              </Field>
-
-              <Field label="Requirements" className="sm:col-span-2">
-                <TextArea
-                  rows={3}
-                  value={form.requirements}
-                  onChange={(e) => update("requirements", e.target.value)}
-                  placeholder={"Enter one requirement per line\nStrong JavaScript fundamentals\nExperience with REST APIs"}
-                />
-                <p className="mt-1 text-xs text-slate-400">
-                  Each line becomes a separate requirement.
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-violet-700 sm:text-xs">
+                  Peer.Hiring
                 </p>
-              </Field>
 
-              <Field label="Responsibilities" className="sm:col-span-2">
-                <TextArea
-                  rows={3}
-                  value={form.responsibilities}
-                  onChange={(e) => update("responsibilities", e.target.value)}
-                  placeholder={"Enter one responsibility per line\nBuild and maintain APIs\nCollaborate with the team"}
-                />
-              </Field>
-
-              <Field label="Skills" className="sm:col-span-2">
-                <TextInput
-                  value={form.skills}
-                  onChange={(e) => update("skills", e.target.value)}
-                  placeholder="React, Node.js, MongoDB, SQL"
-                />
-                <p className="mt-1 text-xs text-slate-400">
-                  Separate skills with commas.
-                </p>
-              </Field>
-
-              <div className="sm:col-span-2">
-                <div className="mb-2 mt-2 flex items-center gap-2 text-sm font-bold text-slate-900">
-                  <MapPin size={18} className="text-violet-700" />
-                  Job location
-                </div>
+                <h2 className="truncate text-lg font-bold text-slate-950 sm:text-xl">
+                  {mode === "edit"
+                    ? "Edit job"
+                    : "Create a job"}
+                </h2>
               </div>
-
-              <Field label="City">
-                <TextInput
-                  value={form.city}
-                  onChange={(e) => update("city", e.target.value)}
-                  placeholder="e.g. Agra"
-                />
-              </Field>
-
-              <Field label="State">
-                <TextInput
-                  value={form.state}
-                  onChange={(e) => update("state", e.target.value)}
-                  placeholder="e.g. Uttar Pradesh"
-                />
-              </Field>
-
-              <Field label="Country">
-                <TextInput
-                  value={form.country}
-                  onChange={(e) => update("country", e.target.value)}
-                  placeholder="e.g. India"
-                />
-              </Field>
-
-              <div className="sm:col-span-2">
-                <div className="mb-2 mt-2 flex items-center gap-2 text-sm font-bold text-slate-900">
-                  <CircleDollarSign size={18} className="text-violet-700" />
-                  Compensation
-                </div>
-              </div>
-
-              <Field label="Minimum salary" error={errors.salaryMin}>
-                <TextInput
-                  type="number"
-                  min="0"
-                  step="any"
-                  value={form.salaryMin}
-                  onChange={(e) => update("salaryMin", e.target.value)}
-                  placeholder="e.g. 400000"
-                />
-              </Field>
-
-              <Field label="Maximum salary" error={errors.salaryMax}>
-                <TextInput
-                  type="number"
-                  min="0"
-                  step="any"
-                  value={form.salaryMax}
-                  onChange={(e) => update("salaryMax", e.target.value)}
-                  placeholder="e.g. 800000"
-                />
-              </Field>
-
-              <Field label="Currency">
-                <SelectInput
-                  value={form.currency}
-                  onChange={(e) => update("currency", e.target.value)}
-                >
-                  <option value="INR">INR — Indian Rupee</option>
-                  <option value="USD">USD — US Dollar</option>
-                  <option value="EUR">EUR — Euro</option>
-                  <option value="GBP">GBP — British Pound</option>
-                </SelectInput>
-              </Field>
-
-              <div className="flex items-end pb-1">
-                <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={form.isNegotiable}
-                    onChange={(e) => update("isNegotiable", e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 accent-violet-700"
-                  />
-                  Salary is negotiable
-                </label>
-              </div>
-
-              <Field label="Application deadline" error={errors.applicationDeadline}>
-                <TextInput
-                  type="date"
-                  value={form.applicationDeadline}
-                  onChange={(e) => update("applicationDeadline", e.target.value)}
-                />
-              </Field>
             </div>
-          </div>
 
-          <footer className="flex flex-col-reverse gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:justify-end sm:px-7">
             <button
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              aria-label="Close job form"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 disabled:opacity-50"
             >
-              Cancel
+              <X size={20} />
             </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-200 hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {saving ? (
-                <>
-                  <LoaderCircle size={17} className="animate-spin" />
-                  Saving...
-                </>
+          </div>
+
+          {/* Progress */}
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-500">
+                Step {activeSection + 1} of {sections.length}
+              </span>
+
+              <span className="text-xs font-bold text-violet-700">
+                {Math.round(sectionProgress)}% completed
+              </span>
+            </div>
+
+            <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-violet-700 transition-all duration-300"
+                style={{ width: `${sectionProgress}%` }}
+              />
+            </div>
+          </div>
+        </header>
+
+        {/* Section Navigation */}
+        <div className="shrink-0 border-b border-slate-100 bg-white px-3 py-3 sm:px-7">
+          <div className="grid grid-cols-3 gap-2">
+            {sections.map((section, index) => (
+              <button
+                key={section.title}
+                type="button"
+                disabled={saving}
+                onClick={() => setActiveSection(index)}
+                className={sectionButtonClass(index)}
+              >
+                <span
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                    activeSection === index
+                      ? "bg-white/20 text-white"
+                      : "bg-white text-slate-500"
+                  }`}
+                >
+                  {index + 1}
+                </span>
+
+                <span className="min-w-0">
+                  <span className="block truncate text-xs font-bold sm:text-sm">
+                    {section.title}
+                  </span>
+
+                  <span
+                    className={`hidden truncate text-[10px] sm:block ${
+                      activeSection === index
+                        ? "text-violet-100"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {section.subtitle}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Form */}
+        <form
+          onSubmit={submit}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-7 sm:py-6">
+
+            {/* SECTION 1 */}
+            {activeSection === 0 && (
+              <div className="space-y-5">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Basic job information
+                  </h3>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Start with the essential details of your opening.
+                  </p>
+                </div>
+
+                <Field
+                  label="Job title"
+                  required
+                  error={errors.title}
+                >
+                  <TextInput
+                    value={form.title}
+                    onChange={(e) =>
+                      update("title", e.target.value)
+                    }
+                    placeholder="e.g. Full Stack Developer"
+                    maxLength={150}
+                  />
+                </Field>
+
+                <Field label="Category / department">
+                  <TextInput
+                    value={form.category}
+                    onChange={(e) =>
+                      update("category", e.target.value)
+                    }
+                    placeholder="Engineering, Design, Marketing"
+                    maxLength={100}
+                  />
+                </Field>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Field
+                    label="Openings"
+                    error={errors.openings}
+                  >
+                    <TextInput
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={form.openings}
+                      onChange={(e) =>
+                        update("openings", e.target.value)
+                      }
+                    />
+                  </Field>
+
+                  <Field
+                    label="Experience"
+                    required
+                    error={errors.experienceLevel}
+                  >
+                    <SelectInput
+                      value={form.experienceLevel}
+                      onChange={(e) =>
+                        update("experienceLevel", e.target.value)
+                      }
+                    >
+                      {EXPERIENCE_OPTIONS.slice(1).map((item) => (
+                        <option
+                          key={item.value}
+                          value={item.value}
+                        >
+                          {item.label}
+                        </option>
+                      ))}
+                    </SelectInput>
+                  </Field>
+                </div>
+
+                <Field
+                  label="Employment type"
+                  required
+                  error={errors.employmentType}
+                >
+                  <SelectInput
+                    value={form.employmentType}
+                    onChange={(e) =>
+                      update("employmentType", e.target.value)
+                    }
+                  >
+                    {EMPLOYMENT_OPTIONS.slice(1).map((item) => (
+                      <option
+                        key={item.value}
+                        value={item.value}
+                      >
+                        {item.label}
+                      </option>
+                    ))}
+                  </SelectInput>
+                </Field>
+
+                <Field label="Work arrangement">
+                  <SelectInput
+                    value={form.workSpaceType}
+                    onChange={(e) =>
+                      update("workSpaceType", e.target.value)
+                    }
+                  >
+                    {WORKSPACE_OPTIONS.slice(1).map((item) => (
+                      <option
+                        key={item.value}
+                        value={item.value}
+                      >
+                        {item.label}
+                      </option>
+                    ))}
+                  </SelectInput>
+                </Field>
+
+                <Field label="Listing status">
+                  <SelectInput
+                    value={form.status}
+                    onChange={(e) =>
+                      update("status", e.target.value)
+                    }
+                  >
+                    {STATUS_OPTIONS.slice(1).map((item) => (
+                      <option
+                        key={item.value}
+                        value={item.value}
+                      >
+                        {item.label}
+                      </option>
+                    ))}
+                  </SelectInput>
+                </Field>
+              </div>
+            )}
+
+            {/* SECTION 2 */}
+            {activeSection === 1 && (
+              <div className="space-y-5">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Description & qualifications
+                  </h3>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Help candidates understand the role and expectations.
+                  </p>
+                </div>
+
+                <Field
+                  label="Job description"
+                  required
+                  error={errors.description}
+                >
+                  <TextArea
+                    rows={7}
+                    value={form.description}
+                    onChange={(e) =>
+                      update("description", e.target.value)
+                    }
+                    placeholder="Describe the role, team, objectives, and expectations..."
+                  />
+                </Field>
+
+                <Field label="Requirements">
+                  <TextArea
+                    rows={5}
+                    value={form.requirements}
+                    onChange={(e) =>
+                      update("requirements", e.target.value)
+                    }
+                    placeholder={
+                      "One requirement per line\nStrong JavaScript fundamentals\nExperience with REST APIs"
+                    }
+                  />
+
+                  <p className="mt-1.5 text-xs text-slate-400">
+                    Each line becomes a separate requirement.
+                  </p>
+                </Field>
+
+                <Field label="Responsibilities">
+                  <TextArea
+                    rows={5}
+                    value={form.responsibilities}
+                    onChange={(e) =>
+                      update("responsibilities", e.target.value)
+                    }
+                    placeholder={
+                      "One responsibility per line\nBuild and maintain APIs\nCollaborate with the team"
+                    }
+                  />
+                </Field>
+
+                <Field label="Required skills">
+                  <TextInput
+                    value={form.skills}
+                    onChange={(e) =>
+                      update("skills", e.target.value)
+                    }
+                    placeholder="React, Node.js, MongoDB, SQL"
+                  />
+
+                  <p className="mt-1.5 text-xs text-slate-400">
+                    Separate skills with commas.
+                  </p>
+                </Field>
+              </div>
+            )}
+
+            {/* SECTION 3 */}
+            {activeSection === 2 && (
+              <div className="space-y-5">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Location & compensation
+                  </h3>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Specify where candidates will work and the salary range.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Field label="City">
+                    <TextInput
+                      value={form.city}
+                      onChange={(e) =>
+                        update("city", e.target.value)
+                      }
+                      placeholder="e.g. Agra"
+                    />
+                  </Field>
+
+                  <Field label="State">
+                    <TextInput
+                      value={form.state}
+                      onChange={(e) =>
+                        update("state", e.target.value)
+                      }
+                      placeholder="e.g. Uttar Pradesh"
+                    />
+                  </Field>
+                </div>
+
+                <Field label="Country">
+                  <TextInput
+                    value={form.country}
+                    onChange={(e) =>
+                      update("country", e.target.value)
+                    }
+                    placeholder="e.g. India"
+                  />
+                </Field>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Field
+                    label="Minimum salary"
+                    error={errors.salaryMin}
+                  >
+                    <TextInput
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={form.salaryMin}
+                      onChange={(e) =>
+                        update("salaryMin", e.target.value)
+                      }
+                      placeholder="400000"
+                    />
+                  </Field>
+
+                  <Field
+                    label="Maximum salary"
+                    error={errors.salaryMax}
+                  >
+                    <TextInput
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={form.salaryMax}
+                      onChange={(e) =>
+                        update("salaryMax", e.target.value)
+                      }
+                      placeholder="800000"
+                    />
+                  </Field>
+                </div>
+
+                <Field label="Currency">
+                  <SelectInput
+                    value={form.currency}
+                    onChange={(e) =>
+                      update("currency", e.target.value)
+                    }
+                  >
+                    <option value="INR">
+                      INR — Indian Rupee
+                    </option>
+                    <option value="USD">
+                      USD — US Dollar
+                    </option>
+                    <option value="EUR">
+                      EUR — Euro
+                    </option>
+                    <option value="GBP">
+                      GBP — British Pound
+                    </option>
+                  </SelectInput>
+                </Field>
+
+                <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-4">
+                  <input
+                    type="checkbox"
+                    checked={form.isNegotiable}
+                    onChange={(e) =>
+                      update("isNegotiable", e.target.checked)
+                    }
+                    className="h-4 w-4 accent-violet-700"
+                  />
+
+                  <span>
+                    <span className="block text-sm font-semibold text-slate-800">
+                      Salary is negotiable
+                    </span>
+
+                    <span className="mt-0.5 block text-xs text-slate-500">
+                      Candidates can discuss compensation.
+                    </span>
+                  </span>
+                </label>
+
+                <Field
+                  label="Application deadline"
+                  error={errors.applicationDeadline}
+                >
+                  <TextInput
+                    type="date"
+                    value={form.applicationDeadline}
+                    onChange={(e) =>
+                      update("applicationDeadline", e.target.value)
+                    }
+                    min={getDateInputValue(new Date())}
+                  />
+                </Field>
+              </div>
+            )}
+          </div>
+
+          {/* Sticky Footer */}
+          <footer className="shrink-0 border-t border-slate-200 bg-white px-3 py-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:px-7 sm:py-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+
+              {activeSection > 0 ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActiveSection((current) => current - 1)
+                  }
+                  disabled={saving}
+                  className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-3 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 sm:gap-2 sm:px-4"
+                >
+                  <ChevronLeft size={17} />
+                  Back
+                </button>
               ) : (
-                <>
-                  <Save size={17} />
-                  {mode === "edit" ? "Save changes" : "Create job"}
-                </>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={saving}
+                  className="inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 px-3 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 sm:px-4"
+                >
+                  Cancel
+                </button>
               )}
-            </button>
+
+              <div className="flex-1" />
+
+              {activeSection < sections.length - 1 ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActiveSection((current) => current + 1)
+                  }
+                  disabled={saving}
+                  className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl bg-violet-700 px-4 text-sm font-bold text-white shadow-lg shadow-violet-200 hover:bg-violet-800 disabled:opacity-50 sm:gap-2 sm:px-5"
+                >
+                  Continue
+                  <ChevronRight size={17} />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl bg-violet-700 px-4 text-sm font-bold text-white shadow-lg shadow-violet-200 hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60 sm:gap-2 sm:px-5"
+                >
+                  {saving ? (
+                    <>
+                      <LoaderCircle
+                        size={17}
+                        className="animate-spin"
+                      />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={17} />
+                      {mode === "edit"
+                        ? "Save changes"
+                        : "Create job"}
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </footer>
         </form>
       </section>
     </div>
   );
 }
+
 
 function MetricCard({ icon: Icon, label, value, note, accent }) {
   return (
@@ -973,7 +1248,13 @@ function MenuButton({
   );
 }
 
-function JobCard({ job, view, onAction, busy, recruiterActivePage }) {
+function JobCard({
+  job,
+  view,
+  onAction,
+  busy,
+  setRecruiterActivePage,
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const accent =
@@ -992,6 +1273,7 @@ function JobCard({ job, view, onAction, busy, recruiterActivePage }) {
         view === "list" ? "p-5" : "p-5 sm:p-6"
       }`}
     >
+      {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3.5">
           <div
@@ -999,6 +1281,7 @@ function JobCard({ job, view, onAction, busy, recruiterActivePage }) {
           >
             {job.initials}
           </div>
+
           <div className="min-w-0">
             <button
               type="button"
@@ -1007,11 +1290,13 @@ function JobCard({ job, view, onAction, busy, recruiterActivePage }) {
             >
               {job.title}
             </button>
+
             <p className="mt-1 text-xs font-medium text-slate-400">
               ID: {String(job._id).slice(-8)}
               <span className="mx-1.5">·</span>
               {job.category || "General"}
             </p>
+
             <span
               className={`mt-2.5 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset ${
                 STATUS_STYLES[job.status] || STATUS_STYLES.DRAFT
@@ -1022,6 +1307,7 @@ function JobCard({ job, view, onAction, busy, recruiterActivePage }) {
           </div>
         </div>
 
+        {/* Action menu */}
         <div className="relative">
           <button
             type="button"
@@ -1042,6 +1328,7 @@ function JobCard({ job, view, onAction, busy, recruiterActivePage }) {
                 aria-label="Close action menu"
                 onClick={() => setMenuOpen(false)}
               />
+
               <div className="absolute right-0 top-10 z-20 w-48 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
                 <MenuButton
                   icon={Eye}
@@ -1052,6 +1339,7 @@ function JobCard({ job, view, onAction, busy, recruiterActivePage }) {
                 >
                   View details
                 </MenuButton>
+
                 <MenuButton
                   icon={Pencil}
                   onClick={() => {
@@ -1061,6 +1349,7 @@ function JobCard({ job, view, onAction, busy, recruiterActivePage }) {
                 >
                   Edit job
                 </MenuButton>
+
                 <MenuButton
                   icon={ExternalLink}
                   onClick={() => {
@@ -1140,15 +1429,18 @@ function JobCard({ job, view, onAction, busy, recruiterActivePage }) {
         </div>
       </div>
 
+      {/* Job information */}
       <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs font-medium text-slate-500">
         <span className="inline-flex items-center gap-1.5">
           <MapPin size={14} />
           {job.locationLabel}
         </span>
+
         <span className="inline-flex items-center gap-1.5">
           <BriefcaseBusiness size={14} />
           {formatEnum(job.employmentType)}
         </span>
+
         <span className="inline-flex items-center gap-1.5">
           <CircleDollarSign size={14} />
           {job.salaryLabel}
@@ -1157,31 +1449,39 @@ function JobCard({ job, view, onAction, busy, recruiterActivePage }) {
 
       <div className="my-5 border-t border-slate-100" />
 
+      {/* Statistics */}
       <div className="grid grid-cols-3 gap-2">
         <StatBox label="Applicants" value={job.applicants} />
+
         <StatBox label="Openings" value={job.openings ?? 1} />
+
         <StatBox label="Views" value={job.views} />
       </div>
 
+      {/* Footer */}
       <div className="mt-5 flex items-center justify-between gap-3">
         <div className="min-w-0 text-xs text-slate-500">
           <p className="flex items-center gap-1.5">
             <Clock3 size={13} />
             Posted {job.postedLabel}
           </p>
+
           <p className="mt-1.5 flex items-center gap-1.5 truncate">
             <CalendarDays size={13} />
             Deadline: {job.deadlineLabel}
           </p>
         </div>
 
-  <button
-  type="button"
-  onClick={() => recruiterActivePage("recruiter/application")}
-  className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-violet-50 px-3 py-2.5 text-xs font-bold text-violet-700 hover:bg-violet-100"
->
-  Applicants <Users size={14} />
-</button>
+        <button
+          type="button"
+          onClick={() =>
+            setRecruiterActivePage("recruiter/application")
+          }
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-violet-50 px-3 py-2.5 text-xs font-bold text-violet-700 hover:bg-violet-100"
+        >
+          Applicants
+          <Users size={14} />
+        </button>
       </div>
     </article>
   );
@@ -1230,7 +1530,7 @@ export default function RecruiterJobs() {
     handleDeleteJob,
   } = useJob();
 
-  const {recruiterActivePage} = useHome();
+  const { setRecruiterActivePage } = useHome();
 
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [view, setView] = useState("grid");
@@ -1446,7 +1746,7 @@ export default function RecruiterJobs() {
   // Dashboard state navigation — no React Router navigation.
   if (action === "applicants") {
     setSelectedJob(null);
-    recruiterActivePage("recruiter/application");
+    setRecruiterActivePage("recruiter/application");
     return;
   }
 
@@ -1917,7 +2217,7 @@ export default function RecruiterJobs() {
             >
               {jobs.map((job) => (
                 <JobCard
-                  recruiterActivePage={recruiterActivePage}
+                  setRecruiterActivePage={setRecruiterActivePage}
                   key={job._id}
                   job={job}
                   view={view}

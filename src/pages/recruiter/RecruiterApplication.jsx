@@ -449,7 +449,7 @@ function DetailField({ icon: Icon, children }) {
   return (
     <div className="flex min-w-0 items-center gap-2 text-sm text-slate-600">
       <Icon size={16} className="shrink-0 text-slate-400" />
-      <span className="min-w-0 break-words">{children}</span>
+      <span className="min-w-0 flex-1 break-all">{children}</span>
     </div>
   );
 }
@@ -501,7 +501,7 @@ function ApplicationDrawer({
         onClick={onClose}
       />
 
-      <aside className="relative flex h-full w-full max-w-xl flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200">
+      <aside className="relative flex h-full w-full min-w-0 max-w-xl flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-700">
@@ -522,16 +522,17 @@ function ApplicationDrawer({
           </button>
         </div>
 
-        <div className="flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
-          <section className="rounded-2xl border border-slate-200 bg-gradient-to-br from-violet-50 via-white to-white p-5">
-            <div className="flex items-start gap-4">
+        <div className="min-w-0 flex-1 space-y-5 overflow-y-auto p-3 sm:p-6">
+          <section className="min-w-0 rounded-2xl border border-slate-200 bg-gradient-to-br from-violet-50 via-white to-white p-3 sm:p-5">
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
               <CandidateAvatar
                 candidate={application.candidate}
                 size="large"
               />
 
-              <div className="min-w-0 flex-1">
-                <h2 className="break-words text-xl font-bold text-slate-950">
+              <div className="flex min-w-0 flex-1 items-start gap-3">
+                <div className="min-w-0 flex-1">
+                <h2 className="break-words text-lg font-bold leading-6 text-slate-950 sm:text-xl">
                   {application.candidateName}
                 </h2>
 
@@ -539,12 +540,13 @@ function ApplicationDrawer({
                   {application.candidateRole || "Role not provided"}
                 </p>
 
-                <div className="mt-3">
+                <div className="mt-2">
                   <StatusBadge status={application.status} />
+                </div>
                 </div>
               </div>
 
-              <div className="shrink-0 rounded-xl border border-violet-100 bg-white px-3 py-2 text-center">
+              <div className="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-violet-100 bg-white px-3 py-2 text-center sm:block sm:self-auto">
                 <p className="text-2xl font-bold text-violet-700">
                   {application.score ?? "—"}
                 </p>
@@ -572,13 +574,13 @@ function ApplicationDrawer({
               </DetailField>
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               {application.candidatePortfolio && (
               <a
                 href={application.candidatePortfolio}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-violet-700 hover:text-violet-900"
+                className="inline-flex min-w-0 items-center gap-2 break-words text-sm font-semibold text-violet-700 hover:text-violet-900 sm:mt-4"
               >
                 View candidate portfolio
                 <ExternalLink size={15} />
@@ -599,7 +601,7 @@ function ApplicationDrawer({
     setRecruiterActivePage("/recruiter/candidate/profile");
     setTitle("Candidate");
   }}
-  className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"
+  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-3 py-3 text-sm font-semibold text-white transition hover:bg-violet-700 sm:w-auto sm:px-4 sm:py-2"
 >
   <Eye size={16} />
   Candidate Profile
@@ -859,15 +861,15 @@ function ApplicationDrawer({
           </section>
         </div>
 
-        <div className="flex items-center justify-between border-t border-slate-200 bg-white px-5 py-4 sm:px-6">
-          <span className="text-xs text-slate-500">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-white px-3 py-3 sm:px-6 sm:py-4">
+          <span className="min-w-0 text-xs text-slate-500">
             Applied {formatRelativeDate(application.appliedAt)}
           </span>
 
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="shrink-0 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:px-4"
           >
             Close details
           </button>
@@ -1256,7 +1258,7 @@ if (!isValidStatus || status === current.status) {
 
   return (
     <div className="min-h-screen bg-[#F7F8FC] text-slate-900">
-      <main className="mx-auto max-w-[1600px] space-y-6 p-4 sm:p-6 lg:p-8">
+      <main className="mx-auto w-full max-w-[1600px] space-y-4 p-3 sm:space-y-6 sm:p-6 lg:p-8">
         <header className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
           <div>
             <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">
@@ -1274,15 +1276,15 @@ if (!isValidStatus || status === current.status) {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
+          <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+            <div className="relative w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() =>
                   setShowExportMenu((previous) => !previous)
                 }
                 disabled={items.length === 0}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50 sm:w-auto"
               >
                 <Download size={16} />
                 Export current page
@@ -1307,7 +1309,7 @@ if (!isValidStatus || status === current.status) {
               type="button"
               onClick={() => fetchApplications({ silent: true })}
               disabled={refreshing || loading}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 sm:w-auto"
             >
               <RefreshCw
                 size={16}
@@ -1319,7 +1321,7 @@ if (!isValidStatus || status === current.status) {
             <button
               type="button"
               onClick={resetFilters}
-              className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800 sm:w-auto"
             >
               <RotateCcw size={16} />
               Reset filters
@@ -1678,7 +1680,124 @@ if (!isValidStatus || status === current.status) {
           ) : (
             <>
               {view === "table" ? (
-                <div className="overflow-x-auto">
+                <>
+                  {/* Mobile layout: cards instead of a wide, horizontally-scrolling table. */}
+                  <div className="grid gap-3 p-3 sm:p-4 md:hidden">
+                    {items.map((item) => (
+                      <article
+                        key={`mobile-${item._id}`}
+                        className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                      >
+                        <div className="flex min-w-0 items-start gap-3">
+                          <CandidateAvatar candidate={item.candidate} />
+                          <div className="min-w-0 flex-1">
+                            <button
+                              type="button"
+                              onClick={() => openApplication(item._id)}
+                              className="block w-full whitespace-normal break-words text-left text-base font-bold leading-5 text-slate-950"
+                            >
+                              {item.candidateName}
+                            </button>
+                            <p className="mt-1.5 max-w-full break-all text-sm leading-5 text-slate-600">
+                              {item.candidateEmail || "No email available"}
+                            </p>
+                            <p className="mt-1 break-words text-xs text-slate-400">
+                              {item.candidateRole || "Role not provided"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex min-w-0 items-center">
+                          <StatusBadge status={item.status} />
+                        </div>
+
+                        <div className="mt-4 rounded-lg bg-slate-50 p-3">
+                          <p className="text-[11px] font-medium text-slate-500">Applied for</p>
+                          <p className="mt-1 break-words text-sm font-semibold text-slate-800">
+                            {item.jobTitle}
+                          </p>
+                          <p className="mt-1 break-words text-xs text-slate-500">
+                            {item.jobDepartment || "Position"}
+                          </p>
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-[11px] text-slate-500">ATS score</p>
+                            <p className="mt-0.5 text-sm font-bold text-violet-700">
+                              {item.score === null ? "Not scored" : `${item.score}%`}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[11px] text-slate-500">Applied</p>
+                            <p className="mt-0.5 text-xs font-medium text-slate-700">
+                              {formatDate(item.appliedAt)}
+                            </p>
+                            <p className="mt-0.5 text-[11px] text-slate-400">
+                              {formatRelativeDate(item.appliedAt)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {item.score !== null && (
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                            <div
+                              className="h-full rounded-full bg-violet-600"
+                              style={{
+                                width: `${Math.min(100, Math.max(0, item.score))}%`,
+                              }}
+                            />
+                          </div>
+                        )}
+
+                        <label className="mt-4 block">
+                          <span className="mb-1.5 block text-xs font-semibold text-slate-600">
+                            Update application status
+                          </span>
+                          <select
+                            value={item.status}
+                            disabled={
+                              busyStatus ||
+                              RECRUITER_TERMINAL_STATUSES.has(item.status)
+                            }
+                            onChange={(event) =>
+                              updateStatus(item._id, event.target.value)
+                            }
+                            aria-label={`Update status for ${item.candidateName}`}
+                            className="w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-violet-500 disabled:bg-slate-100 disabled:opacity-60"
+                          >
+                            {getRecruiterStatusOptions(item.status).map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openApplication(item._id)}
+                            className="inline-flex min-w-0 items-center justify-center gap-2 rounded-lg bg-violet-700 px-3 py-2.5 text-xs font-semibold text-white hover:bg-violet-800"
+                          >
+                            <Eye size={15} />
+                            View details
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openApplication(item._id)}
+                            className="inline-flex min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            <MessageSquareText size={15} />
+                            Recruiter notes
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+
+                  {/* Desktop/tablet table remains unchanged. */}
+                  <div className="hidden overflow-x-auto md:block">
                   <table className="w-full min-w-[1000px] border-collapse text-left">
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
@@ -1853,9 +1972,10 @@ if (!isValidStatus || status === current.status) {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                  </div>
+                </>
               ) : (
-                <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-3 p-3 sm:gap-4 sm:p-4 sm:grid-cols-2 xl:grid-cols-3">
                   {items.map((item) => (
                     <article
                       key={item._id}

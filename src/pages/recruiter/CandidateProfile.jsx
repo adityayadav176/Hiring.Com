@@ -689,14 +689,6 @@ export default function CandidateProfile() {
 
         <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <button
-              type="button"
-              onClick={goBack}
-              className="mb-4 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-violet-700"
-            >
-              <ArrowLeft size={17} />
-              Back to applications
-            </button>
 
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">
               <Sparkles size={15} />
@@ -1121,15 +1113,6 @@ export default function CandidateProfile() {
           <p className="text-xs text-slate-400">
             Peer.Hiring · Recruiter workspace
           </p>
-
-          <button
-            type="button"
-            onClick={goBack}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-800"
-          >
-            <ArrowLeft size={16} />
-            Back to applications
-          </button>
         </footer>
       </main>
     </div>

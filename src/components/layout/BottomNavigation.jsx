@@ -9,6 +9,7 @@ import {
   Users,
   Building2,
   ClipboardList,
+  User,
 } from "lucide-react";
 
 function BottomNavigation() {
@@ -41,7 +42,7 @@ function BottomNavigation() {
     { label: "Applications", page: "recruiter/application", icon: FileText },
     { label: "Interviews", page: "recruiter/interviews", icon: CalendarDays },
     { label: "Messages", page: "/recruiter/chat", icon: MessageSquare },
-    { label: "Profile", page: "recruiter/profile", icon: MessageSquare },
+    { label: "Profile", page: "recruiter/profile", icon: User },
   ];
 
   const candidateItems = [

@@ -243,23 +243,28 @@ function Modal({ title, subtitle, onClose, children }) {
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-slate-950/50 p-3 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-slate-950/50 p-0 backdrop-blur-sm sm:p-6"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <section className="my-auto w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-        <header className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-5 sm:px-7">
-          <div>
-            <h2 className="text-xl font-bold text-slate-950">{title}</h2>
-            <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+      <section className="flex h-[100dvh] w-full max-w-none flex-col overflow-hidden rounded-none bg-white shadow-2xl sm:my-auto sm:h-auto sm:max-h-[calc(100dvh-3rem)] sm:max-w-4xl sm:rounded-3xl">
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-4 py-4 sm:px-7 sm:py-5">
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold text-slate-950">
+              {title}
+            </h2>
+
+            <p className="mt-1 text-sm leading-5 text-slate-500">
+              {subtitle}
+            </p>
           </div>
 
           <button
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="rounded-xl p-2 text-slate-500 hover:bg-slate-100"
+            className="shrink-0 rounded-xl p-2 text-slate-500 hover:bg-slate-100"
           >
             <X size={19} />
           </button>
@@ -458,9 +463,9 @@ function CompanyForm({
 
   return (
     <form
-      onSubmit={submit}
-      className="max-h-[calc(100vh-8rem)] overflow-y-auto"
-    >
+  onSubmit={submit}
+  className="min-h-0 flex-1 overflow-y-auto sm:flex-none sm:max-h-[calc(100vh-8rem)]"
+>
       <div className="space-y-7 px-5 py-6 sm:px-7">
         {(error || formError) && (
           <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
@@ -468,11 +473,6 @@ function CompanyForm({
             <span>{formError || error}</span>
           </div>
         )}
-
-        <p className="text-xs text-slate-500">
-          Fields marked with <span className="text-rose-500">*</span> are
-          required by the company schema. All other profile fields are optional.
-        </p>
 
         <section className="space-y-4">
           <SectionTitle

@@ -659,31 +659,46 @@ function MetricCard({ icon: Icon, label, value, caption, tone }) {
   );
 }
 
-function Modal({ title, subtitle, onClose, children, wide = false }) {
+function Modal({
+  title,
+  subtitle,
+  onClose,
+  children,
+  wide = false,
+  fullScreenMobile = false,
+}) {
   return (
     <div
-      className="fixed inset-0 min-h-full z-50 flex items-center justify-center overflow-y-auto bg-slate-950/50 p-3 backdrop-blur-sm sm:p-6"
+      className={`fixed inset-0 z-50 flex min-h-0 items-center justify-center bg-slate-950/50 backdrop-blur-sm ${
+        fullScreenMobile
+          ? "overflow-hidden p-0 sm:overflow-y-auto sm:p-6"
+          : "overflow-y-auto p-3 sm:p-6"
+      }`}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
       <section
-        className={`my-auto w-full overflow-hidden rounded-3xl bg-white shadow-2xl ${
-          wide ? "max-w-3xl" : "max-w-xl"
+        className={`my-auto flex min-h-0 w-full flex-col overflow-hidden bg-white shadow-2xl ${
+          fullScreenMobile
+            ? `h-[100dvh] max-h-[100dvh] max-w-none rounded-none sm:h-auto sm:max-h-[90vh] sm:max-w-3xl sm:rounded-3xl`
+            : `rounded-3xl ${wide ? "max-w-3xl" : "max-w-xl"}`
         }`}
       >
-        <div className="flex items-start justify-between border-b border-slate-100 px-5 py-5 sm:px-7">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-950">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-4 py-4 sm:px-7 sm:py-5">
+          <div className="min-w-0">
+            <h2 className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl">
               {title}
             </h2>
-            <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+            <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
+              {subtitle}
+            </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100"
+            className="shrink-0 rounded-xl p-2 text-slate-500 transition hover:bg-slate-100"
           >
             <X size={19} />
           </button>
@@ -1918,10 +1933,11 @@ export default function RecruiterInterviews() {
             }
             onClose={() => !submitting && setModal("")}
             wide
+            fullScreenMobile
           >
             <form
               onSubmit={submitInterview}
-              className="max-h-[75vh] space-y-6 overflow-y-auto px-5 py-6 sm:px-7"
+              className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 py-5 sm:max-h-[75vh] sm:flex-none sm:px-7 sm:py-6"
             >
               {!editingId && (
                 <div>
@@ -2243,7 +2259,7 @@ export default function RecruiterInterviews() {
                   type="button"
                   disabled={submitting}
                   onClick={() => setModal("")}
-                  className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  className="w-full rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 sm:w-auto"
                 >
                   Cancel
                 </button>
@@ -2253,7 +2269,7 @@ export default function RecruiterInterviews() {
                     submitting ||
                     (!editingId && !form.applicationId)
                   }
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-200 hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-200 hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   {submitting ? (
                     <LoaderCircle
