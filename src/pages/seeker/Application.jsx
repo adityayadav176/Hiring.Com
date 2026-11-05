@@ -250,6 +250,8 @@ function Applications() {
     handleGetMyApplications,
   } = useApplication();
 
+  console.log(applications);
+
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("newest");

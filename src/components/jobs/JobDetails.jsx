@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Clock3,
   DollarSign,
+  Eye,
   MapPin,
   Send,
   Users,
@@ -394,6 +395,15 @@ function JobDetails({ job }) {
                   </div>
                   <span className="text-right text-sm font-semibold text-slate-800">
                     {applicants}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-b border-slate-100 py-3">
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Eye size={16} />
+                    <span className="text-sm">Total Views</span>
+                  </div>
+                  <span className="text-right text-sm font-semibold text-slate-800">
+                    {job?.views || 0}
                   </span>
                 </div>
 

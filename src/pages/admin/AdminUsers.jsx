@@ -909,6 +909,8 @@ export default function AdminUsers() {
     handleDeleteUser,
   } = useAdmin();
 
+  console.log(rawUsers);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");

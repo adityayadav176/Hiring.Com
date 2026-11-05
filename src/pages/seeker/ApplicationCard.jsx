@@ -190,7 +190,7 @@ const ApplicationCard = ({ application, statusStyle }) => {
     return {
       companyName: company.name || "Company",
       jobTitle: job.title || "Job title unavailable",
-      companyLogo: company.logo,
+      companyLogo: company.logo.url,
       location: job.location,
       employmentType: job.employmentType,
       status: application?.status || "applied",
