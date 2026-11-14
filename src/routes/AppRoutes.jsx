@@ -15,33 +15,46 @@ const InterviewRoom = lazy(() => import("../pages/interview/InterviewRoom"));
 
 const AppRoutes = () => {
     return (
-        <Suspense fallback={<Loading />}>
             <Routes>
                 <Route path="/sendPasswordResetOpt" element={<SendPasswordResetOtp />} />
                 <Route path="/forgetPassword" element={<ForgetPassword />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
-                <Route path="/interview" element={<InterviewRoom />} />
 
                 <Route element={<ProtectedRoutes allowedType="both" />}>
-                    <Route path="/interview/:interviewId" element={<InterviewRoom />} />
+                    <Route path="/interview/:interviewId" element={
+                        <Suspense fallback={<Loading />}>
+                            <InterviewRoom />
+                        </Suspense>
+                    } />
                 </Route>
 
                 <Route element={<ProtectedRoutes allowedType="admin" />}>
-                    <Route path="/admin" element={<ADashboard />} />
+                        <Route path="/admin" element={
+                            <Suspense fallback={<Loading />}>
+                                <ADashboard />
+                            </Suspense>
+                        } />
                 </Route>
 
                 <Route element={<ProtectedRoutes allowedType="recruiter" />}>
-                    <Route path="/recruiter" element={<RecruiterLayout />} />
+                        <Route path="/recruiter" element={
+                            <Suspense fallback={<Loading />}>
+                                <RecruiterLayout />
+                            </Suspense>
+                        } />
                 </Route>
 
                 <Route element={<ProtectedRoutes allowedType="user" />}>
-                    <Route path="/" element={<Dashboard />} />
+                        <Route path="/" element={
+                            <Suspense fallback={<Loading />}>
+                                <Dashboard />
+                            </Suspense>
+                        } />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />
             </Routes>
-        </Suspense>
     );
 };
 

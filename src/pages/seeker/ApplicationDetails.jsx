@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock3,
-  Download,
   ExternalLink,
   FileText,
   Globe,
