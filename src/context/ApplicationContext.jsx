@@ -1,3 +1,4 @@
+
 import {
   createContext,
   useCallback,
@@ -5,16 +6,13 @@ import {
   useState,
 } from "react";
 
+import { apiRequest } from "../utils/apiRequest";
+
 export const ApplicationContext = createContext(null);
 
 const DEFAULT_PAGINATION = null;
 const GET_CACHE_TTL = 1500;
 
-/**
- * Avoid state updates when the received JSON data has not changed.
- * This helps prevent render loops caused by repeatedly fetching
- * and setting equivalent arrays or objects.
- */
 const setStateIfChanged = (setter, nextValue) => {
   setter((previousValue) => {
     const next =
@@ -27,14 +25,11 @@ const setStateIfChanged = (setter, nextValue) => {
     }
 
     try {
-      if (
-        JSON.stringify(previousValue) ===
-        JSON.stringify(next)
-      ) {
+      if (JSON.stringify(previousValue) === JSON.stringify(next)) {
         return previousValue;
       }
     } catch {
-      // If serialization fails, apply the new value normally.
+      // Ignore serialization errors.
     }
 
     return next;
@@ -50,8 +45,7 @@ const ApplicationProvider = ({ children }) => {
 
   const [application, setApplication] = useState(null);
   const [applications, setApplications] = useState([]);
-  const [deletedApplications, setDeletedApplications] =
-    useState([]);
+  const [deletedApplications, setDeletedApplications] = useState([]);
 
   const [myApplicationPagination, setMyApplicationPagination] =
     useState(DEFAULT_PAGINATION);
@@ -65,45 +59,19 @@ const ApplicationProvider = ({ children }) => {
   const [jobApplicationPagination, setJobApplicationPagination] =
     useState(DEFAULT_PAGINATION);
 
-  // --------------------------------------------------
-  // REQUEST DEDUPLICATION
-  // --------------------------------------------------
-
-  /**
-   * Keep track of:
-   * 1. GET requests currently in progress.
-   * 2. Recently completed GET responses.
-   *
-   * Concurrent calls for the same URL share one fetch request.
-   * The short cache also helps with React StrictMode effect replay.
-   */
   const inFlightRequestsRef = useRef(new Map());
   const getCacheRef = useRef(new Map());
 
-  /**
-   * Invalidate cached application GET responses after mutations.
-   */
   const invalidateApplicationCache = useCallback(() => {
     const cache = getCacheRef.current;
 
     for (const key of cache.keys()) {
-      if (key.startsWith(`${APPLICATIONS_URL}`)) {
+      if (key.startsWith(APPLICATIONS_URL)) {
         cache.delete(key);
       }
     }
   }, [APPLICATIONS_URL]);
 
-  /**
-   * Shared API helper.
-   *
-   * GET:
-   * - Deduplicates concurrent requests for the same URL.
-   * - Reuses a recently completed response for 1.5 seconds.
-   *
-   * POST/PATCH/DELETE:
-   * - Makes the requested mutation.
-   * - Invalidates cached application GET responses on success.
-   */
   const request = useCallback(
     async (url, options = {}) => {
       const {
@@ -126,7 +94,6 @@ const ApplicationProvider = ({ children }) => {
 
       const cacheKey = url;
 
-      // Reuse a cached GET response while it is fresh.
       if (isGet && !skipCache && cacheTtl > 0) {
         const cached = getCacheRef.current.get(cacheKey);
 
@@ -139,7 +106,6 @@ const ApplicationProvider = ({ children }) => {
         }
       }
 
-      // Share any GET request already in progress for this URL.
       if (isGet && !skipCache) {
         const existingRequest =
           inFlightRequestsRef.current.get(cacheKey);
@@ -150,11 +116,11 @@ const ApplicationProvider = ({ children }) => {
       }
 
       const executeRequest = async () => {
-        const response = await fetch(url, {
-          credentials: "include",
+        const response = await apiRequest(url, {
           ...fetchOptions,
           headers: {
-            ...(fetchOptions.body
+            ...(fetchOptions.body &&
+            !(fetchOptions.body instanceof FormData)
               ? { "Content-Type": "application/json" }
               : {}),
             ...fetchOptions.headers,
@@ -170,7 +136,6 @@ const ApplicationProvider = ({ children }) => {
           );
         }
 
-        // A successful mutation can make previous GET results stale.
         if (!isGet) {
           invalidateApplicationCache();
         } else if (!skipCache && cacheTtl > 0) {
@@ -197,7 +162,6 @@ const ApplicationProvider = ({ children }) => {
       try {
         return await pendingRequest;
       } finally {
-        // Do not accidentally remove a newer request.
         if (
           inFlightRequestsRef.current.get(cacheKey) ===
           pendingRequest
@@ -209,16 +173,8 @@ const ApplicationProvider = ({ children }) => {
     [API_URL, invalidateApplicationCache]
   );
 
-  // --------------------------------------------------
-  // APPLY FOR A JOB
-  // --------------------------------------------------
-
   const handleApplyForAJob = useCallback(
-    async ({
-      jobId,
-      resumeId,
-      messageToRecruiter = "",
-    }) => {
+    async ({ jobId, resumeId, messageToRecruiter = "" }) => {
       try {
         const data = await request(
           `${APPLICATIONS_URL}/${jobId}`,
@@ -260,10 +216,6 @@ const ApplicationProvider = ({ children }) => {
     [APPLICATIONS_URL, request]
   );
 
-  // --------------------------------------------------
-  // GET MY APPLICATIONS
-  // --------------------------------------------------
-
   const handleGetMyApplications = useCallback(
     async ({ page = 1, limit = 10, forceRefresh = false } = {}) => {
       try {
@@ -284,10 +236,7 @@ const ApplicationProvider = ({ children }) => {
         const pagination = result?.pagination ?? null;
 
         setStateIfChanged(setApplications, items);
-        setStateIfChanged(
-          setMyApplicationPagination,
-          pagination
-        );
+        setStateIfChanged(setMyApplicationPagination, pagination);
 
         return items;
       } catch (error) {
@@ -336,10 +285,6 @@ const ApplicationProvider = ({ children }) => {
     [APPLICATIONS_URL, request]
   );
 
-  // --------------------------------------------------
-  // GET MY APPLICATION BY ID
-  // --------------------------------------------------
-
   const handleGetMyApplicationById = useCallback(
     async ({ applicationId }) => {
       try {
@@ -353,19 +298,12 @@ const ApplicationProvider = ({ children }) => {
 
         return result;
       } catch (error) {
-        console.error(
-          "Get my application details error:",
-          error
-        );
+        console.error("Get my application details error:", error);
         throw error;
       }
     },
     [APPLICATIONS_URL, request]
   );
-
-  // --------------------------------------------------
-  // GET APPLICATION BY ID (RECRUITER)
-  // --------------------------------------------------
 
   const handleGetApplicationById = useCallback(
     async ({ applicationId }) => {
@@ -380,10 +318,7 @@ const ApplicationProvider = ({ children }) => {
 
         return result;
       } catch (error) {
-        console.error(
-          "Get recruiter application details error:",
-          error
-        );
+        console.error("Get recruiter application details error:", error);
         throw error;
       }
     },
@@ -424,10 +359,7 @@ const ApplicationProvider = ({ children }) => {
         const pagination = result?.pagination ?? null;
 
         setStateIfChanged(setJobApplications, items);
-        setStateIfChanged(
-          setJobApplicationPagination,
-          pagination
-        );
+        setStateIfChanged(setJobApplicationPagination, pagination);
 
         return items;
       } catch (error) {
@@ -437,10 +369,6 @@ const ApplicationProvider = ({ children }) => {
     },
     [APPLICATIONS_URL, request]
   );
-
-  // --------------------------------------------------
-  // GET RECRUITER APPLICATIONS
-  // --------------------------------------------------
 
   const handleGetRecruiterApplications = useCallback(
     async (filters = {}) => {
@@ -478,17 +406,11 @@ const ApplicationProvider = ({ children }) => {
         if (status) query.set("status", status);
         if (atsStatus) query.set("atsStatus", atsStatus);
 
-        if (
-          minAtsScore !== undefined &&
-          minAtsScore !== ""
-        ) {
+        if (minAtsScore !== undefined && minAtsScore !== "") {
           query.set("minAtsScore", String(minAtsScore));
         }
 
-        if (
-          maxAtsScore !== undefined &&
-          maxAtsScore !== ""
-        ) {
+        if (maxAtsScore !== undefined && maxAtsScore !== "") {
           query.set("maxAtsScore", String(maxAtsScore));
         }
 
@@ -521,26 +443,16 @@ const ApplicationProvider = ({ children }) => {
         const pagination = result?.pagination ?? null;
 
         setStateIfChanged(setApplications, items);
-        setStateIfChanged(
-          setMyApplicationPagination,
-          pagination
-        );
+        setStateIfChanged(setMyApplicationPagination, pagination);
 
         return result;
       } catch (error) {
-        console.error(
-          "Get recruiter applications error:",
-          error
-        );
+        console.error("Get recruiter applications error:", error);
         throw error;
       }
     },
     [APPLICATIONS_URL, request]
   );
-
-  // --------------------------------------------------
-  // UPDATE RECRUITER NOTES
-  // --------------------------------------------------
 
   const handleUpdateRecruiterNotes = useCallback(
     async ({ applicationId, recruiterNotes }) => {
@@ -571,13 +483,8 @@ const ApplicationProvider = ({ children }) => {
           };
         };
 
-        setApplications((previous) =>
-          previous.map(updateNotes)
-        );
-
-        setJobApplications((previous) =>
-          previous.map(updateNotes)
-        );
+        setApplications((previous) => previous.map(updateNotes));
+        setJobApplications((previous) => previous.map(updateNotes));
 
         setApplication((previous) => {
           if (previous?._id !== applicationId) {
@@ -601,10 +508,6 @@ const ApplicationProvider = ({ children }) => {
     [APPLICATIONS_URL, request]
   );
 
-  // --------------------------------------------------
-  // DELETE APPLICATION (SOFT DELETE)
-  // --------------------------------------------------
-
   const handleDeleteApplication = useCallback(
     async ({ applicationId }) => {
       try {
@@ -620,9 +523,7 @@ const ApplicationProvider = ({ children }) => {
         );
 
         setApplications((previous) =>
-          previous.filter(
-            (item) => item._id !== applicationId
-          )
+          previous.filter((item) => item._id !== applicationId)
         );
 
         if (existingApplication) {
@@ -647,9 +548,7 @@ const ApplicationProvider = ({ children }) => {
         }
 
         setApplication((previous) =>
-          previous?._id === applicationId
-            ? null
-            : previous
+          previous?._id === applicationId ? null : previous
         );
 
         return true;
@@ -660,10 +559,6 @@ const ApplicationProvider = ({ children }) => {
     },
     [APPLICATIONS_URL, applications, request]
   );
-
-  // --------------------------------------------------
-  // UPDATE APPLICATION STATUS
-  // --------------------------------------------------
 
   const handleUpdateApplicationStatus = useCallback(
     async ({ applicationId, status }) => {
@@ -683,13 +578,8 @@ const ApplicationProvider = ({ children }) => {
             ? { ...item, ...updated }
             : item;
 
-        setApplications((previous) =>
-          previous.map(updateStatus)
-        );
-
-        setJobApplications((previous) =>
-          previous.map(updateStatus)
-        );
+        setApplications((previous) => previous.map(updateStatus));
+        setJobApplications((previous) => previous.map(updateStatus));
 
         setApplication((previous) =>
           previous?._id === applicationId
@@ -699,19 +589,12 @@ const ApplicationProvider = ({ children }) => {
 
         return updated;
       } catch (error) {
-        console.error(
-          "Update application status error:",
-          error
-        );
+        console.error("Update application status error:", error);
         throw error;
       }
     },
     [APPLICATIONS_URL, request]
   );
-
-  // --------------------------------------------------
-  // WITHDRAW APPLICATION
-  // --------------------------------------------------
 
   const handleWithdrawApplication = useCallback(
     async ({ applicationId }) => {
@@ -730,9 +613,7 @@ const ApplicationProvider = ({ children }) => {
             ? { ...item, ...updated }
             : item;
 
-        setApplications((previous) =>
-          previous.map(updateStatus)
-        );
+        setApplications((previous) => previous.map(updateStatus));
 
         setApplication((previous) =>
           previous?._id === applicationId
@@ -749,10 +630,6 @@ const ApplicationProvider = ({ children }) => {
     [APPLICATIONS_URL, request]
   );
 
-  // --------------------------------------------------
-  // CONTEXT VALUE
-  // --------------------------------------------------
-
   return (
     <ApplicationContext.Provider
       value={{
@@ -763,7 +640,6 @@ const ApplicationProvider = ({ children }) => {
         deletedApplicationPagination,
         jobApplications,
         jobApplicationPagination,
-
         handleApplyForAJob,
         handleGetMyApplications,
         handleGetDeletedApplications,
@@ -775,7 +651,6 @@ const ApplicationProvider = ({ children }) => {
         handleDeleteApplication,
         handleUpdateApplicationStatus,
         handleWithdrawApplication,
-
         selectedCandidate,
         setSelectedCandidate,
       }}

@@ -1,10 +1,10 @@
 import { createContext, useCallback, useState } from "react";
+import { apiRequest } from "../utils/apiRequest";
 
 export const ResumeContext = createContext();
 
 const ResumeProvider = ({ children }) => {
     const API_URL = import.meta.env.VITE_API_URL;
-
     const BASE_URL = `${API_URL}/resume`;
 
     const [resume, setResume] = useState(null);
@@ -20,7 +20,7 @@ const ResumeProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const parseResponse = async (response) => {
+    const parseResponse = useCallback(async (response) => {
         const data = await response.json();
 
         if (!response.ok) {
@@ -30,16 +30,15 @@ const ResumeProvider = ({ children }) => {
         }
 
         return data;
-    };
+    }, []);
 
     const handleUploadResume = async (formData) => {
         try {
             setLoading(true);
             setError(null);
 
-            const response = await fetch(BASE_URL, {
+            const response = await apiRequest(BASE_URL, {
                 method: "POST",
-                credentials: "include",
                 body: formData,
             });
 
@@ -79,48 +78,45 @@ const ResumeProvider = ({ children }) => {
         }
     };
 
+    const handleGetAllResumes = useCallback(
+        async ({ page = 1, limit = 10 } = {}) => {
+            try {
+                setLoading(true);
+                setError(null);
 
-const handleGetAllResumes = useCallback(
-  async ({ page = 1, limit = 10 } = {}) => {
-    try {
-      setLoading(true);
-      setError(null);
+                const url = `${BASE_URL}/userResumes?page=${page}&limit=${limit}`;
 
-      const url = `${BASE_URL}/userResumes?page=${page}&limit=${limit}`;
+                const response = await apiRequest(url, {
+                    method: "GET",
+                });
 
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      });
+                const result = await parseResponse(response);
+                const resumeData = result?.data;
 
-      const result = await parseResponse(response);
-      const resumeData = result?.data;
+                setResumes(resumeData?.resumes ?? []);
 
-      setResumes(resumeData?.resumes ?? []);
+                setResumePagination(
+                    resumeData?.pagination ?? {
+                        currentPage: page,
+                        totalPages: 0,
+                        totalResumes: 0,
+                        limit,
+                        hasNextPage: false,
+                        hasPreviousPage: false,
+                    }
+                );
 
-      setResumePagination(
-        resumeData?.pagination ?? {
-          currentPage: page,
-          totalPages: 0,
-          totalResumes: 0,
-          limit,
-          hasNextPage: false,
-          hasPreviousPage: false,
-        }
-      );
-
-      return resumeData;
-    } catch (error) {
-      console.error("Get All Resumes Error:", error);
-      setError(error?.message || "Failed to fetch resumes.");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  },
-  [BASE_URL, parseResponse]
-);
-
+                return resumeData;
+            } catch (error) {
+                console.error("Get All Resumes Error:", error);
+                setError(error?.message || "Failed to fetch resumes.");
+                throw error;
+            } finally {
+                setLoading(false);
+            }
+        },
+        [BASE_URL, parseResponse]
+    );
 
     const handleGetResumeById = async ({ resumeId }) => {
         if (!resumeId) {
@@ -131,11 +127,10 @@ const handleGetAllResumes = useCallback(
             setLoading(true);
             setError(null);
 
-            const response = await fetch(
+            const response = await apiRequest(
                 `${BASE_URL}/${resumeId}`,
                 {
                     method: "GET",
-                    credentials: "include",
                 }
             );
 
@@ -180,11 +175,10 @@ const handleGetAllResumes = useCallback(
             setLoading(true);
             setError(null);
 
-            const response = await fetch(
+            const response = await apiRequest(
                 `${BASE_URL}/${resumeId}`,
                 {
                     method: "PATCH",
-                    credentials: "include",
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -238,11 +232,10 @@ const handleGetAllResumes = useCallback(
             setLoading(true);
             setError(null);
 
-            const response = await fetch(
+            const response = await apiRequest(
                 `${BASE_URL}/update/${resumeId}`,
                 {
                     method: "PATCH",
-                    credentials: "include",
                     body: formData,
                 }
             );
@@ -283,11 +276,10 @@ const handleGetAllResumes = useCallback(
             setLoading(true);
             setError(null);
 
-            const response = await fetch(
+            const response = await apiRequest(
                 `${BASE_URL}/ChangeStatus/${resumeId}`,
                 {
                     method: "PATCH",
-                    credentials: "include",
                 }
             );
 
@@ -329,11 +321,10 @@ const handleGetAllResumes = useCallback(
             setLoading(true);
             setError(null);
 
-            const response = await fetch(
+            const response = await apiRequest(
                 `${BASE_URL}/delete/${resumeId}`,
                 {
                     method: "PATCH",
-                    credentials: "include",
                 }
             );
 
@@ -371,11 +362,10 @@ const handleGetAllResumes = useCallback(
             setLoading(true);
             setError(null);
 
-            const response = await fetch(
+            const response = await apiRequest(
                 `${BASE_URL}/restore/${resumeId}`,
                 {
                     method: "PATCH",
-                    credentials: "include",
                 }
             );
 
@@ -413,11 +403,10 @@ const handleGetAllResumes = useCallback(
             setLoading(true);
             setError(null);
 
-            const response = await fetch(
+            const response = await apiRequest(
                 `${BASE_URL}/delete/Recycle/${resumeId}`,
                 {
                     method: "DELETE",
-                    credentials: "include",
                 }
             );
 
@@ -441,7 +430,7 @@ const handleGetAllResumes = useCallback(
         }
     };
 
-    const handleDownloadResume = ( resumeId ) => {
+    const handleDownloadResume = (resumeId) => {
         if (!resumeId) {
             throw new Error("Resume ID is required");
         }

@@ -1,4 +1,5 @@
 import { createContext, useCallback, useState } from "react";
+import { apiRequest } from "../utils/apiRequest";
 
 export const ConversationContext = createContext();
 
@@ -11,8 +12,7 @@ const ConversationProvider = ({ children }) => {
   const handleCreateAndGetConversation = useCallback(
     async ({ participantId, conversationType, groupName, participants }) => {
       try {
-        const response = await fetch(`${API_URL}/conversation`, {
-          credentials: "include",
+        const response = await apiRequest(`${API_URL}/conversation`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -65,8 +65,7 @@ const ConversationProvider = ({ children }) => {
 
   const handleGetMyConversations = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/conversation/me`, {
-        credentials: "include",
+      const response = await apiRequest(`${API_URL}/conversation/me`, {
         method: "GET",
       });
 
@@ -102,10 +101,9 @@ const ConversationProvider = ({ children }) => {
       }
 
       try {
-        const response = await fetch(
+        const response = await apiRequest(
           `${API_URL}/conversation/${conversationId}`,
           {
-            credentials: "include",
             method: "GET",
           }
         );
@@ -154,10 +152,9 @@ const ConversationProvider = ({ children }) => {
       }
 
       try {
-        const response = await fetch(
+        const response = await apiRequest(
           `${API_URL}/conversation/${conversationId}/permanent`,
           {
-            credentials: "include",
             method: "DELETE",
           }
         );
@@ -182,7 +179,10 @@ const ConversationProvider = ({ children }) => {
 
         return data.data;
       } catch (error) {
-        console.error("Failed to permanently delete conversation:", error);
+        console.error(
+          "Failed to permanently delete conversation:",
+          error
+        );
         alert(error.message);
         throw error;
       }
@@ -197,10 +197,9 @@ const ConversationProvider = ({ children }) => {
       }
 
       try {
-        const response = await fetch(
+        const response = await apiRequest(
           `${API_URL}/conversation/${conversationId}/delete`,
           {
-            credentials: "include",
             method: "PATCH",
           }
         );
@@ -240,10 +239,9 @@ const ConversationProvider = ({ children }) => {
       }
 
       try {
-        const response = await fetch(
+        const response = await apiRequest(
           `${API_URL}/conversation/${conversationId}/restore`,
           {
-            credentials: "include",
             method: "PATCH",
           }
         );

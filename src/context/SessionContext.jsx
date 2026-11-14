@@ -1,4 +1,5 @@
 import { createContext, useCallback, useState } from "react";
+import { apiRequest } from "../utils/apiRequest";
 
 export const SessionContext = createContext(null);
 
@@ -12,11 +13,10 @@ const SessionProvider = ({ children }) => {
         setSessionsLoading(true);
 
         try {
-            const response = await fetch(`${API_URL}/session`, {
+            const response = await apiRequest(`${API_URL}/session`, {
                 method: "GET",
-                credentials: "include",
             });
-            
+
             if (response.status === 401) {
                 setSessions([]);
                 window.location.replace("/login");
@@ -37,7 +37,6 @@ const SessionProvider = ({ children }) => {
 
             setSessions(sessionData);
 
-
             return sessionData;
         } catch (error) {
             console.error("Get all sessions error:", error);
@@ -57,15 +56,13 @@ const SessionProvider = ({ children }) => {
             }
 
             try {
-                const response = await fetch(
+                const response = await apiRequest(
                     `${API_URL}/session/logoutSpecificDevice/${sessionId}`,
                     {
                         method: "DELETE",
-                        credentials: "include",
                     }
                 );
 
-                // Current session expired
                 if (response.status === 401) {
                     setSessions([]);
                     window.location.replace("/login");
@@ -80,7 +77,6 @@ const SessionProvider = ({ children }) => {
                     );
                 }
 
-                // Remove only the logged-out session
                 setSessions((prev) =>
                     prev.filter(
                         (session) => session.sessionId !== sessionId
@@ -89,10 +85,7 @@ const SessionProvider = ({ children }) => {
 
                 return data;
             } catch (error) {
-                console.error(
-                    "Logout specific device error:",
-                    error
-                );
+                console.error("Logout specific device error:", error);
 
                 throw error;
             }
@@ -102,15 +95,13 @@ const SessionProvider = ({ children }) => {
 
     const handleLogoutAllDevices = useCallback(async () => {
         try {
-            const response = await fetch(
+            const response = await apiRequest(
                 `${API_URL}/session/logoutAllDevice`,
                 {
                     method: "DELETE",
-                    credentials: "include",
                 }
             );
 
-            // Current session expired
             if (response.status === 401) {
                 setSessions([]);
                 window.location.replace("/login");
@@ -131,10 +122,7 @@ const SessionProvider = ({ children }) => {
 
             return data;
         } catch (error) {
-            console.error(
-                "Logout all devices error:",
-                error
-            );
+            console.error("Logout all devices error:", error);
 
             throw error;
         }

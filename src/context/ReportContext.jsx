@@ -1,10 +1,10 @@
-
 import {
   createContext,
   useCallback,
   useRef,
   useState,
 } from "react";
+import { apiRequest } from "../utils/apiRequest";
 
 export const ReportContext = createContext(null);
 
@@ -17,7 +17,6 @@ const INITIAL_PAGINATION = {
 
 const GET_CACHE_TTL = 1500;
 
-// Avoid unnecessary state updates when JSON data is equivalent.
 const setStateIfChanged = (setter, nextValue) => {
   setter((previous) => {
     const next =
@@ -32,7 +31,6 @@ const setStateIfChanged = (setter, nextValue) => {
         return previous;
       }
     } catch {
-      // Apply the update normally if comparison is not possible.
     }
 
     return next;
@@ -49,14 +47,13 @@ const ReportProvider = ({ children }) => {
   const [reportsPagination, setReportsPagination] =
     useState(INITIAL_PAGINATION);
 
-  // Deduplicate concurrent GET requests and cache brief responses.
   const inFlightRef = useRef(new Map());
   const cacheRef = useRef(new Map());
 
   const invalidateReportCache = useCallback(() => {
     cacheRef.current.clear();
   }, []);
-  
+
   const request = useCallback(
     async (path, options = {}) => {
       const {
@@ -66,9 +63,7 @@ const ReportProvider = ({ children }) => {
       } = options;
 
       if (!API_URL) {
-        throw new Error(
-          "VITE_API_URL is not configured."
-        );
+        throw new Error("VITE_API_URL is not configured.");
       }
 
       const method = (
@@ -103,8 +98,7 @@ const ReportProvider = ({ children }) => {
       }
 
       const execute = async () => {
-        const response = await fetch(url, {
-          credentials: "include",
+        const response = await apiRequest(url, {
           ...fetchOptions,
           headers: {
             ...(fetchOptions.body
@@ -153,10 +147,6 @@ const ReportProvider = ({ children }) => {
     [API_URL, invalidateReportCache]
   );
 
-  // --------------------------------------------------
-  // GET REPORTS
-  // --------------------------------------------------
-
   const handleGetReports = useCallback(
     async ({
       page = 1,
@@ -180,6 +170,7 @@ const ReportProvider = ({ children }) => {
       if (reason) params.set("reason", reason);
 
       const normalizedSearch = String(search || "").trim();
+
       if (normalizedSearch) {
         params.set("search", normalizedSearch);
       }
@@ -208,10 +199,6 @@ const ReportProvider = ({ children }) => {
     [request]
   );
 
-  // --------------------------------------------------
-  // GET ONE REPORT
-  // --------------------------------------------------
-
   const handleGetReportById = useCallback(
     async ({ reportId, forceRefresh = false } = {}) => {
       if (!reportId) {
@@ -237,10 +224,6 @@ const ReportProvider = ({ children }) => {
     },
     [request]
   );
-
-  // --------------------------------------------------
-  // RESOLVE / REJECT REPORT
-  // --------------------------------------------------
 
   const updateReportStatus = useCallback(
     async ({ reportId, action, adminNote = "" } = {}) => {
@@ -309,10 +292,6 @@ const ReportProvider = ({ children }) => {
     [updateReportStatus]
   );
 
-  // --------------------------------------------------
-  // CREATE REPORT
-  // --------------------------------------------------
-
   const handleCreateReport = useCallback(
     async ({
       reportedUser = null,
@@ -370,10 +349,6 @@ const ReportProvider = ({ children }) => {
     },
     [request]
   );
-
-  // --------------------------------------------------
-  // CONTEXT VALUE
-  // --------------------------------------------------
 
   return (
     <ReportContext.Provider

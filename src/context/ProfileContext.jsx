@@ -1,89 +1,128 @@
 import { createContext, useState } from "react";
+import { apiRequest } from "../utils/apiRequest";
 
 export const ProfileContext = createContext();
 
-const ProfileProvider = ({children}) => {
-
+const ProfileProvider = ({ children }) => {
     const [profile, setProfile] = useState(null);
     const [selectedProfile, setSelectedProfile] = useState(null);
     const [profileCompletion, setProfileCompletion] = useState(null);
     const [profiles, setProfiles] = useState([]);
-    const [updateProfileModalS, setUpdateProfileModal] = useState(false);
+    const [updateProfileModal, setUpdateProfileModal] = useState(false);
 
-    const API_URL = (
-  import.meta.env.VITE_API_URL
-).replace(/\/$/, "");
+    const API_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 
-    const handleCreateProfile = async(details) => {
-
-       try {
-        const { bio, headline, skills, projects, experience, education, socialLinks, resumeId, location, preferences } = details;
-         const response = await fetch(`${API_URL}/profile`, {
-             headers: {
-                 "Content-Type":"application/json"
-             },
-             credentials: "include",
-             method: "POST",
-             body: JSON.stringify({bio, headline, skills, projects, experience, education, socialLinks, resumeId, location, preferences})
-         })
- 
-         const data = await response.json();
- 
-         if(!response.ok) {
-             throw new Error(data.message || "Profile Creting Failed");
-         }
-
-         setProfile(data.data);
-        await handleGetMyProfile();
- 
-         console.log("Profile Created Successfully");
-       } catch (error) {
-        console.log(error);
-        alert(error.message);
-       }
-    }
-
-    const handleGetMyProfile = async() => {
+    const handleCreateProfile = async (details) => {
         try {
-            const response = await fetch(`${API_URL}/profile/me`, {
-                credentials: "include",
-                method: "GET"
-            })
-    
+            const {
+                bio,
+                headline,
+                skills,
+                projects,
+                experience,
+                education,
+                socialLinks,
+                resumeId,
+                location,
+                preferences,
+            } = details;
+
+            const response = await apiRequest(`${API_URL}/profile`, {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                method: "POST",
+                body: JSON.stringify({
+                    bio,
+                    headline,
+                    skills,
+                    projects,
+                    experience,
+                    education,
+                    socialLinks,
+                    resumeId,
+                    location,
+                    preferences,
+                }),
+            });
+
             const data = await response.json();
-    
-            if(!response.ok) {
-                throw new Error(data.message || "Fetched Profile Failed");
+
+            if (!response.ok) {
+                throw new Error(data.message || "Profile Creting Failed");
             }
-    
-            console.log("Profile fetched successfully");
 
             setProfile(data.data);
-            
+            await handleGetMyProfile();
+
+            console.log("Profile Created Successfully");
         } catch (error) {
             console.log(error);
             alert(error.message);
         }
-    }
+    };
 
-    const handleUpdateProfile = async(details) => {
+    const handleGetMyProfile = async () => {
         try {
-            const { bio, headline, skills, projects, experience, education, socialLinks, resumeId, location, preferences } = details;
-            const response = await fetch(`${API_URL}/profile`, {
-                method: "PATCH",
-                credentials: "include",
-                headers: {
-                    "Content-Type":"application/json"
-                },
-                body: JSON.stringify({bio, headline, skills, projects, experience, education, socialLinks, resumeId, location, preferences})
-            })
-    
+            const response = await apiRequest(`${API_URL}/profile/me`, {
+                method: "GET",
+            });
+
             const data = await response.json();
-    
-            if(!response.ok) {
+
+            if (!response.ok) {
+                throw new Error(data.message || "Fetched Profile Failed");
+            }
+
+            console.log("Profile fetched successfully");
+
+            setProfile(data.data);
+        } catch (error) {
+            console.log(error);
+            alert(error.message);
+        }
+    };
+
+    const handleUpdateProfile = async (details) => {
+        try {
+            const {
+                bio,
+                headline,
+                skills,
+                projects,
+                experience,
+                education,
+                socialLinks,
+                resumeId,
+                location,
+                preferences,
+            } = details;
+
+            const response = await apiRequest(`${API_URL}/profile`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    bio,
+                    headline,
+                    skills,
+                    projects,
+                    experience,
+                    education,
+                    socialLinks,
+                    resumeId,
+                    location,
+                    preferences,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
                 throw new Error(data.message || "Update Profile Failed");
             }
-    
+
             console.log("Profile Updated Successfully");
 
             setProfile(data.data);
@@ -93,61 +132,63 @@ const ProfileProvider = ({children}) => {
             console.log(error);
             alert(error.message);
         }
-    }
+    };
 
-    const handleProfileCompletion = async() => {
+    const handleProfileCompletion = async () => {
         try {
-            const response = await fetch(`${API_URL}/profile/profileCompletion`, {
-                credentials: "include",
-                method: "GET"
-            });
-    
+            const response = await apiRequest(
+                `${API_URL}/profile/profileCompletion`,
+                {
+                    method: "GET",
+                }
+            );
+
             const data = await response.json();
-    
-            if(!response.ok) {
+
+            if (!response.ok) {
                 throw new Error(data.message || "ProfileCompletion Failed");
             }
-    
+
             console.log("ProfileCompletion Fetched Successfully");
             setProfileCompletion(data.data);
-
         } catch (error) {
             console.log(error);
             alert(error.message);
         }
-    }
-    const handleGetProfileByUserId = async(userId) => {
+    };
+
+    const handleGetProfileByUserId = async (userId) => {
         try {
-            const response = await fetch(`${API_URL}/profile/${userId}`, {
-                credentials: "include",
-                method: "GET"
+            const response = await apiRequest(`${API_URL}/profile/${userId}`, {
+                method: "GET",
             });
-    
+
             const data = await response.json();
-    
-            if(!response.ok) {
+
+            if (!response.ok) {
                 throw new Error(data.message || "Profile Fetched Failed");
             }
-    
+
             console.log("Profile Fetched Successfully");
             setSelectedProfile(data.data);
         } catch (error) {
             console.log(error);
             alert(error.message);
         }
-    }
-    const handleSearchProfile = async() => {
+    };
+
+    const handleSearchProfile = async () => {
         try {
-            const response = await fetch(`${API_URL}/profile/search`, {
-                method: "GET"
+            const response = await apiRequest(`${API_URL}/profile/search`, {
+                method: "GET",
             });
-    
+
             const data = await response.json();
-    
-            if(!response.ok) {
+
+            if (!response.ok) {
                 throw new Error(data.message || "Profile Fetched Failed");
             }
-    
+
             console.log("Profile Fetched Successfully");
 
             setProfiles(data);
@@ -155,13 +196,28 @@ const ProfileProvider = ({children}) => {
             console.log(error);
             alert(error.message);
         }
-    }
+    };
 
     return (
-        <ProfileContext.Provider value={{setUpdateProfileModal, updateProfileModalS,profile, profiles, selectedProfile, profileCompletion, handleCreateProfile, handleGetMyProfile, handleGetProfileByUserId, handleProfileCompletion, handleSearchProfile, handleUpdateProfile}}>
+        <ProfileContext.Provider
+            value={{
+                setUpdateProfileModal,
+                updateProfileModal,
+                profile,
+                profiles,
+                selectedProfile,
+                profileCompletion,
+                handleCreateProfile,
+                handleGetMyProfile,
+                handleGetProfileByUserId,
+                handleProfileCompletion,
+                handleSearchProfile,
+                handleUpdateProfile,
+            }}
+        >
             {children}
         </ProfileContext.Provider>
-    )
-}
+    );
+};
 
 export default ProfileProvider;

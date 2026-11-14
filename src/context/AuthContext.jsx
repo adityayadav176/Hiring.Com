@@ -1,3 +1,4 @@
+
 import {
   createContext,
   useState,
@@ -7,12 +8,16 @@ import {
 } from "react";
 
 import { useNavigate } from "react-router-dom";
+import { useAdmin } from "../hooks/Hook";
+import {
+  apiRequest,
+  setRefreshAccessToken,
+} from "../utils/apiRequest";
 
 export const AuthContext = createContext(null);
 
 const API_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 const REFRESH_URL = `${API_URL}/auth/refreshAccessToken`;
-import { useAdmin } from "../hooks/Hook";
 
 const parseResponse = async (response) => {
   return response.json().catch(() => ({}));
@@ -54,7 +59,8 @@ function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [recruiter, setRecruiter] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const { admin, setAdmin } = useAdmin();
+
+  const { setAdmin } = useAdmin();
 
   const refreshPromiseRef = useRef(null);
   const authCheckPromiseRef = useRef(null);
@@ -64,7 +70,7 @@ function AuthProvider({ children }) {
     setUser(null);
     setRecruiter(null);
     setAdmin(null);
-  }, []);
+  }, [setAdmin]);
 
   const setAuthenticatedAccount = useCallback(
     (type, account) => {
@@ -98,11 +104,9 @@ function AuthProvider({ children }) {
 
       throw new Error("Unknown account type.");
     },
-    [clearLocalAuth]
+    [clearLocalAuth, setAdmin]
   );
 
-  // Refresh is called only by protected session restoration (getUser).
-  // Concurrent refresh attempts share the same promise.
   const handleRefreshAccessToken = useCallback(async () => {
     if (refreshPromiseRef.current) {
       return refreshPromiseRef.current;
@@ -138,10 +142,14 @@ function AuthProvider({ children }) {
     }
   }, []);
 
-  // Protected session restoration:
-  // 1. Check current access cookie.
-  // 2. If unauthorized, attempt refresh once.
-  // 3. Retry fetchUser once after successful refresh.
+  useEffect(() => {
+    setRefreshAccessToken(handleRefreshAccessToken);
+
+    return () => {
+      setRefreshAccessToken(null);
+    };
+  }, [handleRefreshAccessToken]);
+
   const getUser = useCallback(async () => {
     if (authCheckPromiseRef.current) {
       return authCheckPromiseRef.current;
@@ -169,7 +177,6 @@ function AuthProvider({ children }) {
             return null;
           }
 
-          // Only one retry. No refresh loop.
           response = await fetchUserRequest();
         }
 
@@ -189,7 +196,6 @@ function AuthProvider({ children }) {
 
         const type = normalizeAccountType(account.role, account);
 
-        // getUser is for User/recruiter protected routes.
         if (type !== "user" && type !== "recruiter") {
           clearLocalAuth();
           return null;
@@ -214,6 +220,7 @@ function AuthProvider({ children }) {
     })();
 
     authCheckPromiseRef.current = authCheckPromise;
+
     return authCheckPromise;
   }, [
     handleRefreshAccessToken,
@@ -251,7 +258,6 @@ function AuthProvider({ children }) {
         throw new Error("Please enter either email or phone number, not both.");
       }
 
-      // Public login request: intentionally no refresh/retry.
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: {
@@ -331,7 +337,6 @@ function AuthProvider({ children }) {
         throw new Error("Google credential is required.");
       }
 
-      // Public Google authentication request: no refresh/retry.
       const response = await fetch(`${API_URL}/auth/google`, {
         method: "POST",
         headers: {
@@ -416,12 +421,10 @@ function AuthProvider({ children }) {
         throw new Error("Name, email and password are required.");
       }
 
-      // Preserve exact backend role casing.
       if (!["User", "recruiter"].includes(role)) {
         throw new Error("Please select a valid account type.");
       }
 
-      // Public signup request: no refresh/retry.
       const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: {
@@ -450,6 +453,7 @@ function AuthProvider({ children }) {
       );
 
       navigate("/login", { replace: true });
+
       return data;
     } catch (error) {
       console.error("Signup error:", error);
@@ -464,7 +468,6 @@ function AuthProvider({ children }) {
         throw new Error("Email is required.");
       }
 
-      // Public password-reset request: no refresh/retry.
       const response = await fetch(`${API_URL}/auth/SendPasswordResetOtp`, {
         method: "POST",
         headers: {
@@ -483,6 +486,7 @@ function AuthProvider({ children }) {
       }
 
       navigate("/forgetPassword");
+
       return data;
     } catch (error) {
       console.error("Password reset OTP error:", error);
@@ -513,7 +517,6 @@ function AuthProvider({ children }) {
         throw new Error("Password and confirm password do not match.");
       }
 
-      // Public password-reset request: no refresh/retry.
       const response = await fetch(`${API_URL}/auth/forgetPassword`, {
         method: "POST",
         headers: {
@@ -536,6 +539,7 @@ function AuthProvider({ children }) {
       clearLocalAuth();
       alert("Password changed successfully.");
       navigate("/login", { replace: true });
+
       return data;
     } catch (error) {
       console.error("Password reset error:", error);
@@ -550,12 +554,11 @@ function AuthProvider({ children }) {
         throw new Error("Name is required.");
       }
 
-      const response = await fetch(`${API_URL}/auth/changeName`, {
+      const response = await apiRequest(`${API_URL}/auth/changeName`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
         body: JSON.stringify({
           name: name.trim(),
         }),
@@ -593,7 +596,6 @@ function AuthProvider({ children }) {
     const logoutURL = `${API_URL}/auth/logoutCurrentUser`;
 
     try {
-      // Logout should not trigger refresh. Always clear client auth afterward.
       const response = await fetch(logoutURL, {
         method: "POST",
         credentials: "include",
@@ -618,12 +620,11 @@ function AuthProvider({ children }) {
 
   const handleDeleteAccount = async ({ otp, password } = {}) => {
     try {
-      const response = await fetch(`${API_URL}/auth/deleteAccount`, {
+      const response = await apiRequest(`${API_URL}/auth/deleteAccount`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
         body: JSON.stringify({
           otp,
           password,
@@ -642,6 +643,7 @@ function AuthProvider({ children }) {
       authCheckPromiseRef.current = null;
       alert("Account deleted successfully.");
       navigate("/login", { replace: true });
+
       return data;
     } catch (error) {
       console.error("Delete account error:", error);
@@ -652,11 +654,10 @@ function AuthProvider({ children }) {
 
   const handleEmailVerificationOtp = async () => {
     try {
-      const response = await fetch(
+      const response = await apiRequest(
         `${API_URL}/auth/sendEmailVerificationOtp`,
         {
           method: "POST",
-          credentials: "include",
         }
       );
 
@@ -678,12 +679,11 @@ function AuthProvider({ children }) {
 
   const handleVerifyEmail = async ({ otp } = {}) => {
     try {
-      const response = await fetch(`${API_URL}/auth/VerifyEmail`, {
+      const response = await apiRequest(`${API_URL}/auth/VerifyEmail`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
         body: JSON.stringify({ otp }),
       });
 
@@ -694,6 +694,7 @@ function AuthProvider({ children }) {
       }
 
       await getUser();
+
       return data;
     } catch (error) {
       console.error("Email verification error:", error);
@@ -704,10 +705,12 @@ function AuthProvider({ children }) {
 
   const handleSendDeleteAccountOtp = async () => {
     try {
-      const response = await fetch(`${API_URL}/auth/sendDeleteAccountOtp`, {
-        method: "POST",
-        credentials: "include",
-      });
+      const response = await apiRequest(
+        `${API_URL}/auth/sendDeleteAccountOtp`,
+        {
+          method: "POST",
+        }
+      );
 
       const data = await parseResponse(response);
 
@@ -727,9 +730,8 @@ function AuthProvider({ children }) {
 
   const handleUpdateAvatar = async (formData) => {
     try {
-      const response = await fetch(`${API_URL}/auth/update-avatar`, {
+      const response = await apiRequest(`${API_URL}/auth/update-avatar`, {
         method: "PATCH",
-        credentials: "include",
         body: formData,
       });
 
@@ -761,11 +763,13 @@ function AuthProvider({ children }) {
 
   const handleUpdateCoverImage = async (formData) => {
     try {
-      const response = await fetch(`${API_URL}/auth/update-coverImage`, {
-        method: "PATCH",
-        credentials: "include",
-        body: formData,
-      });
+      const response = await apiRequest(
+        `${API_URL}/auth/update-coverImage`,
+        {
+          method: "PATCH",
+          body: formData,
+        }
+      );
 
       const data = await parseResponse(response);
 
@@ -798,9 +802,8 @@ function AuthProvider({ children }) {
 
   const handleEnable2FA = async () => {
     try {
-      const response = await fetch(`${API_URL}/auth/2fa/enable`, {
+      const response = await apiRequest(`${API_URL}/auth/2fa/enable`, {
         method: "POST",
-        credentials: "include",
       });
 
       const data = await parseResponse(response);
@@ -822,16 +825,18 @@ function AuthProvider({ children }) {
         throw new Error("Authentication code is required.");
       }
 
-      const response = await fetch(`${API_URL}/auth/2fa/verify-setup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          token: String(token).trim(),
-        }),
-      });
+      const response = await apiRequest(
+        `${API_URL}/auth/2fa/verify-setup`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token: String(token).trim(),
+          }),
+        }
+      );
 
       const data = await parseResponse(response);
 
@@ -840,6 +845,7 @@ function AuthProvider({ children }) {
       }
 
       await getUser();
+
       return data;
     } catch (error) {
       console.error("2FA verification error:", error);
@@ -859,7 +865,6 @@ function AuthProvider({ children }) {
         );
       }
 
-      // Public 2FA login request: no refresh/retry.
       const response = await fetch(`${API_URL}/auth/login/2fa`, {
         method: "POST",
         headers: {

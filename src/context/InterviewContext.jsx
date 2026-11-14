@@ -1,5 +1,6 @@
 
 import { createContext, useCallback, useState } from "react";
+import { apiRequest } from "../utils/apiRequest";
 
 export const InterviewContext = createContext(null);
 
@@ -25,8 +26,7 @@ const InterviewProvider = ({ children }) => {
 
   const request = useCallback(
     async (path, options = {}) => {
-      const response = await fetch(`${API_URL}/interview${path}`, {
-        credentials: "include",
+      const response = await apiRequest(`${API_URL}/interview${path}`, {
         ...options,
         headers: {
           ...(options.body ? { "Content-Type": "application/json" } : {}),
@@ -45,20 +45,16 @@ const InterviewProvider = ({ children }) => {
     [API_URL]
   );
 
- 
-const getListData = (response) => {
-  // Support both { data: { interviews, pagination } }
-  // and { interviews, pagination } response formats.
-  const payload = response?.data ?? response;
+  const getListData = (response) => {
+    const payload = response?.data ?? response;
 
-  return {
-    interviews: Array.isArray(payload?.interviews)
-      ? payload.interviews
-      : [],
-    pagination: payload?.pagination ?? null,
+    return {
+      interviews: Array.isArray(payload?.interviews)
+        ? payload.interviews
+        : [],
+      pagination: payload?.pagination ?? null,
+    };
   };
-};
-
 
   const handleScheduleInterview = useCallback(
     async ({ details }) => {

@@ -1,4 +1,5 @@
 import { createContext, useCallback, useState } from "react";
+import { apiRequest } from "../utils/apiRequest";
 
 export const MessageContext = createContext();
 
@@ -15,11 +16,10 @@ const MessageProvider = ({ children }) => {
       }
 
       try {
-        const response = await fetch(
+        const response = await apiRequest(
           `${API_URL}/messages/${conversationId}`,
           {
             method: "GET",
-            credentials: "include",
           }
         );
 
@@ -46,21 +46,19 @@ const MessageProvider = ({ children }) => {
     [API_URL]
   );
 
-  
-const handleSocketNewMessage = useCallback((message) => {
-  if (!message?._id) return;
+  const handleSocketNewMessage = useCallback((message) => {
+    if (!message?._id) return;
 
-  setMessages((previousMessages) => {
-    const alreadyExists = previousMessages.some(
-      (existing) => String(existing._id) === String(message._id)
-    );
+    setMessages((previousMessages) => {
+      const alreadyExists = previousMessages.some(
+        (existing) => String(existing._id) === String(message._id)
+      );
 
-    if (alreadyExists) return previousMessages;
+      if (alreadyExists) return previousMessages;
 
-    return [...previousMessages, message];
-  });
-}, []);
-
+      return [...previousMessages, message];
+    });
+  }, []);
 
   const handleEditMessage = useCallback(
     async ({ messageId, content }) => {
@@ -73,13 +71,12 @@ const handleSocketNewMessage = useCallback((message) => {
       }
 
       try {
-        const response = await fetch(
+        const response = await apiRequest(
           `${API_URL}/messages/${messageId}`,
           {
             headers: {
               "Content-Type": "application/json",
             },
-            credentials: "include",
             method: "PATCH",
             body: JSON.stringify({ content }),
           }
@@ -120,10 +117,9 @@ const handleSocketNewMessage = useCallback((message) => {
       }
 
       try {
-        const response = await fetch(
+        const response = await apiRequest(
           `${API_URL}/messages/${messageId}`,
           {
-            credentials: "include",
             method: "DELETE",
           }
         );
@@ -159,10 +155,9 @@ const handleSocketNewMessage = useCallback((message) => {
       }
 
       try {
-        const response = await fetch(
+        const response = await apiRequest(
           `${API_URL}/messages/${messageId}/read`,
           {
-            credentials: "include",
             method: "PATCH",
           }
         );
@@ -202,10 +197,9 @@ const handleSocketNewMessage = useCallback((message) => {
       }
 
       try {
-        const response = await fetch(
+        const response = await apiRequest(
           `${API_URL}/messages/${messageId}/delivered`,
           {
-            credentials: "include",
             method: "PATCH",
           }
         );

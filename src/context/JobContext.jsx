@@ -1,4 +1,6 @@
+
 import { createContext, useCallback, useState } from "react";
+import { apiRequest } from "../utils/apiRequest";
 
 export const JobContext = createContext();
 
@@ -19,12 +21,10 @@ const JobProvider = ({ children }) => {
     const getErrorMessage = (data, fallback) =>
         data?.message || fallback;
 
-    // Create Job
     const handleCreateJob = useCallback(async ({ jobData }) => {
         try {
-            const response = await fetch(`${API_URL}/job`, {
+            const response = await apiRequest(`${API_URL}/job`, {
                 method: "POST",
-                credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -51,481 +51,479 @@ const JobProvider = ({ children }) => {
             console.error("Create Job Error:", error);
             throw error;
         }
-    });
+    }, [API_URL]);
 
-    // Get All Public Jobs
-    
-const handleGetAllJobs = useCallback(
-  async (params = {}) => {
-    const {
-      append = false,
-      page = 1,
-      limit = 20,
-      search = "",
-      location = "",
-      category = "",
-      employmentType = [],
-      workSpaceType = [],
-      experienceLevel = "",
-      skills = [],
-      minSalary = "",
-      maxSalary = "",
-      postedWithin = "",
-      sortBy = "relevance",
-      signal,
-    } = params;
+    const handleGetAllJobs = useCallback(
+        async (params = {}) => {
+            const {
+                append = false,
+                page = 1,
+                limit = 20,
+                search = "",
+                location = "",
+                category = "",
+                employmentType = [],
+                workSpaceType = [],
+                experienceLevel = "",
+                skills = [],
+                minSalary = "",
+                maxSalary = "",
+                postedWithin = "",
+                sortBy = "relevance",
+                signal,
+            } = params;
 
-    try {
-      const query = new URLSearchParams();
+            try {
+                const query = new URLSearchParams();
 
-      query.set("page", String(page));
-      query.set("limit", String(limit));
+                query.set("page", String(page));
+                query.set("limit", String(limit));
 
-      const addFilter = (key, value) => {
-        if (Array.isArray(value)) {
-          value.forEach((item) => {
-            if (item !== "" && item != null) {
-              query.append(key, String(item));
-            }
-          });
-          return;
-        }
+                const addFilter = (key, value) => {
+                    if (Array.isArray(value)) {
+                        value.forEach((item) => {
+                            if (item !== "" && item != null) {
+                                query.append(key, String(item));
+                            }
+                        });
+                        return;
+                    }
 
-        if (value !== "" && value != null) {
-          query.set(key, String(value));
-        }
-      };
+                    if (value !== "" && value != null) {
+                        query.set(key, String(value));
+                    }
+                };
 
-      // Must match the backend query parameter names.
-      addFilter(
-        "search",
-        typeof search === "string" ? search.trim() : ""
-      );
+                addFilter(
+                    "search",
+                    typeof search === "string" ? search.trim() : ""
+                );
 
-      addFilter(
-        "location",
-        typeof location === "string" ? location.trim() : ""
-      );
+                addFilter(
+                    "location",
+                    typeof location === "string" ? location.trim() : ""
+                );
 
-      addFilter("category", category);
-      addFilter("employmentType", employmentType);
-      addFilter("workSpaceType", workSpaceType);
-      addFilter("experienceLevel", experienceLevel);
-      addFilter("skills", skills);
-      addFilter("minSalary", minSalary);
-      addFilter("maxSalary", maxSalary);
-      addFilter("postedWithin", postedWithin);
-      addFilter("sortBy", sortBy);
+                addFilter("category", category);
+                addFilter("employmentType", employmentType);
+                addFilter("workSpaceType", workSpaceType);
+                addFilter("experienceLevel", experienceLevel);
+                addFilter("skills", skills);
+                addFilter("minSalary", minSalary);
+                addFilter("maxSalary", maxSalary);
+                addFilter("postedWithin", postedWithin);
+                addFilter("sortBy", sortBy);
 
-      const response = await fetch(
-        `${API_URL}/job?${query.toString()}`,
-        {
-          method: "GET",
-          credentials: "include",
-          signal,
-        }
-      );
+                const response = await apiRequest(
+                    `${API_URL}/job?${query.toString()}`,
+                    {
+                        method: "GET",
+                        signal,
+                    }
+                );
 
-      const data = await response.json();
+                const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(
-          getErrorMessage(
-            data,
-            `Request failed: ${response.status}`
-          )
-        );
-      }
-
-      const incomingJobs = Array.isArray(data?.data?.jobs)
-        ? data.data.jobs
-        : [];
-
-      setJobs((previousJobs) => {
-        if (!append) {
-          return incomingJobs;
-        }
-
-        const existingIds = new Set(
-          previousJobs.map((job) => String(job._id))
-        );
-
-        return [
-          ...previousJobs,
-          ...incomingJobs.filter(
-            (job) => !existingIds.has(String(job._id))
-          ),
-        ];
-      });
-
-      setJobPagination(data?.data?.pagination ?? {});
-
-      return data;
-    } catch (error) {
-      if (error.name !== "AbortError") {
-        console.error("Get All Jobs Error:", error);
-      }
-
-      throw error;
-    }
-  },
-  [API_URL]
-);
-
-    // Get Recruiter Jobs
-const handleGetRecruiterJobs = useCallback(
-  async ({ query = "" } = {}) => {
-    try {
-      const response = await fetch(
-        `${API_URL}/job/recruiter${query}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data?.message || "Failed to fetch recruiter jobs"
-        );
-      }
-
-      setRecruiterJobs(data?.data?.jobs || []);
-      setRecruiterJobPagination(data?.data?.pagination || {});
-
-      return data?.data;
-    } catch (error) {
-      console.error("Get recruiter jobs error:", error);
-      throw error;
-    }
-  },
-  [API_URL]
-);
-
-    // Get Deleted Jobs
-    const handleGetDeletedJobs = useCallback(async ({ query = "" } = {}) => {
-        try {
-            const response = await fetch(
-                `${API_URL}/job/deleted${query}`,
-                {
-                    method: "GET",
-                    credentials: "include",
+                if (!response.ok) {
+                    throw new Error(
+                        getErrorMessage(
+                            data,
+                            `Request failed: ${response.status}`
+                        )
+                    );
                 }
-            );
 
-            const data = await response.json();
+                const incomingJobs = Array.isArray(data?.data?.jobs)
+                    ? data.data.jobs
+                    : [];
 
-            if (!response.ok) {
-                throw new Error(
-                    getErrorMessage(data, "Failed to Get Deleted Jobs")
-                );
-            }
+                setJobs((previousJobs) => {
+                    if (!append) {
+                        return incomingJobs;
+                    }
 
-            setDeletedJobs(data?.data?.jobs || []);
-            setDeletedJobPagination(data?.data?.pagination || {});
+                    const existingIds = new Set(
+                        previousJobs.map((job) => String(job._id))
+                    );
 
-            return data;
-        } catch (error) {
-            console.error("Get Deleted Jobs Error:", error);
-            throw error;
-        }
-    });
+                    return [
+                        ...previousJobs,
+                        ...incomingJobs.filter(
+                            (job) => !existingIds.has(String(job._id))
+                        ),
+                    ];
+                });
 
-    // Get Recruiter Job By ID
-const handleGetJobById = useCallback(
-  async ({ JobId, jobId } = {}) => {
-    try {
-      const id = String(JobId ?? jobId ?? "").trim();
+                setJobPagination(data?.data?.pagination ?? {});
 
-      if (!/^[a-fA-F0-9]{24}$/.test(id)) {
-        console.error("Invalid Job ID received:", {
-          JobId,
-          jobId,
-        });
-
-        throw new Error(`Invalid Job ID: ${id || "missing ID"}`);
-      }
-
-      const response = await fetch(
-        `${API_URL}/job/recruiter/${encodeURIComponent(id)}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data?.message || "Failed to get recruiter job"
-        );
-      }
-
-      const fetchedJob = data?.data?.job ?? data?.data;
-
-      if (!fetchedJob?._id) {
-        throw new Error("Job was not found in the API response.");
-      }
-
-      setJob(fetchedJob);
-      return fetchedJob;
-    } catch (error) {
-      console.error("Get Recruiter Job Error:", error);
-      throw error;
-    }
-  },
-  [API_URL]
-);
-
-    // Get User Job By ID
-    const handleGetUserJobById = useCallback(async ({ JobId }) => {
-        try {
-            if (!JobId) {
-                throw new Error("Job ID is required");
-            }
-
-            const response = await fetch(
-                `${API_URL}/job/user/${JobId}`,
-                {
-                    method: "GET",
-                    credentials: "include",
+                return data;
+            } catch (error) {
+                if (error.name !== "AbortError") {
+                    console.error("Get All Jobs Error:", error);
                 }
-            );
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    getErrorMessage(data, "Failed to Get Job")
-                );
+                throw error;
             }
+        },
+        [API_URL]
+    );
 
-            setJob(data.data);
-
-            return data.data;
-        } catch (error) {
-            console.error("Get User Job Error:", error);
-            throw error;
-        }
-    });
-
-    // Update Job
-    const handleUpdateJob = useCallback(async ({ JobId, jobData }) => {
-        try {
-            const response = await fetch(`${API_URL}/job/${JobId}`, {
-                method: "PATCH",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(jobData),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    getErrorMessage(data, "Failed to Update Job")
+    const handleGetRecruiterJobs = useCallback(
+        async ({ query = "" } = {}) => {
+            try {
+                const response = await apiRequest(
+                    `${API_URL}/job/recruiter${query}`,
+                    {
+                        method: "GET",
+                    }
                 );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data?.message || "Failed to fetch recruiter jobs"
+                    );
+                }
+
+                setRecruiterJobs(data?.data?.jobs || []);
+                setRecruiterJobPagination(data?.data?.pagination || {});
+
+                return data?.data;
+            } catch (error) {
+                console.error("Get recruiter jobs error:", error);
+                throw error;
             }
+        },
+        [API_URL]
+    );
 
-            const updatedJob = data.data;
+    const handleGetDeletedJobs = useCallback(
+        async ({ query = "" } = {}) => {
+            try {
+                const response = await apiRequest(
+                    `${API_URL}/job/deleted${query}`,
+                    {
+                        method: "GET",
+                    }
+                );
 
-            setJob((prev) =>
-                prev?._id === JobId ? updatedJob : prev
-            );
+                const data = await response.json();
 
-            setJobs((prev) =>
-                prev.map((item) =>
-                    item._id === JobId ? updatedJob : item
-                )
-            );
+                if (!response.ok) {
+                    throw new Error(
+                        getErrorMessage(data, "Failed to Get Deleted Jobs")
+                    );
+                }
 
-            setRecruiterJobs((prev) =>
-                prev.map((item) =>
-                    item._id === JobId ? updatedJob : item
-                )
-            );
+                setDeletedJobs(data?.data?.jobs || []);
+                setDeletedJobPagination(data?.data?.pagination || {});
 
-            return updatedJob;
-        } catch (error) {
-            console.error("Update Job Error:", error);
-            throw error;
-        }
-    });
+                return data;
+            } catch (error) {
+                console.error("Get Deleted Jobs Error:", error);
+                throw error;
+            }
+        },
+        [API_URL]
+    );
 
-    // Soft Delete Job
-    const handleDeleteJob = useCallback(async ({ JobId }) => {
-        try {
-            const response = await fetch(
-                `${API_URL}/job/${JobId}/delete`,
-                {
+    const handleGetJobById = useCallback(
+        async ({ JobId, jobId } = {}) => {
+            try {
+                const id = String(JobId ?? jobId ?? "").trim();
+
+                if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+                    console.error("Invalid Job ID received:", {
+                        JobId,
+                        jobId,
+                    });
+
+                    throw new Error(`Invalid Job ID: ${id || "missing ID"}`);
+                }
+
+                const response = await apiRequest(
+                    `${API_URL}/job/recruiter/${encodeURIComponent(id)}`,
+                    {
+                        method: "GET",
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data?.message || "Failed to get recruiter job"
+                    );
+                }
+
+                const fetchedJob = data?.data?.job ?? data?.data;
+
+                if (!fetchedJob?._id) {
+                    throw new Error("Job was not found in the API response.");
+                }
+
+                setJob(fetchedJob);
+                return fetchedJob;
+            } catch (error) {
+                console.error("Get Recruiter Job Error:", error);
+                throw error;
+            }
+        },
+        [API_URL]
+    );
+
+    const handleGetUserJobById = useCallback(
+        async ({ JobId }) => {
+            try {
+                if (!JobId) {
+                    throw new Error("Job ID is required");
+                }
+
+                const response = await apiRequest(
+                    `${API_URL}/job/user/${JobId}`,
+                    {
+                        method: "GET",
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        getErrorMessage(data, "Failed to Get Job")
+                    );
+                }
+
+                setJob(data.data);
+
+                return data.data;
+            } catch (error) {
+                console.error("Get User Job Error:", error);
+                throw error;
+            }
+        },
+        [API_URL]
+    );
+
+    const handleUpdateJob = useCallback(
+        async ({ JobId, jobData }) => {
+            try {
+                const response = await apiRequest(`${API_URL}/job/${JobId}`, {
                     method: "PATCH",
-                    credentials: "include",
-                }
-            );
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    getErrorMessage(data, "Failed to Delete Job")
-                );
-            }
-
-            setJobs((prev) =>
-                prev.filter((item) => item._id !== JobId)
-            );
-
-            setRecruiterJobs((prev) =>
-                prev.filter((item) => item._id !== JobId)
-            );
-
-            setJob((prev) =>
-                prev?._id === JobId ? null : prev
-            );
-
-            setSelectedJobs((prev) =>
-                prev?._id === JobId ? null : prev
-            );
-
-            return data;
-        } catch (error) {
-            console.error("Delete Job Error:", error);
-            throw error;
-        }
-    });
-
-    // Permanently Delete Job
-    const handlePermanentDeleteJob = useCallback(async ({ JobId }) => {
-        try {
-            const response = await fetch(
-                `${API_URL}/job/${JobId}/permanent`,
-                {
-                    method: "DELETE",
-                    credentials: "include",
-                }
-            );
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    getErrorMessage(
-                        data,
-                        "Failed to Permanently Delete Job"
-                    )
-                );
-            }
-
-            setDeletedJobs((prev) =>
-                prev.filter((item) => item._id !== JobId)
-            );
-
-            setJob((prev) =>
-                prev?._id === JobId ? null : prev
-            );
-
-            setSelectedJobs((prev) =>
-                prev?._id === JobId ? null : prev
-            );
-
-            return data;
-        } catch (error) {
-            console.error("Permanent Delete Job Error:", error);
-            throw error;
-        }
-    });
-
-    // Change Job Status
-    const handleChangeJobStatus = useCallback(async ({ JobId, status }) => {
-        try {
-            const response = await fetch(
-                `${API_URL}/job/${JobId}/status`,
-                {
-                    method: "PATCH",
-                    credentials: "include",
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ status }),
+                    body: JSON.stringify(jobData),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        getErrorMessage(data, "Failed to Update Job")
+                    );
                 }
-            );
 
-            const data = await response.json();
+                const updatedJob = data.data;
 
-            if (!response.ok) {
-                throw new Error(
-                    getErrorMessage(data, "Failed to Change Job Status")
+                setJob((prev) =>
+                    prev?._id === JobId ? updatedJob : prev
                 );
+
+                setJobs((prev) =>
+                    prev.map((item) =>
+                        item._id === JobId ? updatedJob : item
+                    )
+                );
+
+                setRecruiterJobs((prev) =>
+                    prev.map((item) =>
+                        item._id === JobId ? updatedJob : item
+                    )
+                );
+
+                return updatedJob;
+            } catch (error) {
+                console.error("Update Job Error:", error);
+                throw error;
             }
+        },
+        [API_URL]
+    );
 
-            const updatedJob = data.data;
+    const handleDeleteJob = useCallback(
+        async ({ JobId }) => {
+            try {
+                const response = await apiRequest(
+                    `${API_URL}/job/${JobId}/delete`,
+                    {
+                        method: "PATCH",
+                    }
+                );
 
-            setJob((prev) =>
-                prev?._id === JobId ? updatedJob : prev
-            );
+                const data = await response.json();
 
-            setJobs((prev) =>
-                prev.map((item) =>
-                    item._id === JobId ? updatedJob : item
-                )
-            );
-
-            setRecruiterJobs((prev) =>
-                prev.map((item) =>
-                    item._id === JobId ? updatedJob : item
-                )
-            );
-
-            return updatedJob;
-        } catch (error) {
-            console.error("Change Job Status Error:", error);
-            throw error;
-        }
-    });
-
-    // Restore Job
-    const handleRestoreJob =  useCallback(async ({ JobId }) => {
-        try {
-            const response = await fetch(
-                `${API_URL}/job/${JobId}/restore`,
-                {
-                    method: "PATCH",
-                    credentials: "include",
+                if (!response.ok) {
+                    throw new Error(
+                        getErrorMessage(data, "Failed to Delete Job")
+                    );
                 }
-            );
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    getErrorMessage(data, "Failed to Restore Job")
+                setJobs((prev) =>
+                    prev.filter((item) => item._id !== JobId)
                 );
+
+                setRecruiterJobs((prev) =>
+                    prev.filter((item) => item._id !== JobId)
+                );
+
+                setJob((prev) =>
+                    prev?._id === JobId ? null : prev
+                );
+
+                setSelectedJobs((prev) =>
+                    prev?._id === JobId ? null : prev
+                );
+
+                return data;
+            } catch (error) {
+                console.error("Delete Job Error:", error);
+                throw error;
             }
+        },
+        [API_URL]
+    );
 
-            const restoredJob = data.data;
+    const handlePermanentDeleteJob = useCallback(
+        async ({ JobId }) => {
+            try {
+                const response = await apiRequest(
+                    `${API_URL}/job/${JobId}/permanent`,
+                    {
+                        method: "DELETE",
+                    }
+                );
 
-            setDeletedJobs((prev) =>
-                prev.filter((item) => item._id !== JobId)
-            );
+                const data = await response.json();
 
-            setRecruiterJobs((prev) => [
-                restoredJob,
-                ...prev.filter((item) => item._id !== JobId),
-            ]);
+                if (!response.ok) {
+                    throw new Error(
+                        getErrorMessage(
+                            data,
+                            "Failed to Permanently Delete Job"
+                        )
+                    );
+                }
 
-            return restoredJob;
-        } catch (error) {
-            console.error("Restore Job Error:", error);
-            throw error;
-        }
-    });
+                setDeletedJobs((prev) =>
+                    prev.filter((item) => item._id !== JobId)
+                );
 
-    // Time Ago
+                setJob((prev) =>
+                    prev?._id === JobId ? null : prev
+                );
+
+                setSelectedJobs((prev) =>
+                    prev?._id === JobId ? null : prev
+                );
+
+                return data;
+            } catch (error) {
+                console.error("Permanent Delete Job Error:", error);
+                throw error;
+            }
+        },
+        [API_URL]
+    );
+
+    const handleChangeJobStatus = useCallback(
+        async ({ JobId, status }) => {
+            try {
+                const response = await apiRequest(
+                    `${API_URL}/job/${JobId}/status`,
+                    {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ status }),
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        getErrorMessage(data, "Failed to Change Job Status")
+                    );
+                }
+
+                const updatedJob = data.data;
+
+                setJob((prev) =>
+                    prev?._id === JobId ? updatedJob : prev
+                );
+
+                setJobs((prev) =>
+                    prev.map((item) =>
+                        item._id === JobId ? updatedJob : item
+                    )
+                );
+
+                setRecruiterJobs((prev) =>
+                    prev.map((item) =>
+                        item._id === JobId ? updatedJob : item
+                    )
+                );
+
+                return updatedJob;
+            } catch (error) {
+                console.error("Change Job Status Error:", error);
+                throw error;
+            }
+        },
+        [API_URL]
+    );
+
+    const handleRestoreJob = useCallback(
+        async ({ JobId }) => {
+            try {
+                const response = await apiRequest(
+                    `${API_URL}/job/${JobId}/restore`,
+                    {
+                        method: "PATCH",
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        getErrorMessage(data, "Failed to Restore Job")
+                    );
+                }
+
+                const restoredJob = data.data;
+
+                setDeletedJobs((prev) =>
+                    prev.filter((item) => item._id !== JobId)
+                );
+
+                setRecruiterJobs((prev) => [
+                    restoredJob,
+                    ...prev.filter((item) => item._id !== JobId),
+                ]);
+
+                return restoredJob;
+            } catch (error) {
+                console.error("Restore Job Error:", error);
+                throw error;
+            }
+        },
+        [API_URL]
+    );
+
     const getTimeAgo = (date) => {
         if (!date) return "";
 
@@ -571,7 +569,6 @@ const handleGetJobById = useCallback(
         return `${years} year${years !== 1 ? "s" : ""} ago`;
     };
 
-    // Format Location
     const FormatLocation = (location) => {
         if (!location) {
             return "Location Not Specified";
@@ -585,7 +582,6 @@ const handleGetJobById = useCallback(
         );
     };
 
-    // Format Enum Value
     const FormatEnumValue = (value) => {
         if (!value) return "";
 
@@ -599,7 +595,6 @@ const handleGetJobById = useCallback(
             .join(" ");
     };
 
-    // Format Application Deadline
     const formatDeadline = (date) => {
         if (!date) return "No Deadline";
 
@@ -621,7 +616,6 @@ const handleGetJobById = useCallback(
         return `${days - 1} days left`;
     };
 
-    // Format Applicants Count
     const formatApplicants = (applicants) => {
         if (
             applicants === undefined ||
@@ -634,7 +628,6 @@ const handleGetJobById = useCallback(
         return `${applicants} Applicant${applicants !== 1 ? "s" : ""}`;
     };
 
-    // Format Salary
     const formatSalary = (salary) => {
         if (salary === undefined || salary === null || salary === "") {
             return "";
@@ -651,21 +644,17 @@ const handleGetJobById = useCallback(
                 jobs,
                 recruiterJobs,
                 deletedJobs,
-
                 jobPagination,
                 recruiterJobPagination,
                 deletedJobPagination,
-
                 selectedJobs,
                 setSelectedJobs,
-
                 getTimeAgo,
                 formatSalary,
                 FormatEnumValue,
                 FormatLocation,
                 formatDeadline,
                 formatApplicants,
-
                 handleCreateJob,
                 handleGetAllJobs,
                 handleGetRecruiterJobs,
