@@ -69,38 +69,6 @@ const AdminProvider = ({ children }) => {
   );
 };
 
-
-const handleRefreshAdminToken = useCallback(async () => {
-  try {
-    const response = await fetch(
-      `${API_URL}/admin/refresh-admin-token`,
-      {
-        method: "POST",
-        credentials: "include",
-      }
-    );
-
-    const result = await response.json().catch(() => ({}));
-
-    if (!response.ok || result?.success === false) {
-      console.error(
-        "Admin token refresh failed:",
-        result?.message || response.status
-      );
-
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error("Admin refresh request failed:", error);
-    return false;
-  }
-}, [API_URL]);
-
-
-
-
 const getAdmin = useCallback(async () => {
   try {
     const fetchAdminProfileRequest = () =>
@@ -112,17 +80,16 @@ const getAdmin = useCallback(async () => {
     let response = await fetchAdminProfileRequest();
 
     // Access token expired: refresh and retry once.
-    if (response.status === 401) {
-      const refreshed = await handleRefreshAdminToken();
+    // if (response.status === 401) {
 
-      if (!refreshed) {
-        setAdmin(null);
-        setAdminProfile(null);
-        return null;
-      }
+    //   if (!refreshed) {
+    //     setAdmin(null);
+    //     setAdminProfile(null);
+    //     return null;
+    //   }
 
-      response = await fetchAdminProfileRequest();
-    }
+    //   response = await fetchAdminProfileRequest();
+    // }
 
     const result = await response.json().catch(() => ({}));
 
@@ -150,7 +117,7 @@ const getAdmin = useCallback(async () => {
     setAdminProfile(null);
     return null;
   }
-}, [API_URL, handleRefreshAdminToken]);
+}, [API_URL]);
 
 
   const handleGetAdminDashboard = useCallback(async () => {
@@ -1354,14 +1321,12 @@ const handleUnlockJob = useCallback(async (jobId) => {
       getAdmin,
       admin,
       setAdmin,
-      handleRefreshAdminToken,
       handleRestoreCompany,
     }),
     [
       setAdminProfile,
       admin,
       setAdmin,
-      handleRefreshAdminToken,
       adminProfile,
       adminLogout,
       avatarLoading,

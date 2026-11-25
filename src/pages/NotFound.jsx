@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 const NotFound = () => {
+  console.log("PNF EXECUTED");
   const navigate = useNavigate();
 
   const handleGoBack = () => {

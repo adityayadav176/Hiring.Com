@@ -1,8 +1,8 @@
-
-import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, NavLink } from "react-router-dom";
 import { useAuth } from "../../hooks/Hook";
 import GoogleButton from "./GoogleButton";
+import Loading from "../loading/loading";
 
 function LoginForm() {
     const [email, setEmail] = useState("");
@@ -12,8 +12,55 @@ function LoginForm() {
     const [token, setToken] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [checkingSession, setCheckingSession] = useState(true);
 
-    const { handleLogin, handleLoginWith2FA } = useAuth();
+    const navigate = useNavigate();
+
+const { handleLogin, handleLoginWith2FA, getUser } = useAuth();
+
+useEffect(() => {
+    let active = true;
+
+    const restoreSession = async () => {
+        try {
+            const account = await getUser();
+
+            if (!active) return;
+
+            if (!account) {
+                setCheckingSession(false);
+                return;
+            }
+
+            if (account.role === "recruiter") {
+                navigate("/recruiter", { replace: true });
+            } else if (
+                account.role === "User" ||
+                account.role === "user"
+            ) {
+                navigate("/dashboard", { replace: true });
+            } else {
+                setCheckingSession(false);
+            }
+        } catch (error) {
+            console.error("Session restoration failed:", error);
+
+            if (active) {
+                setCheckingSession(false);
+            }
+        }
+    };
+
+    restoreSession();
+
+    return () => {
+        active = false;
+    };
+}, [getUser, navigate]);
+
+if(checkingSession) {
+    return <Loading/>;   
+}
 
     const handleSubmit = async (e) => {
         e?.preventDefault();

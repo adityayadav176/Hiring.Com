@@ -23,7 +23,6 @@ function ProtectedRoutes({ allowedType }) {
   const {getAdmin, admin} = useAdmin();
 
   const location = useLocation();
-
   const [checking, setChecking] = useState(true);
 
   const getUserRef = useRef(getUser);
@@ -38,35 +37,42 @@ function ProtectedRoutes({ allowedType }) {
   }, [getAdmin]);
 
   useEffect(() => {
-    let active = true;
+  let active = true;
 
-    const restoreSession = async () => {
-      setChecking(true);
+  const restoreSession = async () => {
+    const alreadyAuthenticated = Boolean(user || recruiter || admin);
 
-      try {
-        if (allowedType === "admin") {
-          await getAdminRef.current();
-        } else {
-          await getUserRef.current();
-        }
-      } catch (error) {
-        console.error(
-          "Protected route session restoration failed:",
-          error
-        );
-      } finally {
-        if (active) {
-          setChecking(false);
-        }
+    if (alreadyAuthenticated) {
+      setChecking(false);
+      return;
+    }
+
+    setChecking(true);
+
+    try {
+      if (allowedType === "admin") {
+        await getAdminRef.current();
+      } else {
+        await getUserRef.current();
       }
-    };
+    } catch (error) {
+      console.error(
+        "Protected route session restoration failed:",
+        error
+      );
+    } finally {
+      if (active) {
+        setChecking(false);
+      }
+    }
+  };
 
-    restoreSession();
+  restoreSession();
 
-    return () => {
-      active = false;
-    };
-  }, [allowedType]);
+  return () => {
+    active = false;
+  };
+}, [allowedType, user, recruiter, admin]);
 
   if (checking) {
     return (
@@ -85,7 +91,7 @@ function ProtectedRoutes({ allowedType }) {
     }
 
     if (user) {
-      return <Navigate to="/" replace />;
+      return <Navigate to="/dashboard" replace />;
     }
 
     return (
@@ -108,7 +114,7 @@ function ProtectedRoutes({ allowedType }) {
     }
 
     if (user) {
-      return <Navigate to="/" replace />;
+      return <Navigate to="/dashboard" replace />;
     }
 
     return (

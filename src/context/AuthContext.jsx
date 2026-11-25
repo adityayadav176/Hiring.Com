@@ -236,8 +236,11 @@ function AuthProvider({ children }) {
     };
   }, []);
 
+  
+
   const handleLogin = async (details = {}) => {
     try {
+      console.log("LOGIN AUTH EXECUTED");
       const { email, password, phoneNo } = details;
 
       const normalizedEmail =
@@ -317,7 +320,7 @@ function AuthProvider({ children }) {
       } else if (accountType === "recruiter") {
         navigate("/recruiter", { replace: true });
       } else {
-        navigate("/", { replace: true });
+        navigate("/dashboard", { replace: true });
       }
 
       return {
@@ -336,7 +339,7 @@ function AuthProvider({ children }) {
       if (!credential) {
         throw new Error("Google credential is required.");
       }
-
+      console.log("GOOGLE AUTH EXECUTED");
       const response = await fetch(`${API_URL}/auth/google`, {
         method: "POST",
         headers: {
@@ -398,7 +401,7 @@ function AuthProvider({ children }) {
       } else if (accountType === "recruiter") {
         navigate("/recruiter", { replace: true });
       } else {
-        navigate("/", { replace: true });
+        navigate("/dashboard", { replace: true });
       }
 
       return {
@@ -858,6 +861,7 @@ function AuthProvider({ children }) {
     userId,
     token,
   } = {}) => {
+    console.log("2FA AUTH EXECUTED");
     try {
       if (!twoFactorToken || !token) {
         throw new Error(
@@ -908,7 +912,7 @@ function AuthProvider({ children }) {
       } else if (accountType === "recruiter") {
         navigate("/recruiter", { replace: true });
       } else {
-        navigate("/", { replace: true });
+        navigate("/dashboard", { replace: true });
       }
 
       return {
