@@ -8,10 +8,10 @@ import NotFound from "../pages/NotFound";
 import ProtectedRoutes from "./ProtectedRoutes";
 import Loading from "../components/loading/loading";
 
-const Dashboard = lazy(() => import("../pages/seeker/Dashboard"));
-const ADashboard = lazy(() => import("../pages/admin/ADashboard"));
-const RecruiterLayout = lazy(() => import("../pages/recruiter/RecruiterLayout"));
-const InterviewRoom = lazy(() => import("../pages/interview/InterviewRoom"));
+import {Dashboard} from "../pages/seeker/Dashboard" 
+import {RecruiterLayout} from "../pages/recruiter/RecruiterLayout"
+import {ADashboard} from "../pages/admin/ADashboard"
+import {InterviewRoom} from "../pages/interview/InterviewRoom"
 
 const AppRoutes = () => {
     return (
@@ -22,35 +22,19 @@ const AppRoutes = () => {
                 <Route path="/signup" element={<Signup />} />
 
                 <Route element={<ProtectedRoutes allowedType="both" />}>
-                    <Route path="/interview/:interviewId" element={
-                        <Suspense fallback={<Loading />}>
-                            <InterviewRoom />
-                        </Suspense>
-                    } />
+                    <Route path="/interview/:interviewId" element={<InterviewRoom />} />
                 </Route>
 
                 <Route element={<ProtectedRoutes allowedType="admin" />}>
-                        <Route path="/admin" element={
-                            <Suspense fallback={<Loading />}>
-                                <ADashboard />
-                            </Suspense>
-                        } />
+                        <Route path="/admin" element={ <ADashboard />} />
                 </Route>
 
                 <Route element={<ProtectedRoutes allowedType="recruiter" />}>
-                        <Route path="/recruiter" element={
-                            <Suspense fallback={<Loading />}>
-                                <RecruiterLayout />
-                            </Suspense>
-                        } />
+                        <Route path="/recruiter" element={<RecruiterLayout />} />
                 </Route>
 
                 <Route element={<ProtectedRoutes allowedType="user" />}>
-                        <Route path="/" element={
-                            <Suspense fallback={<Loading />}>
-                                <Dashboard />
-                            </Suspense>
-                        } />
+                        <Route path="/" element={<Dashboard />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />

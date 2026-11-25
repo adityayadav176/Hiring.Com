@@ -1640,7 +1640,7 @@ const navigateTo = (key) => {
     const failed = results.some((result) => result.status === "rejected");
 
     if (failed) {
-      setLoadError("Some dashboard data could not be loaded.");
+      setLoadError("You'r Not In Company. Create Company To Access Peer.Hiring Features");
     }
 
     setLoading(false);
