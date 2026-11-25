@@ -11,8 +11,7 @@ function LoginForm() {
     const [twoFactorToken, setTwoFactorToken] = useState("");
     const [token, setToken] = useState("");
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [checkingSession, setCheckingSession] = useState(true);
+    const [error, setError] = useState("");``
 
     const navigate = useNavigate();
 
@@ -27,11 +26,6 @@ useEffect(() => {
 
             if (!active) return;
 
-            if (!account) {
-                setCheckingSession(false);
-                return;
-            }
-
             if (account.role === "recruiter") {
                 navigate("/recruiter", { replace: true });
             } else if (
@@ -39,15 +33,9 @@ useEffect(() => {
                 account.role === "user"
             ) {
                 navigate("/dashboard", { replace: true });
-            } else {
-                setCheckingSession(false);
             }
         } catch (error) {
             console.error("Session restoration failed:", error);
-
-            if (active) {
-                setCheckingSession(false);
-            }
         }
     };
 
@@ -57,10 +45,6 @@ useEffect(() => {
         active = false;
     };
 }, [getUser, navigate]);
-
-if(checkingSession) {
-    return <Loading/>;   
-}
 
     const handleSubmit = async (e) => {
         e?.preventDefault();
