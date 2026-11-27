@@ -1,8 +1,8 @@
+
 import React, { useState, useEffect } from "react";
-import { useNavigate, NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/Hook";
 import GoogleButton from "./GoogleButton";
-import Loading from "../loading/loading";
 
 function LoginForm() {
     const [email, setEmail] = useState("");
@@ -11,43 +11,47 @@ function LoginForm() {
     const [twoFactorToken, setTwoFactorToken] = useState("");
     const [token, setToken] = useState("");
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");``
+    const [error, setError] = useState("");
 
     const navigate = useNavigate();
 
-const { handleLogin, handleLoginWith2FA, getUser } = useAuth();
+    const { handleLogin, handleLoginWith2FA, getUser } = useAuth();
 
-useEffect(() => {
-    let active = true;
+    // Restore existing session
+    useEffect(() => {
+        let active = true;
 
-    const restoreSession = async () => {
-        try {
-            const account = await getUser();
+        const restoreSession = async () => {
+            try {
+                const account = await getUser();
 
-            if (!active) return;
+                if (!active || !account) return;
 
-            if (account.role === "recruiter") {
-                navigate("/recruiter", { replace: true });
-            } else if (
-                account.role === "User" ||
-                account.role === "user"
-            ) {
-                navigate("/dashboard", { replace: true });
+                if (account.role === "recruiter") {
+                    navigate("/recruiter", { replace: true });
+                } else if (
+                    account.role === "User" ||
+                    account.role === "user"
+                ) {
+                    navigate("/dashboard", { replace: true });
+                }
+            } catch (err) {
+                console.error("Session restoration failed:", err);
             }
-        } catch (error) {
-            console.error("Session restoration failed:", error);
-        }
-    };
+        };
 
-    restoreSession();
+        restoreSession();
 
-    return () => {
-        active = false;
-    };
-}, [getUser, navigate]);
+        return () => {
+            active = false;
+        };
+    }, [getUser, navigate]);
 
+    // Login
     const handleSubmit = async (e) => {
-        e?.preventDefault();
+        e.preventDefault();
+
+        if (loading) return;
 
         try {
             setLoading(true);
@@ -58,7 +62,6 @@ useEffect(() => {
                 password,
             });
 
-            // Support common response shapes returned by AuthContext.
             const responseData =
                 result?.data?.data ??
                 result?.data ??
@@ -66,7 +69,9 @@ useEffect(() => {
 
             const requires2FA =
                 responseData?.requires2FA ??
-                responseData?.requires2FA;
+                responseData?.twoFactorRequired ??
+                responseData?.data?.requires2FA ??
+                responseData?.data?.twoFactorRequired;
 
             if (requires2FA) {
                 const temporaryToken =
@@ -75,7 +80,7 @@ useEffect(() => {
 
                 if (!temporaryToken) {
                     setError(
-                        "Your backend did not return a temporary 2FA token. Please check handleLogin in AuthContext.jsx."
+                        "Two-factor authentication token was not received. Please try again."
                     );
                     return;
                 }
@@ -83,7 +88,6 @@ useEffect(() => {
                 setTwoFactorToken(temporaryToken);
                 setTwoFactorRequired(true);
                 setToken("");
-                return;
             }
         } catch (err) {
             console.error("Login error:", err);
@@ -93,6 +97,7 @@ useEffect(() => {
         }
     };
 
+    // Verify 2FA
     const handleVerify2FA = async () => {
         if (!/^\d{6}$/.test(token)) {
             setError("Please enter the 6-digit authentication code.");
@@ -120,10 +125,6 @@ useEffect(() => {
         }
     };
 
-    const LoadingSpinner = () => (
-        <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-    );
-
     const handleBackToLogin = () => {
         setTwoFactorRequired(false);
         setTwoFactorToken("");
@@ -131,20 +132,27 @@ useEffect(() => {
         setError("");
     };
 
-    
-return (
-    <div className="w-full max-w-sm sm:max-w-md mx-auto px-3 sm:px-0 py-2">
-        <div className="bg-white w-full rounded-xl border border-slate-200 p-4 sm:p-6 min-h-[560px] mt-2 mb-2">
+    const inputClass =
+        "mt-1.5 h-[40px] w-full rounded-[9px] border border-[#E8E3F2] bg-white px-3 text-[12px] font-medium text-[#29233D] outline-none transition-all placeholder:text-[#AAA4B9] hover:border-violet-300 focus:border-violet-500 focus:ring-[3px] focus:ring-violet-100 disabled:bg-slate-50";
 
-            <div className="flex gap-6 border-b border-slate-200">
+    const labelClass =
+        "block text-[11px] font-semibold text-[#514A68]";
+
+    const activeTab =
+        "relative pb-2.5 text-[13px] font-semibold text-violet-700 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:rounded-full after:bg-violet-600";
+
+    const inactiveTab =
+        "pb-2.5 text-[13px] font-semibold text-[#817B95] transition-colors hover:text-violet-600";
+
+    return (
+        <div className="mx-auto w-full max-w-[360px] min-w-0">
+
+            {/* Tabs */}
+            <div className="flex items-center gap-7 border-b border-[#EDE9F5]">
                 <NavLink
                     to="/login"
                     className={({ isActive }) =>
-                        `pb-4 text-xs font-medium transition-colors ${
-                            isActive
-                                ? "text-violet-600 border-b-2 border-violet-600"
-                                : "text-slate-500 hover:text-violet-500"
-                        }`
+                        isActive ? activeTab : inactiveTab
                     }
                 >
                     Log in
@@ -153,129 +161,152 @@ return (
                 <NavLink
                     to="/signup"
                     className={({ isActive }) =>
-                        `pb-4 text-xs font-medium transition-colors ${
-                            isActive
-                                ? "text-violet-600 border-b-2 border-violet-600"
-                                : "text-slate-500 hover:text-violet-500"
-                        }`
+                        isActive ? activeTab : inactiveTab
                     }
                 >
                     Create account
                 </NavLink>
             </div>
 
-            <div className="mt-4">
-                <h1 className="text-2xl font-bold">
+            {/* Heading */}
+            <div className="mt-4 mb-4">
+                <h1 className="text-[23px] font-bold tracking-[-0.8px] text-[#17152F]">
                     {twoFactorRequired
                         ? "Verify your identity"
                         : "Welcome back"}
                 </h1>
 
-                <p className="text-slate-500 font-medium text-xs mt-2 mb-4">
+                <p className="mt-1 text-[12px] leading-5 text-[#77718F]">
                     {twoFactorRequired
                         ? "Enter the 6-digit code from your Authenticator app."
                         : "Enter your details to continue your search."}
                 </p>
+            </div>
 
-                {!twoFactorRequired && (
-                    <form onSubmit={handleSubmit} className="space-y-3">
-                        <label
-                            htmlFor="login-email"
-                            className="text-slate-600 font-medium text-xs block"
-                        >
+            {/* Login Form */}
+            {!twoFactorRequired && (
+                <form onSubmit={handleSubmit} className="space-y-3">
+
+                    <div>
+                        <label htmlFor="login-email" className={labelClass}>
                             Work email
                         </label>
 
                         <input
                             id="login-email"
-                            required
-                            disabled={loading}
-                            onChange={(e) => setEmail(e.target.value)}
-                            value={email}
-                            className="text-slate-700 outline-none font-medium text-xs p-3 sm:p-2.5 border border-gray-200 focus:border-blue-500 rounded-xl w-full min-w-0 disabled:bg-slate-50"
                             type="email"
                             autoComplete="email"
+                            required
+                            disabled={loading}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             placeholder="you@company.com"
+                            className={inputClass}
                         />
+                    </div>
 
-                        <label
-                            htmlFor="login-password"
-                            className="text-slate-600 font-medium text-xs block"
-                        >
+                    <div>
+                        <label htmlFor="login-password" className={labelClass}>
                             Password
                         </label>
 
                         <input
                             id="login-password"
-                            required
-                            disabled={loading}
-                            onChange={(e) => setPassword(e.target.value)}
-                            value={password}
-                            className="text-slate-700 outline-none font-medium text-xs p-3 sm:p-2.5 border border-gray-200 focus:border-blue-500 rounded-xl w-full min-w-0 disabled:bg-slate-50"
                             type="password"
                             autoComplete="current-password"
-                            placeholder="Enter your password"
-                        />
-
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <label className="flex items-center gap-2 text-slate-400 text-[10px]">
-                                <input
-                                    type="checkbox"
-                                    disabled={loading}
-                                    className="cursor-pointer"
-                                />
-                                Remember me
-                            </label>
-
-                            <NavLink
-                                className="font-medium text-[10px] text-blue-600 hover:text-blue-800"
-                                to="/sendPasswordResetOpt"
-                            >
-                                Forgot Password?
-                            </NavLink>
-                        </div>
-
-                        {error && (
-                            <p
-                                role="alert"
-                                className="text-red-500 text-xs break-words"
-                            >
-                                {error}
-                            </p>
-                        )}
-
-                        <button
-                            type="submit"
+                            required
                             disabled={loading}
-                            className="text-white bg-blue-600 hover:bg-blue-700 p-3 sm:p-2.5 text-xs rounded-xl w-full flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter your password"
+                            className={inputClass}
+                        />
+                    </div>
+
+                    {/* Remember / Forgot */}
+                    <div className="flex items-center justify-between gap-2 pt-0.5">
+
+                        <label className="flex cursor-pointer items-center gap-2 text-[10px] text-[#77718F]">
+                            <input
+                                type="checkbox"
+                                disabled={loading}
+                                className="h-3.5 w-3.5 accent-violet-600"
+                            />
+                            Remember me
+                        </label>
+
+                        <NavLink
+                            to="/sendPasswordResetOpt"
+                            className="text-[10px] font-semibold text-violet-600 transition-colors hover:text-violet-800"
                         >
-                            {loading ? (
-                                <>
-                                    <LoadingSpinner />
-                                    <span>Logging in...</span>
-                                </>
-                            ) : (
-                                "Log in"
-                            )}
-                        </button>
-                    </form>
-                )}
+                            Forgot Password?
+                        </NavLink>
+                    </div>
 
-                {twoFactorRequired && (
-                    <div className="mt-6">
-                        <div className="rounded-xl border border-violet-100 bg-violet-50 p-4">
-                            <p className="text-violet-700 text-xs font-semibold">
-                                Two-factor authentication
-                            </p>
-                            <p className="text-slate-500 text-[10px] mt-1 leading-4">
-                                Open your Authenticator app and enter the
-                                6-digit security code.
-                            </p>
-                        </div>
+                    {error && (
+                        <p
+                            role="alert"
+                            className="break-words rounded-lg bg-red-50 px-3 py-2 text-[11px] text-red-600"
+                        >
+                            {error}
+                        </p>
+                    )}
 
+                    {/* Login Button */}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="
+                            group flex h-[42px] w-full items-center
+                            justify-center gap-2 rounded-[10px]
+                            bg-gradient-to-r from-[#A879F5]
+                            via-[#812FEA] to-[#6020DF]
+                            text-[12px] font-semibold text-white
+                            shadow-[0_5px_16px_rgba(112,37,220,0.20)]
+                            transition-all duration-200
+                            hover:-translate-y-[1px]
+                            hover:shadow-[0_8px_22px_rgba(112,37,220,0.28)]
+                            active:translate-y-0
+                            disabled:cursor-not-allowed
+                            disabled:opacity-50
+                        "
+                    >
+                        {loading ? (
+                            <>
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                                Logging in...
+                            </>
+                        ) : (
+                            <>
+                                Log in
+                                <span className="transition-transform group-hover:translate-x-1">
+                                    →
+                                </span>
+                            </>
+                        )}
+                    </button>
+
+                </form>
+            )}
+
+            {/* Two Factor Authentication */}
+            {twoFactorRequired && (
+                <div className="space-y-3">
+
+                    <div className="rounded-lg border border-violet-100 bg-violet-50/80 p-3">
+                        <p className="text-[11px] font-semibold text-violet-700">
+                            Two-factor authentication
+                        </p>
+
+                        <p className="mt-1 text-[10px] leading-4 text-[#77718F]">
+                            Open your Authenticator app and enter your 6-digit security code.
+                        </p>
+                    </div>
+
+                    <div>
                         <label
                             htmlFor="two-factor-code"
-                            className="block text-slate-600 font-medium text-xs mt-5"
+                            className={labelClass}
                         >
                             Authentication code
                         </label>
@@ -294,90 +325,109 @@ return (
                                     e.target.value.replace(/\D/g, "").slice(0, 6)
                                 )
                             }
-                            onKeyDown={(e) => {
-                                if (
-                                    e.key === "Enter" &&
-                                    token.length === 6 &&
-                                    !loading
-                                ) {
-                                    handleVerify2FA();
-                                }
-                            }}
                             placeholder="000000"
-                            className="text-slate-700 outline-none font-semibold tracking-[0.4em] text-center mt-3 text-lg p-3 border border-gray-200 focus:border-violet-500 rounded-xl w-full min-w-0 disabled:bg-slate-50"
+                            className="
+                                mt-1.5 h-[48px] w-full rounded-[9px]
+                                border border-[#E8E3F2] bg-white
+                                text-center text-[20px] font-semibold
+                                tracking-[0.5em] text-[#29233D]
+                                outline-none transition-all
+                                focus:border-violet-500
+                                focus:ring-[3px] focus:ring-violet-100
+                            "
                         />
-
-                        {error && (
-                            <p
-                                role="alert"
-                                className="text-red-500 text-xs mt-2 break-words"
-                            >
-                                {error}
-                            </p>
-                        )}
-
-                        <button
-                            type="button"
-                            onClick={handleVerify2FA}
-                            disabled={loading || token.length !== 6}
-                            className="text-white mt-4 bg-violet-600 hover:bg-violet-700 p-3 sm:p-2.5 text-xs rounded-xl w-full flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                        >
-                            {loading ? (
-                                <>
-                                    <LoadingSpinner />
-                                    <span>Verifying...</span>
-                                </>
-                            ) : (
-                                "Verify & Login"
-                            )}
-                        </button>
-
-                        <button
-                            type="button"
-                            disabled={loading}
-                            onClick={handleBackToLogin}
-                            className="text-slate-500 hover:text-slate-700 text-xs font-medium mt-3 w-full disabled:opacity-50"
-                        >
-                            ← Back to login
-                        </button>
                     </div>
-                )}
-            </div>
 
+                    {error && (
+                        <p role="alert" className="text-[11px] text-red-600">
+                            {error}
+                        </p>
+                    )}
+
+                    {/* Verify Button */}
+                    <button
+                        type="button"
+                        onClick={handleVerify2FA}
+                        disabled={loading || token.length !== 6}
+                        className="
+                            group flex h-[42px] w-full items-center
+                            justify-center gap-2 rounded-[10px]
+                            bg-gradient-to-r from-[#A879F5]
+                            via-[#812FEA] to-[#6020DF]
+                            text-[12px] font-semibold text-white
+                            shadow-[0_5px_16px_rgba(112,37,220,0.20)]
+                            transition-all duration-200
+                            hover:-translate-y-[1px]
+                            hover:shadow-[0_8px_22px_rgba(112,37,220,0.28)]
+                            active:translate-y-0
+                            disabled:cursor-not-allowed
+                            disabled:opacity-50
+                        "
+                    >
+                        {loading ? (
+                            <>
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                                Verifying...
+                            </>
+                        ) : (
+                            <>
+                                Verify & Login
+                                <span className="transition-transform group-hover:translate-x-1">
+                                    →
+                                </span>
+                            </>
+                        )}
+                    </button>
+
+                    <button
+                        type="button"
+                        disabled={loading}
+                        onClick={handleBackToLogin}
+                        className="w-full pt-1 text-[11px] font-semibold text-[#77718F] transition-colors hover:text-violet-600 disabled:opacity-50"
+                    >
+                        ← Back to login
+                    </button>
+                </div>
+            )}
+
+            {/* Google and Terms */}
             {!twoFactorRequired && (
                 <>
-                    <div className="flex items-center gap-3 mt-5 mb-5">
-                        <div className="flex-1 border-t border-slate-200" />
-                        <span className="text-slate-400 font-medium text-[9px] whitespace-nowrap">
+                    <div className="my-4 flex items-center gap-3">
+                        <div className="h-px flex-1 bg-[#EAE6F2]" />
+
+                        <span className="whitespace-nowrap text-[10px] text-[#9690A7]">
                             or continue with
                         </span>
-                        <div className="flex-1 border-t border-slate-200" />
+
+                        <div className="h-px flex-1 bg-[#EAE6F2]" />
                     </div>
 
-                    <GoogleButton onError={(message) => setError(message)} />
+                    <GoogleButton
+                        onError={(message) => setError(message)}
+                    />
 
-                    <p className="text-slate-500 flex flex-wrap justify-center gap-1 text-center font-medium text-[8px] mt-4">
+                    <p className="mt-3 text-center text-[9px] leading-4 text-[#898399]">
                         By continuing, you agree to our{" "}
                         <NavLink
-                            className="text-blue-500 hover:underline"
                             to="/terms"
+                            className="font-semibold text-violet-600 hover:underline"
                         >
                             Terms
-                        </NavLink>{" "}
-                        and{" "}
-                        <NavLink
-                            className="text-blue-500 hover:underline"
-                            to="/privacy"
-                        >
-                            Privacy Policy.
                         </NavLink>
+                        {" "}and{" "}
+                        <NavLink
+                            to="/privacy"
+                            className="font-semibold text-violet-600 hover:underline"
+                        >
+                            Privacy Policy
+                        </NavLink>.
                     </p>
                 </>
             )}
-        </div>
-    </div>
-);
 
+        </div>
+    );
 }
 
 export default LoginForm;

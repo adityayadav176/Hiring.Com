@@ -1,54 +1,110 @@
-import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
-import {useAuth} from "../../hooks/Hook"
+
+import { useState } from "react";
+import { NavLink } from "react-router-dom";
+import { useAuth } from "../../hooks/Hook";
 
 function SendPasswordResetOtpForm() {
-    const [email, setEmail] = useState("");
-    const {handlePasswordResetOtp} = useAuth();
-    const handleSubmit = async() => {
-      if(!email) {
-        alert("Please enter your email");
-        return;
-      }
-      await handlePasswordResetOtp({email});
-    }
- return (
-    <div className='bg-white max-w-sm rounded-xl border border-slate-200 p-6 h-[560px] mt-2 mb-2'>
-      <div>
-       <div className="flex gap-6 border-slate-200">
-</div>
-        <div className='mt-4'>
-          <h1 className='text-2xl font-bold'>Find Your Account</h1>
-          <p className='text-slate-500 font-medium text-xs mt-2 mb-4'>Enter your email to forget Your password.</p>
-          <span className='text-slate-600 font-medium text-xs mt-3'>Email</span>
-          <input onChange={(e)=>setEmail(e.target.value)} value={email} className='text-slate-500 outline-none font-medium mt-3 text-[12px] p-2.5 border-gray-200 focus:border-blue-500 border rounded-xl max-w-md w-full items-center justify-center flex' type="email" placeholder='Peer@example.com' />
-        </div>
-        <div className='flex items-center justify-between mt-4'>
-          <div className='flex items-center mb-2 gap-2'>
-            <input type="checkbox" className='cursor-pointer'/>
-            <span className='text-slate-400 font-medium text-[10px]'> Remember me </span>
-          </div>
-        </div>
-        <button onClick={handleSubmit} type='button' className='text-white mt-2 bg-blue-600 p-2.5 text-[12px] rounded-xl max-w-md w-full items-center justify-center flex cursor-pointer'>Send Otp</button>
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    <div className="flex items-center gap-3 mt-5 mb-5">
-  
-    <div className="flex-1 border-t border-slate-200"></div>
-        <span className="text-slate-400 font-medium text-[9px] whitespace-nowrap">
-            or continue with
-        </span>
-    <div className="flex-1 border-t border-slate-200"></div>
-    </div>
-        <button className="w-full cursor-pointer max-w-md flex items-center justify-center gap-2 p-2.5 mt-4 mb-4 border border-gray-200 rounded-xl text-slate-500 font-medium text-[12px] transition-all duration-200 hover:bg-slate-50"><span className="text-violet-600 text-xl leading-none">G</span>
-  <span>
-    Continue with Google
-  </span>
-</button>
-        <p className='text-slate-500 flex justify-center gap-0.5 font-medium text-[8px]'>By continuing, you agree to our <NavLink
-         className='text-blue-500' to="">Terms</NavLink> and <NavLink className='text-blue-500' to="">Privacy Policy.</NavLink></p>
+  const { handlePasswordResetOtp } = useAuth();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!email.trim()) {
+      alert("Please enter your email.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await handlePasswordResetOtp({ email: email.trim() });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="w-full">
+
+      {/* Heading */}
+      <div className="mb-7">
+        <h1 className="text-[27px] font-bold tracking-tight text-[#17152D]">
+          Find your account
+        </h1>
+
+        <p className="mt-2 text-[13px] leading-5 text-[#77728F]">
+          Enter your registered email address. We'll send you a verification code to reset your password.
+        </p>
       </div>
+
+      <form onSubmit={handleSubmit}>
+
+        {/* Email */}
+        <div className="mb-6">
+          <label className="mb-2 block text-[13px] font-semibold text-[#40385D]">
+            Email address
+          </label>
+
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            autoComplete="email"
+            required
+            className="
+              w-full rounded-xl border border-violet-100
+              bg-[#F7F5FC] px-4 py-3.5
+              text-[13px] text-[#30205D]
+              outline-none transition
+              placeholder:text-[#AAA4BC]
+              focus:border-[#8B5CF6]
+              focus:bg-white
+              focus:ring-2 focus:ring-violet-100
+            "
+          />
+        </div>
+
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="
+            flex w-full items-center justify-center gap-2
+            rounded-xl
+            bg-gradient-to-r from-[#A276F5] to-[#6721D9]
+            px-4 py-3.5
+            text-[14px] font-semibold text-white
+            shadow-lg shadow-violet-500/20
+            transition duration-200
+            hover:brightness-105
+            active:scale-[0.99]
+            disabled:cursor-not-allowed disabled:opacity-60
+          "
+        >
+          {loading ? "Sending..." : "Send verification code"}
+          {!loading && <span>→</span>}
+        </button>
+
+      </form>
+
+      {/* Back to Login */}
+      <div className="mt-7 border-t border-violet-100 pt-5 text-center">
+        <NavLink
+          to="/login"
+          className="
+            text-[12px] font-semibold text-[#7029DF]
+            transition hover:text-[#4F16B8]
+          "
+        >
+          ← Back to login
+        </NavLink>
+      </div>
+
     </div>
-  )
+  );
 }
 
-export default SendPasswordResetOtpForm
+export default SendPasswordResetOtpForm;

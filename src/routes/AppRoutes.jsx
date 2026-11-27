@@ -1,20 +1,20 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { Routes, Route } from "react-router-dom";
 import SendPasswordResetOtp from "../pages/auth/SendPasswordResetOtp";
 import ForgetPassword from "../pages/auth/ForgetPassword";
 import Login from "../pages/auth/Login";
 import Signup from "../pages/auth/Signup";
 import NotFound from "../pages/NotFound";
 import ProtectedRoutes from "./ProtectedRoutes";
-import Loading from "../components/loading/loading";
-
 import Dashboard from "../pages/seeker/Dashboard" 
 import RecruiterLayout from "../pages/recruiter/RecruiterLayout"
 import ADashboard from "../pages/admin/ADashboard"
 import InterviewRoom from "../pages/interview/InterviewRoom"
+import DocumentTitle from '../documentTitle';
 
 const AppRoutes = () => {
     return (
+        <>
+        <DocumentTitle/>
             <Routes>
                 <Route path="/sendPasswordResetOpt" element={<SendPasswordResetOtp />} />
                 <Route path="/forgetPassword" element={<ForgetPassword />} />
@@ -40,6 +40,7 @@ const AppRoutes = () => {
 
                 <Route path="*" element={<NotFound />} />
             </Routes>
+            </>
     );
 };
 

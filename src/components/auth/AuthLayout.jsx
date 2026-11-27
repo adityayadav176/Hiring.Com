@@ -4,156 +4,127 @@ import { Sparkles } from "lucide-react";
 
 function AuthLayout({ children }) {
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-[#f7f8fc]">
+    <div className="relative isolate min-h-screen w-full overflow-x-hidden bg-[#F8F7FC]">
+
+      {/* Background */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+
+        <div className="absolute -top-[380px] left-[35%] h-[750px] w-[750px] rounded-full bg-[#EEE7FF]/80" />
+
+        <div className="absolute -top-[240px] left-[48%] h-[650px] w-[650px] rounded-full border border-violet-200/70" />
+
+        <div className="absolute -bottom-[420px] -left-[150px] h-[750px] w-[1000px] rounded-[50%] bg-gradient-to-tr from-[#E9DFFF] via-[#F1EAFF] to-transparent" />
+
+        <div className="absolute -bottom-[400px] -right-[250px] h-[650px] w-[650px] rounded-full bg-[#EDE5FF]/80" />
+
+      </div>
 
       {/* Header */}
-      <header className="h-[65px] sm:h-[75px] lg:h-[90px] px-4 sm:px-8 lg:px-10 flex items-center">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 items-center shadow shadow-violet-800 justify-center flex rounded-xl object-contain bg-violet-700">
-            <span className="font-extrabold text-[17px] text-white">P</span>
+      <header className="relative z-10 mx-auto flex h-[88px] w-full max-w-[1500px] items-center justify-between px-6 sm:px-10 lg:h-[100px] lg:px-12">
+
+        <div className="flex items-center gap-3">
+
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#6924DB] shadow-md shadow-violet-500/20">
+            <span className="text-[27px] font-extrabold italic text-white">
+              P
+            </span>
           </div>
 
-          <p className="text-lg sm:text-xl font-bold text-slate-950">
-            Peer.Hiring
-          </p>
+          <span className="text-[23px] font-bold tracking-[-0.8px] text-[#17152D]">
+            Peer.<span className="text-[#6924DB]">Hiring</span>
+          </span>
+
         </div>
+
       </header>
 
       {/* Main */}
-      <main className="w-full px-4 sm:px-8 lg:px-16 pb-6 lg:pb-0">
+      <main className="
+        relative z-10 mx-auto grid w-full max-w-[1380px]
+        grid-cols-1 items-center gap-12
+        px-6 pb-12 pt-8
+        sm:px-10
+        lg:min-h-[calc(100svh-100px)]
+        lg:grid-cols-[minmax(0,1fr)_440px]
+        lg:gap-16 lg:px-12
+        lg:py-10
+        xl:gap-24
+      ">
 
-        <div
-          className="
-            min-h-[calc(100vh-65px)]
-            sm:min-h-[calc(100vh-75px)]
-            lg:min-h-[calc(100vh-90px)]
+        {/* Hero */}
+        <section className="flex w-full items-center justify-center lg:justify-start">
 
-            flex
-            flex-col
-            lg:flex-row
+          <div className="w-full max-w-[590px]">
 
-            items-start
-            lg:items-center
+            {/* Eyebrow */}
+            <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-violet-200/70 bg-white/70 px-4 py-2.5">
+              <Sparkles className="h-[17px] w-[17px] text-[#7029DF]" />
 
-            justify-start
-            lg:justify-between
+              <span className="text-[12px] font-bold tracking-[1.7px] text-[#7029DF]">
+                THE FUTURE OF WORK
+              </span>
+            </div>
 
-            gap-8
-            sm:gap-10
-            lg:gap-16
-          "
-        >
+            {/* Heading */}
+            <h1 className="text-[clamp(42px,4.3vw,62px)] font-bold leading-[1.08] tracking-[-2.8px] text-[#17152F]">
+              Find work that
+              <br />
+              <span className="bg-gradient-to-r from-[#6721D9] to-[#9460E8] bg-clip-text text-transparent">
+                feels like you.
+              </span>
+            </h1>
 
-          {/* Hero Section */}
-          <div className="w-full lg:w-[55%] pt-3 sm:pt-4 lg:pt-0">
+            {/* Description */}
+            <p className="mt-6 max-w-[470px] text-[16px] leading-[1.8] tracking-[-0.15px] text-[#77728F] sm:text-[17px]">
+              One trusted space for ambitious people and the teams they want to join.
+            </p>
 
-            <div className="max-w-[650px] mx-auto lg:mx-0">
+            {/* Social Proof */}
+            <div className="mt-9 flex flex-wrap items-center gap-4">
 
-              {/* Small heading */}
-              <div className="flex items-center gap-2 sm:gap-3 mb-4 lg:mb-6">
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-violet-600" />
-
-                <p className="text-xs sm:text-sm font-bold tracking-wide text-violet-600">
-                  THE FUTURE OF WORK
-                </p>
-              </div>
-
-              {/* Main heading */}
-              <h1
-                className="
-                  text-[clamp(2.25rem,7vw,2.625rem)]
-                  sm:text-[52px]
-                  lg:text-[68px]
-
-                  leading-[1]
-                  lg:leading-[0.98]
-
-                  tracking-[-1.5px]
-                  sm:tracking-[-2px]
-                  lg:tracking-[-3px]
-
-                  font-bold
-                  text-slate-950
-                "
-              >
-                Find work that
-                <br />
-
-                <span className="text-violet-600">
-                  feels like you.
-                </span>
-              </h1>
-
-              {/* Description */}
-              <p
-                className="
-                  mt-5
-                  lg:mt-7
-
-                  max-w-[600px]
-
-                  text-sm
-                  sm:text-base
-                  lg:text-lg
-
-                  leading-6
-                  sm:leading-7
-                  lg:leading-8
-
-                  text-slate-500
-                "
-              >
-                One trusted space for ambitious people and the teams
-                they want to join.
-              </p>
-
-              {/* Users */}
-              <div className="flex items-center mt-7 sm:mt-8 lg:mt-12">
-
-                <div className="flex -space-x-2 shrink-0">
-
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-violet-100 border-2 border-white flex items-center justify-center">
-                    <span className="text-[10px] sm:text-xs font-bold text-violet-700">
-                      JM
-                    </span>
-                  </div>
-
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-violet-100 border-2 border-white flex items-center justify-center">
-                    <span className="text-[10px] sm:text-xs font-bold text-violet-700">
-                      SK
-                    </span>
-                  </div>
-
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-violet-100 border-2 border-white flex items-center justify-center">
-                    <span className="text-[10px] sm:text-xs font-bold text-violet-700">
-                      RB
-                    </span>
-                  </div>
-
+              <div className="flex -space-x-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-[#E7DDFB] text-[11px] font-bold text-violet-800">
+                  JM
                 </div>
 
-                <p className="ml-3 sm:ml-5 text-xs sm:text-sm text-slate-500">
-                  <span className="font-bold text-slate-900">
-                    12,000+
-                  </span>{" "}
-                  people finding better work
-                </p>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-[#F9E1F0] text-[11px] font-bold text-pink-800">
+                  SK
+                </div>
 
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-[#DFE8FF] text-[11px] font-bold text-blue-800">
+                  RB
+                </div>
               </div>
 
+              <div className="h-8 w-px bg-violet-200" />
+
+              <p className="text-[14px] text-[#77728F]">
+                <span className="font-bold text-[#30205D]">12,000+</span>
+                {" "}people finding better work
+              </p>
+
             </div>
+
+          </div>
+        </section>
+
+        {/* Authentication Card */}
+        <section className="flex w-full items-center justify-center lg:-translate-y-10">
+
+          <div className="
+            w-full max-w-[440px]
+            rounded-[24px]
+            border border-white/90
+            bg-white/95
+            px-6 py-7
+            shadow-[0_20px_65px_rgba(76,40,135,0.12)]
+            backdrop-blur-xl
+            sm:px-8 sm:py-8
+          ">
+            {children}
           </div>
 
-          {/* Form Section */}
-          <div className="w-full lg:w-[45%] flex justify-center lg:justify-end">
-
-            <div className="w-full max-w-md min-w-0 pb-4">
-              {children}
-            </div>
-
-          </div>
-
-        </div>
+        </section>
 
       </main>
     </div>

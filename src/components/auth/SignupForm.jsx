@@ -1,303 +1,262 @@
 
-import { useState } from "react";
-import { NavLink } from "react-router-dom";
-import { Building2, User } from "lucide-react";
-import { useAuth } from "../../hooks/Hook";
-import GoogleButton from "./GoogleButton";
+    import { useState } from "react";
+    import { NavLink } from "react-router-dom";
+    import { Building2, User, ArrowRight } from "lucide-react";
+    import { useAuth } from "../../hooks/Hook";
+    import GoogleButton from "./GoogleButton";
 
-function SignupForm() {
-    const [role, setRole] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [name, setName] = useState("");
-    const [phoneNo, setPhoneNo] = useState("");
-    const [loading, setLoading] = useState(false);
+    function SignupForm() {
+        const [role, setRole] = useState("");
+        const [email, setEmail] = useState("");
+        const [password, setPassword] = useState("");
+        const [name, setName] = useState("");
+        const [phoneNo, setPhoneNo] = useState("");
+        const [loading, setLoading] = useState(false);
 
-    const { handleSignup } = useAuth();
+        const { handleSignup } = useAuth();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            if (loading || !role) return;
 
-        if (loading || !role) return;
+            try {
+                setLoading(true);
+                await handleSignup({
+                    role,
+                    email,
+                    password,
+                    name,
+                    phoneNo,
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
 
-        try {
-            setLoading(true);
+        const inputClass =
+            "mt-1 h-[38px] w-full rounded-lg border border-[#E8E3F2] bg-white px-3 text-[12px] font-medium text-[#29233D] outline-none transition-all placeholder:text-[#AAA4B9] focus:border-violet-500 focus:ring-2 focus:ring-violet-100 disabled:bg-slate-50";
 
-            await handleSignup({
-                role,
-                email,
-                password,
-                name,
-                phoneNo,
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+        const labelClass = "text-[11px] font-semibold text-[#514A68]";
 
-    return (
-        <form
-            onSubmit={handleSubmit}
-            className="bg-white w-full max-w-sm min-w-0 rounded-xl border border-slate-200 p-5 sm:p-6 mt-2 mb-2"
-        >
-            <div className="flex gap-8 border-b border-slate-200">
-                <NavLink
-                    to="/login"
-                    className={({ isActive }) =>
-                        `pb-4 text-xs font-medium transition-colors ${
-                            isActive
-                                ? "text-violet-600 border-b-2 border-violet-600"
-                                : "text-slate-500 hover:text-violet-500"
-                        }`
-                    }
-                >
-                    Log in
-                </NavLink>
+        const roleClass = (selected) =>
+            `flex h-[54px] items-center gap-2.5 rounded-lg border px-3 text-left transition-all ${
+                selected
+                    ? "border-violet-400 bg-violet-50"
+                    : "border-[#EAE6F2] bg-white hover:border-violet-300"
+            }`;
 
-                <NavLink
-                    to="/signup"
-                    className={({ isActive }) =>
-                        `pb-4 text-xs font-medium transition-colors ${
-                            isActive
-                                ? "text-violet-600 border-b-2 border-violet-600"
-                                : "text-slate-500 hover:text-violet-500"
-                        }`
-                    }
-                >
-                    Create account
-                </NavLink>
-            </div>
+        return (
+            <form onSubmit={handleSubmit} className="mx-auto w-full max-w-[420px] min-w-0">
 
-            <div className="mt-4">
-                <h1 className="text-2xl font-bold text-slate-950">
-                    Join Peer Hiring
-                </h1>
+                {/* Tabs */}
+                <div className="flex gap-7 border-b border-[#EDE9F5]">
+                    <NavLink
+                        to="/login"
+                        className={({ isActive }) =>
+                            `relative pb-2.5 text-[13px] font-semibold ${
+                                isActive
+                                    ? "text-violet-700 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:bg-violet-600"
+                                    : "text-[#817B95] hover:text-violet-600"
+                            }`
+                        }
+                    >
+                        Log in
+                    </NavLink>
 
-                <p className="text-slate-500 font-medium text-xs mt-2 mb-4">
-                    Choose how you'll use Peer Hiring.
-                </p>
+                    <NavLink
+                        to="/signup"
+                        className={({ isActive }) =>
+                            `relative pb-2.5 text-[13px] font-semibold ${
+                                isActive
+                                    ? "text-violet-700 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:bg-violet-600"
+                                    : "text-[#817B95] hover:text-violet-600"
+                            }`
+                        }
+                    >
+                        Create account
+                    </NavLink>
+                </div>
 
-                <button
-                    type="button"
-                    disabled={loading || role === "User"}
-                    onClick={() => setRole("User")}
-                    className={`outline-none mt-3 p-3 border rounded-xl w-full flex items-center gap-4 text-left transition-all duration-200 ${
-                        role === "User"
-                            ? "border-violet-500 bg-violet-50 cursor-not-allowed"
-                            : "border-slate-200 hover:border-violet-300 cursor-pointer"
-                    }`}
-                >
-                    <User
-                        className={`w-5 h-5 shrink-0 ${
-                            role === "User"
-                                ? "text-violet-600"
-                                : "text-slate-500"
-                        }`}
-                    />
+                {/* Heading */}
+                <div className="mt-4 mb-3">
+                    <h1 className="text-[21px] font-bold tracking-[-0.6px] text-[#17152F]">
+                        Join Peer.Hiring
+                    </h1>
+                    <p className="mt-1 text-[12px] text-[#77718F]">
+                        Choose how you'll use Peer.Hiring.
+                    </p>
+                </div>
+
+                {/* Role Selection */}
+                <div className="grid grid-cols-2 gap-2.5">
+
+                    <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => setRole("User")}
+                        className={roleClass(role === "User")}
+                    >
+                        <User
+                            size={18}
+                            className={role === "User" ? "text-violet-600" : "text-slate-500"}
+                        />
+                        <div>
+                            <p className="text-[11px] font-bold text-[#28233D]">
+                                Job seeker
+                            </p>
+                            <p className="mt-0.5 text-[9px] text-[#858096]">
+                                Find opportunities
+                            </p>
+                        </div>
+                    </button>
+
+                    <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => setRole("recruiter")}
+                        className={roleClass(role === "recruiter")}
+                    >
+                        <Building2
+                            size={18}
+                            className={role === "recruiter" ? "text-violet-600" : "text-slate-500"}
+                        />
+                        <div>
+                            <p className="text-[11px] font-bold text-[#28233D]">
+                                Recruiter
+                            </p>
+                            <p className="mt-0.5 text-[9px] text-[#858096]">
+                                Build your team
+                            </p>
+                        </div>
+                    </button>
+
+                </div>
+
+                {/* Form Fields */}
+                <div className="mt-3.5 grid grid-cols-2 gap-x-3 gap-y-2.5">
+
+                    <div className="col-span-2">
+                        <label className={labelClass}>Work email</label>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            disabled={loading}
+                            placeholder="you@company.com"
+                            className={inputClass}
+                        />
+                    </div>
 
                     <div>
-                        <p
-                            className={`font-semibold text-xs ${
-                                role === "User"
-                                    ? "text-violet-700"
-                                    : "text-slate-900"
-                            }`}
-                        >
-                            {role === "User" ? "User selected" : "Job seeker"}
-                        </p>
-
-                        <p className="text-[10px] text-slate-500 mt-1">
-                            {role === "User"
-                                ? "You are creating a user account"
-                                : "Find your next opportunity"}
-                        </p>
+                        <label className={labelClass}>Phone number</label>
+                        <input
+                            type="tel"
+                            value={phoneNo}
+                            onChange={(e) => setPhoneNo(e.target.value)}
+                            required
+                            disabled={loading}
+                            placeholder="Phone number"
+                            maxLength={10}
+                            className={inputClass}
+                        />
                     </div>
-                </button>
-
-                <button
-                    type="button"
-                    disabled={loading || role === "recruiter"}
-                    onClick={() => setRole("recruiter")}
-                    className={`outline-none mt-3 p-3 border rounded-xl w-full flex items-center gap-4 text-left transition-all duration-200 ${
-                        role === "recruiter"
-                            ? "border-violet-500 bg-violet-50 cursor-not-allowed"
-                            : "border-slate-200 hover:border-violet-300 cursor-pointer"
-                    }`}
-                >
-                    <Building2
-                        className={`w-5 h-5 shrink-0 ${
-                            role === "recruiter"
-                                ? "text-violet-600"
-                                : "text-slate-500"
-                        }`}
-                    />
 
                     <div>
-                        <p
-                            className={`font-semibold text-xs ${
-                                role === "recruiter"
-                                    ? "text-violet-700"
-                                    : "text-slate-900"
-                            }`}
-                        >
-                            {role === "recruiter"
-                                ? "Recruiter selected"
-                                : "Recruiter"}
-                        </p>
-
-                        <p className="text-[10px] text-slate-500 mt-1">
-                            {role === "recruiter"
-                                ? "You are creating a recruiter account"
-                                : "Build your next great team"}
-                        </p>
+                        <label className={labelClass}>Full name</label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                            disabled={loading}
+                            placeholder="John Doe"
+                            className={inputClass}
+                        />
                     </div>
-                </button>
 
-                <div className="mt-5">
-                    <label className="text-slate-600 font-medium text-xs">
-                        Work email
-                    </label>
+                    <div className="col-span-2">
+                        <label className={labelClass}>Password</label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            disabled={loading}
+                            placeholder="Create a password"
+                            className={inputClass}
+                        />
+                    </div>
 
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        disabled={loading}
-                        placeholder="you@company.com"
-                        className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl disabled:bg-slate-50 disabled:cursor-not-allowed"
-                    />
                 </div>
 
-                <div className="mt-5">
-                    <label className="text-slate-600 font-medium text-xs">
-                        Phone No
-                    </label>
-
-                    <input
-                        type="tel"
-                        value={phoneNo}
-                        onChange={(e) => setPhoneNo(e.target.value)}
-                        required
-                        disabled={loading}
-                        placeholder="0000000000"
-                        maxLength={10}
-                        className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl disabled:bg-slate-50 disabled:cursor-not-allowed"
-                    />
-                </div>
-
-                <div className="mt-5">
-                    <label className="text-slate-600 font-medium text-xs">
-                        Full Name
-                    </label>
-
-                    <input
-                        type="text"
-                        placeholder="John Doe"
-                        required
-                        disabled={loading}
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl disabled:bg-slate-50 disabled:cursor-not-allowed"
-                    />
-                </div>
-
-                <div className="mt-3">
-                    <label className="text-slate-600 font-medium text-xs">
-                        Password
-                    </label>
-
-                    <input
-                        type="password"
-                        onChange={(e) => setPassword(e.target.value)}
-                        value={password}
-                        required
-                        disabled={loading}
-                        placeholder="••••••••"
-                        className="text-slate-700 outline-none mt-1 w-full font-medium text-[12px] p-2.5 border border-slate-200 focus:border-violet-500 rounded-xl disabled:bg-slate-50 disabled:cursor-not-allowed"
-                    />
-                </div>
-
+                {/* Submit */}
                 <button
                     type="submit"
                     disabled={!role || loading}
-                    className={`text-white mt-4 transition-colors p-2.5 text-[12px] rounded-xl w-full flex items-center justify-center gap-2 ${
+                    className={`mt-3.5 flex h-[42px] w-full items-center justify-center gap-2 rounded-lg text-[12px] font-semibold text-white transition-all duration-200 ${
                         !role || loading
-                            ? "bg-violet-300 cursor-not-allowed"
-                            : "bg-violet-600 hover:bg-violet-700 cursor-pointer"
+                            ? "cursor-not-allowed bg-violet-300"
+                            : "bg-gradient-to-r from-[#A879F5] via-[#812FEA] to-[#6020DF] shadow-[0_4px_14px_rgba(112,37,220,0.20)] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-violet-300/40 active:translate-y-0"
                     }`}
                 >
                     {loading ? (
                         <>
-                            <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                            Creating Account...
+                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                            Creating account...
                         </>
                     ) : (
                         <>
                             {role === "User"
-                                ? "Create User Account"
+                                ? "Create Job Seeker Account"
                                 : role === "recruiter"
                                 ? "Create Recruiter Account"
-                                : "Select Role"}
+                                : "Select a role to continue"}
+                            {role && <ArrowRight size={14} />}
                         </>
                     )}
                 </button>
 
-                <div className="flex items-center gap-3 mt-5 mb-5">
-                    <div className="flex-1 border-t border-slate-200"></div>
-
-                    <span className="text-slate-400 font-medium text-[9px] whitespace-nowrap">
+                {/* Divider */}
+                <div className="my-3 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-[#EAE6F2]" />
+                    <span className="text-[10px] text-[#9690A7]">
                         or continue with
                     </span>
-
-                    <div className="flex-1 border-t border-slate-200"></div>
+                    <div className="h-px flex-1 bg-[#EAE6F2]" />
                 </div>
 
+                {/* Google */}
                 {role ? (
                     <GoogleButton
                         role={role}
-                        onError={(message) => {
-                            console.error(message);
-                        }}
+                        onError={(message) => console.error(message)}
                     />
                 ) : (
                     <button
                         type="button"
                         disabled
-                        className="w-full flex items-center justify-center gap-2 p-2.5 border border-slate-200 rounded-xl text-slate-300 font-medium text-[12px] cursor-not-allowed"
+                        className="flex h-[38px] w-full items-center justify-center gap-2 rounded-lg border border-[#EAE6F2] bg-[#FAF9FC] text-[11px] font-medium text-[#AAA4B9]"
                     >
-                        <span className="text-slate-300 text-xl leading-none">
-                            G
-                        </span>
-
-                        <span>
-                            Select a role to continue with Google
-                        </span>
+                        <span className="text-base font-bold">G</span>
+                        Select a role to continue with Google
                     </button>
                 )}
 
-                <p className="text-slate-500 flex justify-center flex-wrap gap-0.5 font-medium text-[8px] mt-4 text-center">
-                    <span>By continuing, you agree to our</span>
-
-                    <NavLink
-                        className="text-blue-500 hover:underline"
-                        to="/terms"
-                    >
+                {/* Terms */}
+                <p className="mt-3 text-center text-[9px] text-[#898399]">
+                    By continuing, you agree to our{" "}
+                    <NavLink to="/terms" className="font-semibold text-violet-600 hover:underline">
                         Terms
                     </NavLink>
-
-                    <span>and</span>
-
-                    <NavLink
-                        className="text-blue-500 hover:underline"
-                        to="/privacy"
-                    >
-                        Privacy Policy.
-                    </NavLink>
+                    {" "}and{" "}
+                    <NavLink to="/privacy" className="font-semibold text-violet-600 hover:underline">
+                        Privacy Policy
+                    </NavLink>.
                 </p>
-            </div>
-        </form>
-    );
-}
 
-export default SignupForm;
+            </form>
+        );
+    }
+
+    export default SignupForm;
